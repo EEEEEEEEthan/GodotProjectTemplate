@@ -47,6 +47,7 @@ function Write-CombinedOutput {
 	Get-Content $logFile, $stderrFile -ErrorAction SilentlyContinue | Write-Host
 }
 
+# --script 由本脚本固定注入，调用方只需传 -TestName
 $engineArguments = @("--script", "res://tests/test.gd")
 if ($Headless) {
 	$engineArguments += "--headless"

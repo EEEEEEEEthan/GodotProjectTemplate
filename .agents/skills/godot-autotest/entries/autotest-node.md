@@ -12,9 +12,13 @@
 
 ## 命令行解析
 
-启动格式：`--script res://tests/test.gd [--headless] -- --autotest TESTNAME`（`--` 后为 Godot 用户参数）。
+`.engine-test.ps1` 组装引擎参数，等价于：
 
-使用 `OS.get_cmdline_user_args()` 扫描 `--autotest`，下一项即为 `TESTNAME`。
+```text
+--script res://tests/test.gd [--headless] -- --autotest TESTNAME
+```
+
+`--script` 由脚本固定注入，调用方不要手动添加。`--` 之后为 Godot 用户参数；使用 `OS.get_cmdline_user_args()` 扫描 `--autotest`，下一项即为 `TESTNAME`。
 
 ## 注册与分发
 
