@@ -4,3 +4,4 @@
 .env
 /.local.settings
 /.idea/
+__pycache__/
