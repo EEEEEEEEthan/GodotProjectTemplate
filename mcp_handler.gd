@@ -1,11 +1,9 @@
 extends Node
 
-var command := "ping"
-
 func _ready():
-	MCP.register_handle(self)
+	add_child(ApplicationMcp.new(on_receive))
 
-func on_receive(command: String, data: Dictionary, return_callback: Callable) -> void:
+func on_receive(command: String, data: Dictionary, response: Callable) -> void:
 	match command:
-		"ping":
-			return_callback.call({"pong": true})
+		&"ping":
+			response.call({&"pong": true})

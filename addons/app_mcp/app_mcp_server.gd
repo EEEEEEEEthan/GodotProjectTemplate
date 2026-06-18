@@ -1,4 +1,4 @@
-class_name ApplicationMcpServer
+class_name _ApplicationMcpServer
 extends Node
 ## 基于 TCPServer 的轻量 HTTP 服务，仅处理 POST /mcp。
 

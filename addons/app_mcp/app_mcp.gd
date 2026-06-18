@@ -1,27 +1,27 @@
 extends Node
+class_name ApplicationMcp
 ## Game MCP 单例：启动 HTTP 服务并分发已注册协议回调。
 
 const PLUGIN_CONFIG_PATH := "res://addons/game_mcp/plugin.cfg"
 
-var _handlers: Dictionary = {}
+var _handler = func(command: String, data: Dictionary, respond: Callable) -> void: pass
 var _server: Node
 
-
-func _ready() -> void:
-	if not _is_plugin_enabled():
+func _init(handler: Callable) -> void:
+	_handler = handler
+	if not _is_plugin_enabled:
 		return
-	_server = ApplicationMcpServer.new()
+	_server = _ApplicationMcpServer.new()
 	add_child(_server)
 	_server.command_received.connect(_on_command_received)
 	var port: int = _server.start()
 	if port > 0:
 		print("Game MCP: HTTP 服务已启动，端口 %d" % port)
 
-
-func _is_plugin_enabled() -> bool:
-	var enabled_plugins: PackedStringArray = ProjectSettings.get_setting("editor_plugins/enabled")
-	return enabled_plugins.has(PLUGIN_CONFIG_PATH)
-
+var _is_plugin_enabled: bool:
+	get:
+		var enabled_plugins: PackedStringArray = ProjectSettings.get_setting("editor_plugins/enabled")
+		return enabled_plugins.has(PLUGIN_CONFIG_PATH)
 
 func register_handle(handle: Object) -> void:
 	var command_name := _resolve_command_name(handle)
@@ -31,18 +31,12 @@ func register_handle(handle: Object) -> void:
 	if not handle.has_method("on_receive"):
 		push_error("Game MCP: handle 缺少 on_receive 方法")
 		return
-	_handlers[command_name] = handle
-
-
-func unregister_handle(command_name: String) -> void:
-	_handlers.erase(command_name)
-
+	_handler = handle
 
 func get_listening_port() -> int:
 	if _server == null:
 		return -1
 	return _server.get_listening_port()
-
 
 func _resolve_command_name(handle: Object) -> String:
 	if handle.has_method("get_command"):
@@ -51,11 +45,7 @@ func _resolve_command_name(handle: Object) -> String:
 
 
 func _on_command_received(command: String, data: Dictionary, respond: Callable) -> void:
-	if not _handlers.has(command):
-		respond.call({"ok": false, "error": "未注册的命令: %s" % command})
-		return
-	var handle: Object = _handlers[command]
-	handle.on_receive(
+	_handler.call(
 		command,
 		data,
 		func(result: Dictionary) -> void:
