@@ -15,18 +15,9 @@ var _listening_port: int = -1
 
 func _init(handler: Callable) -> void:
 	_handler = handler
-	if not _is_plugin_enabled:
-		return
 	var port: int = start()
 	if port > 0:
 		print("Game MCP: HTTP 服务已启动，端口 %d" % port)
-
-
-var _is_plugin_enabled: bool:
-	get:
-		var enabled_plugins: PackedStringArray = ProjectSettings.get_setting("editor_plugins/enabled")
-		return enabled_plugins.has(PLUGIN_CONFIG_PATH)
-
 
 func register_handle(handle: Object) -> void:
 	var command_name := _resolve_command_name(handle)
