@@ -8,11 +8,17 @@ func on_receive(command: String, data: Dictionary, response: Callable) -> void:
 		&"ping":
 			response.call({&"pong": true})
 		&"eval":
-			response.call(_eval_gdscript(str(data.get(&"source", ""))))
+			response.call(_eval_gdscript(data))
 
-func _eval_gdscript(source: String) -> Dictionary:
+func _eval_gdscript(data: Dictionary) -> Dictionary:
+	var source := str(data.get(&"source", ""))
+	var file_path := str(data.get(&"file", ""))
+	if not file_path.is_empty():
+		if not FileAccess.file_exists(file_path):
+			return {&"error": &"文件不存在: %s" % file_path}
+		source = FileAccess.get_file_as_string(file_path)
 	if source.is_empty():
-		return {&"error": &"缺少 source"}
+		return {&"error": &"缺少 source 或 file"}
 	var script := GDScript.new()
 	script.source_code = source
 	var reload_error := script.reload()
