@@ -116,6 +116,7 @@ func _dispatch_request(connection: Dictionary) -> void:
 	var data: Dictionary = payload.get("data", {})
 	if typeof(data) != TYPE_DICTIONARY:
 		data = {}
+	print("Game MCP: 收到 command=%s data=%s" % [command, JSON.stringify(data)])
 	connection.state = "dispatched"
 	command_received.emit(
 		command,
@@ -130,6 +131,7 @@ func _send_json_response(connection: Dictionary, status_code: int, response_body
 		return
 	var peer: StreamPeerTCP = connection.peer
 	var body_text := JSON.stringify(response_body)
+	print("Game MCP: 发送 %s" % body_text)
 	var status_text := "OK"
 	if status_code == 400:
 		status_text = "Bad Request"

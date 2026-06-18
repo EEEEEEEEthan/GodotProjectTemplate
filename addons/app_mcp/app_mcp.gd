@@ -2,7 +2,7 @@ extends Node
 class_name ApplicationMcp
 ## Game MCP 单例：启动 HTTP 服务并分发已注册协议回调。
 
-const PLUGIN_CONFIG_PATH := "res://addons/game_mcp/plugin.cfg"
+const PLUGIN_CONFIG_PATH := "res://addons/app_mcp/plugin.cfg"
 
 var _handler = func(command: String, data: Dictionary, respond: Callable) -> void: pass
 var _server: Node
@@ -52,5 +52,6 @@ func _on_command_received(command: String, data: Dictionary, respond: Callable) 
 			if typeof(result) != TYPE_DICTIONARY:
 				respond.call({"ok": false, "error": "回调必须返回 Dictionary"})
 				return
-			respond.call({"ok": true, "data": result})
+			var response_body := {"ok": true, "data": result}
+			respond.call(response_body)
 	)
