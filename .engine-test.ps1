@@ -51,7 +51,7 @@ $engineArguments = @()
 if ($Headless) {
 	$engineArguments += "--headless"
 }
-$engineArguments += @("--autotest", $TestName)
+$engineArguments += @("--", "--autotest", $TestName)
 
 $process = Start-Process `
 	-FilePath $engineExe `

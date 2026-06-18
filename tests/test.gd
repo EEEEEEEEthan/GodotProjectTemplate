@@ -9,15 +9,15 @@ const _TEST_TYPES: Dictionary = {
 
 
 static func has_autotest_argument() -> bool:
-	var command_line_arguments: PackedStringArray = OS.get_cmdline_args()
-	return command_line_arguments.has("--autotest")
+	var user_arguments: PackedStringArray = OS.get_cmdline_user_args()
+	return user_arguments.has("--autotest")
 
 
 static func read_autotest_name_from_command_line() -> String:
-	var command_line_arguments: PackedStringArray = OS.get_cmdline_args()
-	for argument_index in command_line_arguments.size():
-		if command_line_arguments[argument_index] == "--autotest" and argument_index + 1 < command_line_arguments.size():
-			return command_line_arguments[argument_index + 1]
+	var user_arguments: PackedStringArray = OS.get_cmdline_user_args()
+	for argument_index in user_arguments.size():
+		if user_arguments[argument_index] == "--autotest" and argument_index + 1 < user_arguments.size():
+			return user_arguments[argument_index + 1]
 	return ""
 
 

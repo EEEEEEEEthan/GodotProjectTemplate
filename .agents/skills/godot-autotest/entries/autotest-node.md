@@ -12,7 +12,9 @@
 
 ## 命令行解析
 
-使用 `OS.get_cmdline_args()` 扫描 `--autotest`，下一项即为 `TESTNAME`。
+启动格式：`[--headless] -- --autotest TESTNAME`（`--` 后为 Godot 用户参数）。
+
+使用 `OS.get_cmdline_user_args()` 扫描 `--autotest`，下一项即为 `TESTNAME`。
 
 未传 `--autotest` 时，主场景不应干扰正常启动。
 

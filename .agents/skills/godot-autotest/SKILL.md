@@ -24,7 +24,7 @@ description: 本项目 Godot 引擎自动化测试流程（.engine-test.ps1、au
 
 ## 架构
 
-`--autotest TESTNAME` 启动 `.engine/.engine.exe` 后，主场景读取 `TESTNAME` 并交给 `tests/test.gd`（`RefCounted`）分发到对应测试类；测试类实现 `run() -> int`，结束时 `get_tree().quit(exit_code)`（`0` 通过，非 `0` 失败）。
+`--autotest TESTNAME` 作为用户参数放在 `--` 之后启动 `.engine/.engine.exe`（如 `--headless -- --autotest TESTNAME`）；主场景读取 `TESTNAME` 并交给 `tests/test.gd`（`RefCounted`）分发到对应测试类；测试类实现 `run() -> int`，结束时 `get_tree().quit(exit_code)`（`0` 通过，非 `0` 失败）。
 
 详见 [autotest-node.md](entries/autotest-node.md)。
 
