@@ -10,9 +10,9 @@ if errorlevel 1 exit /b 1
 if errorlevel 1 exit /b 1
 
 REM Registered test names; keep in sync with the autotest node
-for %%t in () do (
+for %%t in (hellotest) do (
     echo === Running test: %%t ===
-    call .engine-test.bat --ignore-prepare %%t
+    call .engine-test.bat --ignore-prepare --headless %%t
     if errorlevel 1 (
         echo [FAILED] %%t
         set "anyFailed=1"
