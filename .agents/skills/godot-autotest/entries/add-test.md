@@ -3,8 +3,8 @@
 ## 清单
 
 - [ ] 选定 `TESTNAME`（英文标识符，描述测试意图）
-- [ ] 在 `tests/` 新增测试类，实现 `run() -> int`
-- [ ] 在 `tests/test.gd` 的 `_TEST_TYPES` 注册 `TESTNAME`
+- [ ] 在 `tests/` 新增测试类，实现 `static func run(scene_tree: SceneTree) -> void`
+- [ ] 在 `tests/test.gd` 的 `run_named` match 中注册 `TESTNAME`
 - [ ] 在 `.engine-test-full.bat` 的 `for %%t in (...)` 中加入同一 `TESTNAME`
 - [ ] 本地运行 `.\.engine-test.ps1 TESTNAME` 验证
 - [ ] 运行 `.engine-test-full.bat` 验证全量
@@ -22,9 +22,9 @@ for %%t in (hellotest another_case) do (
 class_name HelloTest
 extends RefCounted
 
-func run() -> int:
+static func run(scene_tree: SceneTree) -> void:
 	print("hellotest")
-	return 0
+	scene_tree.quit(0)
 ```
 
 ## 测试逻辑建议

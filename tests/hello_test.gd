@@ -1,7 +1,6 @@
 class_name HelloTest
 extends RefCounted
 
-
-func run() -> int:
+static func run(scene_tree: SceneTree) -> void:
 	print("hellotest")
-	return 0
+	scene_tree.quit(0)

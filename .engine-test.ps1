@@ -47,7 +47,7 @@ function Write-CombinedOutput {
 	Get-Content $logFile, $stderrFile -ErrorAction SilentlyContinue | Write-Host
 }
 
-$engineArguments = @()
+$engineArguments = @("--script", "res://tests/test.gd")
 if ($Headless) {
 	$engineArguments += "--headless"
 }

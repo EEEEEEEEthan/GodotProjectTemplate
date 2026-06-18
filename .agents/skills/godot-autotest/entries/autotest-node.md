@@ -2,43 +2,38 @@
 
 ## 职责
 
-`tests/test.gd`（`class_name Test`，`RefCounted`）负责：
+`tests/test.gd`（`class_name Test`，`extends SceneTree`）作为 `--script` 入口，负责：
 
 1. 从命令行读取 `--autotest` 后的 `TESTNAME`
-2. 在注册表查找对应测试类
-3. 实例化并调用 `run() -> int`
+2. 在 `run_named` 中 match 分发到对应测试类
+3. 测试类接收 `SceneTree` 引用，结束时调用 `scene_tree.quit(exit_code)`
 
-主场景 `main/main.gd` 在 `_ready` 中检测 `--autotest`；有则分发并 `quit`，无则正常启动。
+主场景不参与 autotest；正常启动与测试启动完全分离。
 
 ## 命令行解析
 
-启动格式：`[--headless] -- --autotest TESTNAME`（`--` 后为 Godot 用户参数）。
+启动格式：`--script res://tests/test.gd [--headless] -- --autotest TESTNAME`（`--` 后为 Godot 用户参数）。
 
 使用 `OS.get_cmdline_user_args()` 扫描 `--autotest`，下一项即为 `TESTNAME`。
 
-未传 `--autotest` 时，主场景不应干扰正常启动。
-
 ## 注册与分发
 
-在 `Test._TEST_TYPES` 维护 `TESTNAME -> TestClass`。每个测试类放在 `tests/`，`extends RefCounted`，实现 `run() -> int`。
+在 `run_named` 的 `match` 中注册 `TESTNAME`。每个测试类放在 `tests/`，`extends RefCounted`，实现 `static func run(scene_tree: SceneTree) -> void`。
 
 ```gdscript
-const _TEST_TYPES: Dictionary = {
-	"hellotest": HelloTest,
-}
-
-func run_named(test_name: String) -> int:
-	if not _TEST_TYPES.has(test_name):
-		push_error("Unknown autotest: %s" % test_name)
-		return 1
-	var test_type: Variant = _TEST_TYPES[test_name]
-	return int(test_type.new().run())
+func run_named(test_name: String) -> void:
+	match test_name:
+		"hellotest":
+			HelloTest.run(self)
+			return
+	push_error("'%s' not found" % test_name)
+	quit(1)
 ```
 
 ## 退出码
 
-| 结果 | `run()` / `quit` |
-|------|------------------|
+| 结果 | `quit` |
+|------|--------|
 | 通过 | `0` |
 | 断言/逻辑失败 | `1`（或约定非零码） |
 | 未知测试名 | `1` |

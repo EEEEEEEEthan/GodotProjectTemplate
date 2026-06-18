@@ -1,11 +1,15 @@
 class_name Test
-extends RefCounted
+extends SceneTree
 
-const HelloTest = preload("res://tests/hello_test.gd")
-
-const _TEST_TYPES: Dictionary = {
-	"hellotest": HelloTest,
-}
+func _init() -> void:
+	if not has_autotest_argument():
+		return
+	var test_name: String = Test.read_autotest_name_from_command_line()
+	if test_name.is_empty():
+		push_error("Missing test name after --autotest")
+		quit(1)
+		return
+	run_named(test_name)
 
 
 static func has_autotest_argument() -> bool:
@@ -21,9 +25,13 @@ static func read_autotest_name_from_command_line() -> String:
 	return ""
 
 
-func run_named(test_name: String) -> int:
-	if not _TEST_TYPES.has(test_name):
-		push_error("Unknown autotest: %s" % test_name)
-		return 1
-	var test_type: Variant = _TEST_TYPES[test_name]
-	return int(test_type.new().run())
+func _run() -> void:
+	print("run")
+
+func run_named(test_name: String) -> void:
+	match test_name:
+		"hellotest":
+			HelloTest.run(self)
+			return
+	push_error("'%s' not found" % test_name)
+	quit(1)
