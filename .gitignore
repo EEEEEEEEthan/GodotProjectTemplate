@@ -1,0 +1,6 @@
+/.godot/
+/.engine/
+/.export/
+.env
+/.local.settings
+/.idea/
