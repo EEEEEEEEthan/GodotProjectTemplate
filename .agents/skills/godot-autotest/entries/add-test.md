@@ -32,7 +32,8 @@ func run() -> int:
 - 单测聚焦一件事；名字能直接看出测什么
 - 失败路径要有可读日志（`push_error` / `printerr`）
 - 异步测试在 `run()` 内 `await` 完成后再返回退出码
-- 不依赖编辑器 UI；headless 可跑
+- 不依赖编辑器 UI
+- 默认用 `.engine-test.bat TESTNAME`（无 `--headless`）；纯逻辑测或 CI 再考虑 `--headless`
 
 ## 不要做的事
 
