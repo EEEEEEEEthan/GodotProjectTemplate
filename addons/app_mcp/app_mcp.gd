@@ -56,6 +56,7 @@ func _on_command_received(command: String, data: Dictionary, respond: Callable) 
 		return
 	var handle: Object = _handlers[command]
 	handle.on_receive(
+		command,
 		data,
 		func(result: Dictionary) -> void:
 			if typeof(result) != TYPE_DICTIONARY:

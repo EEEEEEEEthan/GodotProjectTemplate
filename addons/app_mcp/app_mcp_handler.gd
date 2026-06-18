@@ -10,5 +10,5 @@ func _init(handler_command: String = "") -> void:
 	command = handler_command
 
 
-func on_receive(data: Dictionary, return_callback: Callable) -> void:
+func on_receive(command: String, data: Dictionary, return_callback: Callable) -> void:
 	return_callback.call({})
