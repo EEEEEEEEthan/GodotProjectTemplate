@@ -1,6 +1,6 @@
 ---
 name: godot-autotest
-description: 本项目 Godot 引擎自动化测试流程（.engine-test.bat、autotest 节点注册与分发）。新增/运行/编写自动化测试、实现 --autotest 测试节点、或维护 .engine-test-full.bat 注册表时使用。
+description: 本项目 Godot 引擎自动化测试流程（.engine-test.ps1、autotest 节点注册与分发）。新增/运行/编写自动化测试、实现 --autotest 测试节点、或维护 .engine-test-full.bat 注册表时使用。
 ---
 
 # 自动化测试
@@ -9,17 +9,18 @@ description: 本项目 Godot 引擎自动化测试流程（.engine-test.bat、au
 
 ## 运行
 
-```bat
-.engine-test.bat TESTNAME
-.engine-test.bat --headless TESTNAME
-.engine-test-full.bat
+```powershell
+.\.engine-test.ps1 TESTNAME
+.\.engine-test.ps1 TESTNAME -Headless
+.\.engine-test-full.bat
+.\.engine-test-full.bat --headless
 ```
 
-**默认不加 `--headless`**，走正常 GPU 渲染；仅 CI、无窗口环境或明确不依赖画面时再显式传入。
+**import 固定 `--headless`**；**跑测试默认不加 `-Headless`**，走正常 GPU 渲染。仅 CI、无窗口环境或明确不依赖画面时，单测传 `-Headless`，全量传 `--headless`（转发给各单测）。
 
-单测走 `.engine-test.bat`：`--headless` 可选，传给 `.engine/.engine.exe` 的 import 与 autotest 阶段；无 `--ignore-prepare` 时先 prepare。`.engine-test-run.ps1` 轮询输出，命中 `SCRIPT ERROR` / `Parse Error` / `ERROR: Failed` 或超时则杀进程。
+单测走 `.engine-test.ps1`：无 `-IgnorePrepare` 时先 prepare，再 `--headless --import`；`-Headless` 只影响 autotest 阶段。脚本轮询输出，命中 `SCRIPT ERROR` / `Parse Error` / `ERROR: Failed` 或超时则杀进程。
 
-全量走 `.engine-test-full.bat`：只执行一次 prepare 与 import，再逐个调用单测 bat。
+全量走 `.engine-test-full.bat`：prepare 与 import（headless）各一次，再逐个调用 `.engine-test.ps1 -IgnorePrepare`；可选 `--headless` 透传给各单测。
 
 ## 架构
 
@@ -38,7 +39,7 @@ description: 本项目 Godot 引擎自动化测试流程（.engine-test.bat、au
 ## 约束
 
 - 测试相关脚本放在 `tests/` 目录
-- **默认不加 `--headless`**；依赖渲染的测试必须不开 headless
+- **import 固定 headless**；**跑测试默认不加 `-Headless`**；依赖渲染的测试必须不开 headless
 - `.bat` 文件内容只用英文（echo、REM、变量名等）
 - 测试名使用英文标识符，与 autotest 节点注册键一致
 - 不要引入外部注册表文件；全量列表只写在 `.engine-test-full.bat`

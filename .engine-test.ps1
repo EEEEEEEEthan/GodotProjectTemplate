@@ -1,6 +1,7 @@
 param(
-	[Parameter(Mandatory = $true)]
+	[Parameter(Mandatory = $true, Position = 0)]
 	[string]$TestName,
+	[switch]$IgnorePrepare,
 	[switch]$Headless,
 	[int]$TimeoutSeconds = 120
 )
@@ -9,9 +10,24 @@ $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $engineExe = Join-Path $projectRoot ".engine\.engine.exe"
+$prepareBat = Join-Path $projectRoot ".engine-prepare.bat"
+
 if (-not (Test-Path $engineExe)) {
 	Write-Error "Engine not found: $engineExe"
 	exit 1
+}
+
+if (-not $IgnorePrepare) {
+	& cmd /c "`"$prepareBat`""
+	if ($LASTEXITCODE -ne 0) {
+		exit $LASTEXITCODE
+	}
+
+	$importArguments = @("--headless", "--import")
+	& $engineExe @importArguments
+	if ($LASTEXITCODE -ne 0) {
+		exit $LASTEXITCODE
+	}
 }
 
 $logFile = Join-Path $env:TEMP "engine-test-$PID.log"

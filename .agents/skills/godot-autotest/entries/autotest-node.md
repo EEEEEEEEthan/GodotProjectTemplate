@@ -41,4 +41,4 @@ func run_named(test_name: String) -> int:
 | 断言/逻辑失败 | `1`（或约定非零码） |
 | 未知测试名 | `1` |
 
-`.engine-test.bat` 将引擎进程的退出码原样返回给调用方。Godot 脚本错误通常打印到 stdout/stderr 但不会令进程自行退出，因此由 `.engine-test-run.ps1` 在 bat 层捕获输出并杀进程。
+`.engine-test.ps1` 将引擎进程的退出码原样返回给调用方。Godot 脚本错误通常打印到 stdout/stderr 但不会令进程自行退出，因此脚本在轮询到错误输出时会杀进程。
