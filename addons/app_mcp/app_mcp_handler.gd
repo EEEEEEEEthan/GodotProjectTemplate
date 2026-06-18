@@ -1,4 +1,4 @@
-class_name GameMcpHandler
+class_name ApplicationMcpHandler
 extends RefCounted
 ## 协议回调基类；子类实现 on_receive 并设置 command。
 

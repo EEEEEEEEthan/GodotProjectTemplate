@@ -30,13 +30,13 @@
 
 ```gdscript
 func _ready() -> void:
-    GameMcp.register_handle(MyHandler.new())
+	GameMcp.register_handle(MyHandler.new())
 
 class MyHandler:
-    var command := "my_command"
+	var command := "my_command"
 
-    func on_receive(data: Dictionary, return_callback: Callable) -> void:
-        return_callback.call({"result": data})
+	func on_receive(data: Dictionary, return_callback: Callable) -> void:
+		return_callback.call({"result": data})
 ```
 
 也可继承 `GameMcpHandler` 基类。
@@ -54,10 +54,10 @@ pip install -r .mcp/requirements.txt
 ```json
 {
   "mcpServers": {
-    "godot-game": {
-      "command": "python",
-      "args": ["C:/Projects/Template/.mcp/server.py"]
-    }
+	"godot-game": {
+	  "command": "python",
+	  "args": ["C:/Projects/Template/.mcp/server.py"]
+	}
   }
 }
 ```

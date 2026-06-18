@@ -1,7 +1,6 @@
 extends Node
 ## Game MCP 单例：启动 HTTP 服务并分发已注册协议回调。
 
-const GameMcpServerScript := preload("res://addons/game_mcp/game_mcp_server.gd")
 const PLUGIN_CONFIG_PATH := "res://addons/game_mcp/plugin.cfg"
 
 var _handlers: Dictionary = {}
@@ -11,7 +10,7 @@ var _server: Node
 func _ready() -> void:
 	if not _is_plugin_enabled():
 		return
-	_server = GameMcpServerScript.new()
+	_server = ApplicationMcpServer.new()
 	add_child(_server)
 	_server.command_received.connect(_on_command_received)
 	var port: int = _server.start()

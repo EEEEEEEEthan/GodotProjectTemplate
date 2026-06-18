@@ -16,7 +16,7 @@ config/features=PackedStringArray("4.7")
 
 [autoload]
 
-GameMcp="*res://addons/game_mcp/game_mcp.gd"
+MCP="*uid://cxg836hm737dc"
 McpHandler="*uid://dsqkksyrft4is"
 
 [display]
