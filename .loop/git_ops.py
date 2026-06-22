@@ -15,6 +15,19 @@ def git_is_clean(project_root: Path) -> bool:
     return result.returncode == 0 and not result.stdout.strip()
 
 
+def git_diff(project_root: Path) -> str:
+    result = subprocess.run(
+        ["git", "diff", "HEAD"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError((result.stderr or "") + (result.stdout or "") or "git diff 失败")
+    return result.stdout
+
+
 def git_clean_worktree(project_root: Path) -> str:
     reset = subprocess.run(
         ["git", "reset", "--hard", "HEAD"],

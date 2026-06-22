@@ -1,4 +1,4 @@
-"""用户↔主程(需求+设计)→实现→审查 流水线编排。"""
+"""用户↔主程(需求+设计)→实现→优化→全量测试→审查 流水线编排。"""
 
 import subprocess
 import sys
@@ -14,7 +14,7 @@ from config import (
     PROJECT_ROOT,
     ensure_cursor_api_key_env,
 )
-from git_ops import git_clean_worktree
+from git_ops import git_clean_worktree, git_diff
 from loop_log import LoopRunLogger
 from markers import (
     ReviewVerdict,
@@ -38,24 +38,26 @@ class WorkflowOrchestrator:
         self._run_logger = run_logger
         self._executor: AgentSession | None = None
         self._executor_index = 0
+        self._executor_phase = "implement"
 
     def _log(self, tag: str, text: str) -> None:
         print_role(tag, text, run_logger=self._run_logger)
 
     def _executor_tag(self) -> str:
-        return f"executor#{self._executor_index}"
+        return f"executor#{self._executor_index}/{self._executor_phase}"
 
     def _close_executor(self) -> None:
         if self._executor is not None:
             self._executor.close()
             self._executor = None
 
-    def _open_executor(self, executor_index: int) -> AgentSession:
+    def _open_executor(self, executor_index: int, *, phase: str) -> AgentSession:
         self._close_executor()
         self._executor_index = executor_index
+        self._executor_phase = phase
         self._executor = AgentSession(
             "executor",
-            load_role_prompt("executor"),
+            load_role_prompt(f"executor-{phase}"),
             console_tag=self._executor_tag(),
             client=self.client,
             mode="agent",
@@ -65,30 +67,44 @@ class WorkflowOrchestrator:
         )
         return self._executor
 
-    def _run_executor_until_tests_pass(self, initial_message: str) -> None:
+    def _run_executor_until_done(
+        self,
+        initial_message: str,
+        *,
+        orchestrator_gate: bool = False,
+    ) -> None:
         if self._executor is None:
             raise RuntimeError("执行程序会话未打开")
         label = self._executor_tag()
         message = initial_message
         for round_index in range(1, MAX_EXECUTOR_ROUNDS + 1):
             text = self._executor.send(message)
-            if has_git_clean_request(text):
-                self._apply_git_clean(f"{label} 请求重做")
-                message = "工作区已 git clean。请重新实现。"
-                continue
             if has_executor_done(text):
+                if not orchestrator_gate:
+                    return
                 passed, output = self._run_autotest()
                 if passed:
-                    self._log("系统", f"{label} 全量测试通过。")
+                    self._log("系统", f"{label} 编排器全量测试通过。")
                     return
                 message = (
                     f"编排器全量测试未通过（第 {round_index} 轮），请修复：\n\n{output}"
                 )
                 continue
             message = (
-                "未检测到 EXECUTOR_DONE。请继续实现，或完成后输出 EXECUTOR_DONE 块。"
+                "未检测到 EXECUTOR_DONE。请继续，或完成后输出 EXECUTOR_DONE 块。"
             )
         raise RuntimeError(f"{label} 超过最大轮次 ({MAX_EXECUTOR_ROUNDS})")
+
+    def _run_orchestrator_gate(self, executor_index: int) -> None:
+        passed, output = self._run_autotest()
+        if passed:
+            self._log("系统", f"executor#{executor_index} 编排器全量测试通过。")
+            return
+        self._open_executor(executor_index, phase="implement")
+        self._run_executor_until_done(
+            f"编排器全量测试未通过，请修复：\n\n{output}",
+            orchestrator_gate=True,
+        )
 
     def run(self) -> None:
         banner = (
@@ -210,12 +226,25 @@ class WorkflowOrchestrator:
     def _phase_execute(
         self, requirements: str, design: str, executor_index: int
     ) -> None:
-        self._open_executor(executor_index)
+        self._open_executor(executor_index, phase="implement")
         task = (
             f"需求：\n{requirements}\n\n方案：\n{design}\n\n"
-            "请实现并编写/更新自动化测试，完成后输出 EXECUTOR_DONE。"
+            "请实现并编写/更新自动化测试，跑通相关单测后输出 EXECUTOR_DONE。"
         )
-        self._run_executor_until_tests_pass(task)
+        self._log("系统", f"执行程序 #{executor_index}：实现阶段")
+        self._run_executor_until_done(task)
+        self._phase_optimize(executor_index)
+        self._log("系统", f"执行程序 #{executor_index}：编排器全量测试门禁")
+        self._run_orchestrator_gate(executor_index)
+
+    def _phase_optimize(self, executor_index: int) -> None:
+        diff = git_diff(self.project_root)
+        if not diff.strip():
+            self._log("系统", "无 git diff，跳过代码优化。")
+            return
+        self._open_executor(executor_index, phase="optimize")
+        self._log("系统", f"executor#{executor_index}：代码优化阶段（新会话）")
+        self._run_executor_until_done("实现阶段已完成，请开始优化。")
 
     def _phase_execute_fix(
         self,
@@ -223,14 +252,14 @@ class WorkflowOrchestrator:
         design: str,
         feedback: str,
     ) -> None:
-        if self._executor is None:
-            raise RuntimeError("fix 需要原执行程序会话，但会话已关闭")
+        executor_index = self._executor_index
+        self._open_executor(executor_index, phase="implement")
         message = (
             f"主程审查要求修复（verdict=fix）：\n{feedback}\n\n"
             f"需求：\n{requirements}\n\n方案：\n{design}\n\n"
             "请小步修改，完成后输出 EXECUTOR_DONE。"
         )
-        self._run_executor_until_tests_pass(message)
+        self._run_executor_until_done(message, orchestrator_gate=True)
 
     def _phase_review(
         self, requirements: str, design: str, executor_index: int
