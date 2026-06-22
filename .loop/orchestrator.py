@@ -1,4 +1,4 @@
-"""用户↔主程(需求+设计)→实现→优化→全量测试→审查→用户验收→提交 流水线编排。"""
+"""用户↔主程(需求)→/execute→主程(设计)→实现→优化→全量测试→审查→用户验收→提交 流水线编排。"""
 
 import subprocess
 from contextlib import contextmanager
@@ -126,7 +126,7 @@ class WorkflowOrchestrator:
         banner = (
             f"=== Dev Loop ===\n"
             f"项目: {self.project_root}\n"
-            f"主程: 定稿需求/方案后输入 /execute 开始实现；验收满意后输入 /accept"
+            f"主程: 定稿需求后输入 /execute（主程随后出方案再实现）；验收满意后输入 /accept"
         )
         print(f"{banner}\n")
         if self._run_logger is not None:
@@ -196,7 +196,6 @@ class WorkflowOrchestrator:
     def _phase_intake(self) -> tuple[str, str]:
         with self._lead_session() as lead:
             requirements: str | None = None
-            design: str | None = None
             while True:
                 user_input = input("你> ").strip()
                 if not user_input:
@@ -210,20 +209,29 @@ class WorkflowOrchestrator:
                             "尚无 REQUIREMENTS，请继续与主程对话直至其输出需求块。",
                         )
                         continue
-                    if not design:
-                        self._log(
-                            "系统",
-                            "尚无 DESIGN，请继续与主程对话直至其输出方案块。",
-                        )
-                        continue
-                    self._log("系统", "开始实现...")
-                    return requirements, design
-                text = lead.send(user_input)
+                    self._log("系统", "需求已定稿，请主程输出方案...")
+                    design_prompt = (
+                        "用户已发送 /execute。请根据已定稿需求输出 DESIGN 方案块。\n\n"
+                        f"已定稿需求：\n{requirements}"
+                    )
+                    for cycle in range(1, MAX_REVIEW_CYCLES + 1):
+                        prompt = design_prompt
+                        if cycle > 1:
+                            prompt = (
+                                "未解析到有效 DESIGN 块，请严格按格式重新输出。\n\n"
+                                + prompt
+                            )
+                        lead.send(prompt)
+                        if block := extract_block(
+                            lead.text_for_block_extraction(), "DESIGN"
+                        ):
+                            self._log("系统", "开始实现...")
+                            return requirements, block
+                    raise RuntimeError("主程未输出有效 DESIGN 块")
+                lead.send(user_input)
                 extraction_text = lead.text_for_block_extraction()
                 if block := extract_block(extraction_text, "REQUIREMENTS"):
                     requirements = block
-                if block := extract_block(extraction_text, "DESIGN"):
-                    design = block
 
     def _phase_design_revision(
         self, requirements: str, design: str, feedback: str
