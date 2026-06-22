@@ -10,6 +10,7 @@ LOOP_ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = LOOP_ROOT.parent
 SETTINGS_DIR = LOOP_ROOT / "settings"
 BRIDGE_STATE_ROOT = LOOP_ROOT / ".bridge-state"
+LOOP_LOGS_DIR = LOOP_ROOT / ".logs"
 LOOP_SETTINGS_FILE = SETTINGS_DIR / "loop.toml"
 PROJECT_ENV_FILE = PROJECT_ROOT / ".env"
 

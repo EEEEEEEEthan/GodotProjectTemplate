@@ -15,6 +15,7 @@ from config import (
     ensure_cursor_api_key_env,
 )
 from git_ops import git_clean_worktree
+from loop_log import LoopRunLogger
 from markers import (
     ReviewVerdict,
     extract_block,
@@ -29,12 +30,17 @@ class WorkflowOrchestrator:
         self,
         client: Client,
         project_root: Path = PROJECT_ROOT,
+        run_logger: LoopRunLogger | None = None,
     ) -> None:
         self.client = client
         self.project_root = project_root
         self.api_key = ensure_cursor_api_key_env()
+        self._run_logger = run_logger
         self._executor: AgentSession | None = None
         self._executor_index = 0
+
+    def _log(self, tag: str, text: str) -> None:
+        print_role(tag, text, run_logger=self._run_logger)
 
     def _executor_tag(self) -> str:
         return f"executor#{self._executor_index}"
@@ -55,6 +61,7 @@ class WorkflowOrchestrator:
             mode="agent",
             api_key=self.api_key,
             cwd=self.project_root,
+            run_logger=self._run_logger,
         )
         return self._executor
 
@@ -72,7 +79,7 @@ class WorkflowOrchestrator:
             if has_executor_done(text):
                 passed, output = self._run_autotest()
                 if passed:
-                    print_role("系统", f"{label} 全量测试通过。")
+                    self._log("系统", f"{label} 全量测试通过。")
                     return
                 message = (
                     f"编排器全量测试未通过（第 {round_index} 轮），请修复：\n\n{output}"
@@ -84,9 +91,14 @@ class WorkflowOrchestrator:
         raise RuntimeError(f"{label} 超过最大轮次 ({MAX_EXECUTOR_ROUNDS})")
 
     def run(self) -> None:
-        print("=== Dev Loop ===")
-        print(f"项目: {self.project_root}")
-        print("主程: 输入「对齐」确认需求并出方案，「退出」结束\n")
+        banner = (
+            f"=== Dev Loop ===\n"
+            f"项目: {self.project_root}\n"
+            f"主程: 输入「对齐」确认需求并出方案，「退出」结束"
+        )
+        print(f"{banner}\n")
+        if self._run_logger is not None:
+            self._run_logger.log_banner(banner)
         try:
             self._run_pipeline()
         finally:
@@ -108,7 +120,7 @@ class WorkflowOrchestrator:
 
             review = self._phase_review(requirements, design, executor_index)
             if review.verdict == ReviewVerdict.PASS:
-                print_role("系统", "审查通过，流程结束。")
+                self._log("系统", "审查通过，流程结束。")
                 return
 
             if review.verdict == ReviewVerdict.FIX:
@@ -117,7 +129,7 @@ class WorkflowOrchestrator:
 
             redo_count += 1
             if redo_count > MAX_REDO_CYCLES:
-                print_role("系统", f"已达最大重做次数 ({MAX_REDO_CYCLES})，流程终止。")
+                self._log("系统", f"已达最大重做次数 ({MAX_REDO_CYCLES})，流程终止。")
                 return
 
             self._close_executor()
@@ -130,7 +142,7 @@ class WorkflowOrchestrator:
                 )
             executor_index += 1
             need_execute = True
-            print_role("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
+            self._log("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
 
     def _phase_intake(self) -> tuple[str, str] | None:
         lead_prompt = load_role_prompt("lead")
@@ -142,11 +154,14 @@ class WorkflowOrchestrator:
             api_key=self.api_key,
             cwd=self.project_root,
             echo_plan=True,
+            run_logger=self._run_logger,
         ) as lead:
             while True:
                 user_input = input("你> ").strip()
                 if not user_input:
                     continue
+                if self._run_logger is not None:
+                    self._run_logger.log_user(user_input)
                 if user_input in ("退出", "quit", "exit"):
                     return None
                 if user_input in ("对齐", "/align"):
@@ -155,16 +170,16 @@ class WorkflowOrchestrator:
                     )
                     requirements = extract_block(text, "REQUIREMENTS")
                     if not requirements:
-                        print_role(
+                        self._log(
                             "系统",
                             "未解析到 REQUIREMENTS，请继续与主程澄清或再输入「对齐」。",
                         )
                         continue
-                    print_role("系统", "需求已对齐，主程输出技术方案...")
+                    self._log("系统", "需求已对齐，主程输出技术方案...")
                     text = lead.send("请基于已对齐需求输出技术方案（DESIGN 块）。")
                     design = extract_block(text, "DESIGN")
                     if not design:
-                        print_role("系统", "未解析到 DESIGN，请让主程补充或再输入「对齐」。")
+                        self._log("系统", "未解析到 DESIGN，请让主程补充或再输入「对齐」。")
                         continue
                     return requirements, design
                 lead.send(user_input)
@@ -181,6 +196,7 @@ class WorkflowOrchestrator:
             api_key=self.api_key,
             cwd=self.project_root,
             echo_plan=True,
+            run_logger=self._run_logger,
         ) as lead:
             text = lead.send(
                 "审查结论为 redo。请修订方案（DESIGN 块），避免下一任执行程序重复犯错。\n\n"
@@ -228,6 +244,7 @@ class WorkflowOrchestrator:
             api_key=self.api_key,
             cwd=self.project_root,
             echo_plan=True,
+            run_logger=self._run_logger,
         ) as lead:
             for cycle in range(1, MAX_REVIEW_CYCLES + 1):
                 prompt = (
@@ -247,7 +264,7 @@ class WorkflowOrchestrator:
                     )
                 review = parse_review(text)
                 if review:
-                    print_role(
+                    self._log(
                         "系统",
                         f"审查结果: {review.verdict.value}（第 {cycle} 轮）",
                     )
@@ -257,12 +274,14 @@ class WorkflowOrchestrator:
             raise RuntimeError("unreachable")
 
     def _apply_git_clean(self, reason: str) -> None:
-        print_role("系统", f"git clean（{reason}）...")
+        self._log("系统", f"git clean（{reason}）...")
         log = git_clean_worktree(self.project_root)
         print(log)
+        if self._run_logger is not None:
+            self._run_logger.log_role("系统/git clean", log)
 
     def _run_autotest(self) -> tuple[bool, str]:
-        print_role("系统", "运行全量自动化测试...")
+        self._log("系统", "运行全量自动化测试...")
         batch = self.project_root / ".engine-test-full.bat"
         result = subprocess.run(
             [str(batch), "--headless"],
@@ -272,4 +291,7 @@ class WorkflowOrchestrator:
             shell=True,
         )
         output = (result.stdout or "") + (result.stderr or "")
+        if self._run_logger is not None:
+            status = "通过" if result.returncode == 0 else "失败"
+            self._run_logger.log_role(f"系统/测试/{status}", output)
         return result.returncode == 0, output
