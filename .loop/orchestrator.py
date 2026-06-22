@@ -7,7 +7,7 @@ from pathlib import Path
 
 from cursor_sdk import Client
 
-from agent_session import AgentSession, load_prompt, print_role
+from agent_session import AgentSession, load_role_prompt, print_role
 from config import (
     MAX_EXECUTOR_ROUNDS,
     MAX_REDO_CYCLES,
@@ -39,8 +39,8 @@ class WorkflowOrchestrator:
             print("请设置环境变量 CURSOR_API_KEY", file=sys.stderr)
             sys.exit(1)
 
-    def _executor_label(self) -> str:
-        return f"执行#{self._executor_index}"
+    def _executor_tag(self) -> str:
+        return f"executor#{self._executor_index}"
 
     def _close_executor(self) -> None:
         if self._executor is not None:
@@ -51,8 +51,9 @@ class WorkflowOrchestrator:
         self._close_executor()
         self._executor_index = executor_index
         self._executor = AgentSession(
-            self._executor_label(),
-            load_prompt("executor"),
+            "executor",
+            load_role_prompt("executor"),
+            console_tag=self._executor_tag(),
             client=self.client,
             mode="agent",
             api_key=self.api_key,
@@ -63,7 +64,7 @@ class WorkflowOrchestrator:
     def _run_executor_until_tests_pass(self, initial_message: str) -> None:
         if self._executor is None:
             raise RuntimeError("执行程序会话未打开")
-        label = self._executor_label()
+        label = self._executor_tag()
         message = initial_message
         for round_index in range(1, MAX_EXECUTOR_ROUNDS + 1):
             text = self._executor.send(message)
@@ -88,7 +89,7 @@ class WorkflowOrchestrator:
     def run(self) -> None:
         print("=== Dev Loop ===")
         print(f"项目: {self.project_root}")
-        print("策划阶段: 与策划对话，输入「对齐」确认需求，「退出」结束\n")
+        print("planner: 输入「对齐」确认需求，「退出」结束\n")
         try:
             self._run_pipeline()
         finally:
@@ -136,9 +137,9 @@ class WorkflowOrchestrator:
             print_role("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
 
     def _phase_planning(self) -> str | None:
-        planner_prompt = load_prompt("planner")
+        planner_prompt = load_role_prompt("planner")
         with AgentSession(
-            "策划",
+            "planner",
             planner_prompt,
             client=self.client,
             mode="plan",
@@ -164,9 +165,9 @@ class WorkflowOrchestrator:
                 planner.send(user_input)
 
     def _phase_design(self, requirements: str) -> str:
-        lead_prompt = load_prompt("lead")
+        lead_prompt = load_role_prompt("lead")
         with AgentSession(
-            "主程",
+            "lead",
             lead_prompt,
             client=self.client,
             mode="plan",
@@ -184,9 +185,9 @@ class WorkflowOrchestrator:
     def _phase_design_revision(
         self, requirements: str, design: str, feedback: str
     ) -> str:
-        lead_prompt = load_prompt("lead")
+        lead_prompt = load_role_prompt("lead")
         with AgentSession(
-            "主程",
+            "lead",
             lead_prompt,
             client=self.client,
             mode="plan",
@@ -230,9 +231,9 @@ class WorkflowOrchestrator:
     def _phase_review(
         self, requirements: str, design: str, executor_index: int
     ):
-        lead_prompt = load_prompt("lead")
+        lead_prompt = load_role_prompt("lead")
         with AgentSession(
-            "主程",
+            "lead",
             lead_prompt,
             client=self.client,
             mode="plan",

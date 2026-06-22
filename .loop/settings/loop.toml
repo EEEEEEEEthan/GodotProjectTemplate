@@ -1,0 +1,21 @@
+# Dev Loop 本地 Agent 配置
+# 各角色对应 Cursor SDK：LocalAgentOptions.setting_sources
+#
+# 可选类型（列表可组合；单独写 "all" 时不要再加其他项）：
+#   project — 项目层：.cursor/、.agents/skills/、.cursor/mcp.json、项目 rules 等
+#   user    — 用户层：~/.cursor/（含用户 skills、MCP、hooks）
+#   team    — 团队层：Dashboard 同步到本机的团队设置
+#   mdm     — MDM 托管策略
+#   plugins — 插件提供的 skills、MCP 与其他配置
+#   all     — 以上全部
+#
+# 空列表 [] 表示不加载任何磁盘配置（仅使用本目录角色 prompt，不用 skills/MCP）
+
+[planner]
+setting_sources = ["all"]
+
+[lead]
+setting_sources = ["all"]
+
+[executor]
+setting_sources = ["all"]

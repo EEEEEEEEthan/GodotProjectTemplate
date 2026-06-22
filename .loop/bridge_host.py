@@ -28,7 +28,13 @@ from cursor_sdk._store_callback import (
 from cursor_sdk._tool_callback import ToolCallbackServer, tool_callback_bridge_argv
 from cursor_sdk._vendor import resolve_bridge_path
 
-from config import BRIDGE_LAUNCH_TIMEOUT_SECONDS, BRIDGE_STATE_ROOT, PROJECT_ROOT
+from config import (
+    BRIDGE_LAUNCH_TIMEOUT_SECONDS,
+    BRIDGE_STATE_ROOT,
+    PROJECT_ROOT,
+    load_all_role_setting_sources,
+    union_bridge_setting_sources,
+)
 
 
 def _read_discovery_from_stderr(
@@ -203,9 +209,10 @@ class BridgeHost:
             return cls(client=client, managed_bridge=None)
 
         state_root.mkdir(parents=True, exist_ok=True)
+        setting_sources = union_bridge_setting_sources(load_all_role_setting_sources())
         local_options = LocalAgentOptions(
             cwd=str(workspace.resolve()),
-            setting_sources=[],
+            setting_sources=setting_sources,
         )
         managed_bridge = ManagedBridge.launch(
             workspace=workspace.resolve(),

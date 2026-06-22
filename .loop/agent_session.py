@@ -5,20 +5,20 @@ from pathlib import Path
 
 from cursor_sdk import Agent, AgentOptions, Client, CursorAgentError, LocalAgentOptions
 
-from config import DEFAULT_MODEL, PROJECT_ROOT
+from config import DEFAULT_MODEL, PROJECT_ROOT, SETTINGS_DIR, load_role_setting_sources
 
 
-def load_prompt(name: str) -> str:
-    path = Path(__file__).resolve().parent / "prompts" / f"{name}.txt"
+def load_role_prompt(role_key: str) -> str:
+    path = SETTINGS_DIR / f"{role_key}.txt"
     return path.read_text(encoding="utf-8")
 
 
-def print_role(role_label: str, text: str) -> None:
-    print(f"\n[{role_label}]\n{text}\n")
+def print_role(tag: str, text: str) -> None:
+    print(f"\n[{tag}]\n{text}\n")
 
 
-def stream_run(run, role_label: str) -> None:
-    print(f"\n[{role_label}] ", end="", flush=True)
+def stream_run(run, tag: str) -> None:
+    print(f"\n[{tag}] ", end="", flush=True)
     for message in run.messages():
         if message.type != "assistant":
             continue
@@ -31,7 +31,7 @@ def stream_run(run, role_label: str) -> None:
 class AgentSession:
     def __init__(
         self,
-        role_label: str,
+        role_key: str,
         system_prompt: str,
         *,
         client: Client,
@@ -39,15 +39,20 @@ class AgentSession:
         model: str = DEFAULT_MODEL,
         api_key: str | None = None,
         cwd: Path = PROJECT_ROOT,
+        console_tag: str | None = None,
     ) -> None:
-        self.role_label = role_label
+        self.role_key = role_key
+        self.console_tag = console_tag or role_key
         self.system_prompt = system_prompt
         self._bootstrapped = False
         options = AgentOptions(
             api_key=api_key,
             model=model,
             mode=mode,
-            local=LocalAgentOptions(cwd=str(cwd), setting_sources=[]),
+            local=LocalAgentOptions(
+                cwd=str(cwd),
+                setting_sources=load_role_setting_sources(role_key),
+            ),
         )
         self._agent = Agent.create(options, client=client)
 
@@ -64,9 +69,9 @@ class AgentSession:
         try:
             run = self._agent.send(prompt)
             if stream:
-                stream_run(run, self.role_label)
+                stream_run(run, self.console_tag)
             else:
-                print_role(self.role_label, "(运行中...)")
+                print_role(self.console_tag, "(运行中...)")
             result = run.wait()
         except CursorAgentError as error:
             print(
@@ -75,7 +80,7 @@ class AgentSession:
             )
             raise
         if result.status == "error":
-            raise RuntimeError(f"[{self.role_label}] 运行失败 run_id={run.id}")
+            raise RuntimeError(f"[{self.console_tag}] 运行失败 run_id={run.id}")
         return run.text()
 
     def close(self) -> None:
