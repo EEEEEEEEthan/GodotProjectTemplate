@@ -16,7 +16,7 @@ MAX_EXECUTOR_ROUNDS = 15
 MAX_REVIEW_CYCLES = 5
 MAX_REDO_CYCLES = 3
 
-ROLE_KEYS = ("planner", "lead", "executor")
+ROLE_KEYS = ("lead", "executor")
 VALID_SETTING_SOURCES = frozenset(
     {"project", "user", "team", "mdm", "plugins", "all"}
 )

@@ -1,4 +1,4 @@
-"""需求→设计→实现→审查 流水线编排。"""
+"""用户↔主程(需求+设计)→实现→审查 流水线编排。"""
 
 import os
 import subprocess
@@ -89,18 +89,17 @@ class WorkflowOrchestrator:
     def run(self) -> None:
         print("=== Dev Loop ===")
         print(f"项目: {self.project_root}")
-        print("planner: 输入「对齐」确认需求，「退出」结束\n")
+        print("主程: 输入「对齐」确认需求并出方案，「退出」结束\n")
         try:
             self._run_pipeline()
         finally:
             self._close_executor()
 
     def _run_pipeline(self) -> None:
-        requirements = self._phase_planning()
-        if not requirements:
+        intake = self._phase_intake()
+        if intake is None:
             return
-
-        design = self._phase_design(requirements)
+        requirements, design = intake
         executor_index = 1
         redo_count = 0
         need_execute = True
@@ -136,35 +135,7 @@ class WorkflowOrchestrator:
             need_execute = True
             print_role("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
 
-    def _phase_planning(self) -> str | None:
-        planner_prompt = load_role_prompt("planner")
-        with AgentSession(
-            "planner",
-            planner_prompt,
-            client=self.client,
-            mode="plan",
-            api_key=self.api_key,
-            cwd=self.project_root,
-        ) as planner:
-            while True:
-                user_input = input("你> ").strip()
-                if not user_input:
-                    continue
-                if user_input in ("退出", "quit", "exit"):
-                    return None
-                if user_input in ("对齐", "/align"):
-                    text = planner.send(
-                        "用户已确认对齐。请输出最终需求文档（REQUIREMENTS 块）。"
-                    )
-                    requirements = extract_block(text, "REQUIREMENTS")
-                    if not requirements:
-                        print_role("系统", "未解析到 REQUIREMENTS，请继续与策划澄清或再输入「对齐」。")
-                        continue
-                    print_role("系统", "需求已对齐，交给主程。")
-                    return requirements
-                planner.send(user_input)
-
-    def _phase_design(self, requirements: str) -> str:
+    def _phase_intake(self) -> tuple[str, str] | None:
         lead_prompt = load_role_prompt("lead")
         with AgentSession(
             "lead",
@@ -174,13 +145,31 @@ class WorkflowOrchestrator:
             api_key=self.api_key,
             cwd=self.project_root,
         ) as lead:
-            text = lead.send(
-                f"已对齐需求如下，请输出技术方案（DESIGN 块）：\n\n{requirements}"
-            )
-        design = extract_block(text, "DESIGN")
-        if not design:
-            raise RuntimeError("主程未输出 DESIGN 块")
-        return design
+            while True:
+                user_input = input("你> ").strip()
+                if not user_input:
+                    continue
+                if user_input in ("退出", "quit", "exit"):
+                    return None
+                if user_input in ("对齐", "/align"):
+                    text = lead.send(
+                        "用户已确认对齐。请输出最终需求文档（REQUIREMENTS 块）。"
+                    )
+                    requirements = extract_block(text, "REQUIREMENTS")
+                    if not requirements:
+                        print_role(
+                            "系统",
+                            "未解析到 REQUIREMENTS，请继续与主程澄清或再输入「对齐」。",
+                        )
+                        continue
+                    print_role("系统", "需求已对齐，主程输出技术方案...")
+                    text = lead.send("请基于已对齐需求输出技术方案（DESIGN 块）。")
+                    design = extract_block(text, "DESIGN")
+                    if not design:
+                        print_role("系统", "未解析到 DESIGN，请让主程补充或再输入「对齐」。")
+                        continue
+                    return requirements, design
+                lead.send(user_input)
 
     def _phase_design_revision(
         self, requirements: str, design: str, feedback: str

@@ -11,9 +11,6 @@
 #
 # 空列表 [] 表示不加载任何磁盘配置（仅使用本目录角色 prompt，不用 skills/MCP）
 
-[planner]
-setting_sources = ["all"]
-
 [lead]
 setting_sources = ["all"]
 
