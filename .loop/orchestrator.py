@@ -1,6 +1,5 @@
 """用户↔主程(需求+设计)→实现→审查 流水线编排。"""
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +12,7 @@ from config import (
     MAX_REDO_CYCLES,
     MAX_REVIEW_CYCLES,
     PROJECT_ROOT,
+    ensure_cursor_api_key_env,
 )
 from git_ops import git_clean_worktree
 from markers import (
@@ -32,12 +32,9 @@ class WorkflowOrchestrator:
     ) -> None:
         self.client = client
         self.project_root = project_root
-        self.api_key = os.environ.get("CURSOR_API_KEY")
+        self.api_key = ensure_cursor_api_key_env()
         self._executor: AgentSession | None = None
         self._executor_index = 0
-        if not self.api_key:
-            print("请设置环境变量 CURSOR_API_KEY", file=sys.stderr)
-            sys.exit(1)
 
     def _executor_tag(self) -> str:
         return f"executor#{self._executor_index}"

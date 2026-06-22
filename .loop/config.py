@@ -1,5 +1,7 @@
 """流水线配置。"""
 
+import os
+import sys
 import tomllib
 from pathlib import Path
 from typing import Mapping
@@ -9,6 +11,7 @@ PROJECT_ROOT = LOOP_ROOT.parent
 SETTINGS_DIR = LOOP_ROOT / "settings"
 BRIDGE_STATE_ROOT = LOOP_ROOT / ".bridge-state"
 LOOP_SETTINGS_FILE = SETTINGS_DIR / "loop.toml"
+PROJECT_ENV_FILE = PROJECT_ROOT / ".env"
 
 DEFAULT_MODEL = "composer-2.5"
 BRIDGE_LAUNCH_TIMEOUT_SECONDS = 60.0
@@ -90,3 +93,56 @@ def union_bridge_setting_sources(
             if source not in merged:
                 merged.append(source)
     return merged
+
+
+def _parse_dotenv_line(line: str) -> tuple[str, str] | None:
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return None
+    if stripped.startswith("export "):
+        stripped = stripped[7:].strip()
+    if "=" not in stripped:
+        return None
+    key, _, value = stripped.partition("=")
+    key = key.strip()
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+        value = value[1:-1]
+    if not key:
+        return None
+    return key, value
+
+
+def load_project_dotenv(path: Path = PROJECT_ENV_FILE) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    variables: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        parsed = _parse_dotenv_line(line)
+        if parsed is not None:
+            variables[parsed[0]] = parsed[1]
+    return variables
+
+
+def load_cursor_api_key() -> str | None:
+    environment_key = os.environ.get("CURSOR_API_KEY", "").strip()
+    if environment_key:
+        return environment_key
+    file_key = load_project_dotenv().get("CURSOR_API_KEY", "").strip()
+    if file_key:
+        return file_key
+    return None
+
+
+def ensure_cursor_api_key_env() -> str:
+    api_key = load_cursor_api_key()
+    if not api_key:
+        print(
+            "请设置环境变量 CURSOR_API_KEY，或在 "
+            f"{PROJECT_ENV_FILE} 中配置 CURSOR_API_KEY=...",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    if not os.environ.get("CURSOR_API_KEY"):
+        os.environ["CURSOR_API_KEY"] = api_key
+    return api_key

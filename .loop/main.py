@@ -6,11 +6,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from bridge_host import BridgeHost
-from config import PROJECT_ROOT, load_all_role_setting_sources
+from config import PROJECT_ROOT, ensure_cursor_api_key_env, load_all_role_setting_sources
 from orchestrator import WorkflowOrchestrator
 
 
 def main() -> None:
+    ensure_cursor_api_key_env()
     for role, sources in load_all_role_setting_sources().items():
         print(
             f"[settings] {role}.setting_sources={sources or '(none)'}",
