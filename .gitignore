@@ -6,3 +6,6 @@
 /.local.settings
 /.idea/
 __pycache__/
+/.loop/.venv/
+/.loop/__pycache__/
+/.loop/.bridge-state/
