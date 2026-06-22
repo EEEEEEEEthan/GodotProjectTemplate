@@ -1,18 +1,7 @@
-"""Git 清理：仅编排器调用，agent 通过标记请求。"""
+"""Git 工作区操作。"""
 
 import subprocess
 from pathlib import Path
-
-
-def git_is_clean(project_root: Path) -> bool:
-    result = subprocess.run(
-        ["git", "status", "--porcelain"],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return result.returncode == 0 and not result.stdout.strip()
 
 
 def git_diff(project_root: Path) -> str:

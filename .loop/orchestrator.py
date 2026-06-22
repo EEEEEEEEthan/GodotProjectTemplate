@@ -1,7 +1,7 @@
 """用户↔主程(需求+设计)→实现→优化→全量测试→审查 流水线编排。"""
 
 import subprocess
-import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 from cursor_sdk import Client
@@ -51,7 +51,7 @@ class WorkflowOrchestrator:
             self._executor.close()
             self._executor = None
 
-    def _open_executor(self, executor_index: int, *, phase: str) -> AgentSession:
+    def _open_executor(self, executor_index: int, *, phase: str) -> None:
         self._close_executor()
         self._executor_index = executor_index
         self._executor_phase = phase
@@ -65,7 +65,20 @@ class WorkflowOrchestrator:
             cwd=self.project_root,
             run_logger=self._run_logger,
         )
-        return self._executor
+
+    @contextmanager
+    def _lead_session(self):
+        with AgentSession(
+            "lead",
+            load_role_prompt("lead"),
+            client=self.client,
+            mode="plan",
+            api_key=self.api_key,
+            cwd=self.project_root,
+            echo_plan=True,
+            run_logger=self._run_logger,
+        ) as lead:
+            yield lead
 
     def _run_executor_until_done(
         self,
@@ -110,7 +123,7 @@ class WorkflowOrchestrator:
         banner = (
             f"=== Dev Loop ===\n"
             f"项目: {self.project_root}\n"
-            f"主程: 输入「对齐」确认需求并出方案，「退出」结束"
+            f"主程: 与主程澄清并定稿需求/方案后输入 /execute 开始实现"
         )
         print(f"{banner}\n")
         if self._run_logger is not None:
@@ -121,10 +134,7 @@ class WorkflowOrchestrator:
             self._close_executor()
 
     def _run_pipeline(self) -> None:
-        intake = self._phase_intake()
-        if intake is None:
-            return
-        requirements, design = intake
+        requirements, design = self._phase_intake()
         executor_index = 1
         redo_count = 0
         need_execute = True
@@ -160,60 +170,41 @@ class WorkflowOrchestrator:
             need_execute = True
             self._log("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
 
-    def _phase_intake(self) -> tuple[str, str] | None:
-        lead_prompt = load_role_prompt("lead")
-        with AgentSession(
-            "lead",
-            lead_prompt,
-            client=self.client,
-            mode="plan",
-            api_key=self.api_key,
-            cwd=self.project_root,
-            echo_plan=True,
-            run_logger=self._run_logger,
-        ) as lead:
+    def _phase_intake(self) -> tuple[str, str]:
+        with self._lead_session() as lead:
+            requirements: str | None = None
+            design: str | None = None
             while True:
                 user_input = input("你> ").strip()
                 if not user_input:
                     continue
                 if self._run_logger is not None:
                     self._run_logger.log_user(user_input)
-                if user_input in ("退出", "quit", "exit"):
-                    return None
-                if user_input in ("对齐", "/align"):
-                    text = lead.send(
-                        "用户已确认对齐。请输出最终需求文档（REQUIREMENTS 块）。"
-                    )
-                    requirements = extract_block(text, "REQUIREMENTS")
+                if user_input == "/execute":
                     if not requirements:
                         self._log(
                             "系统",
-                            "未解析到 REQUIREMENTS，请继续与主程澄清或再输入「对齐」。",
+                            "尚无 REQUIREMENTS，请继续与主程对话直至其输出需求块。",
                         )
                         continue
-                    self._log("系统", "需求已对齐，主程输出技术方案...")
-                    text = lead.send("请基于已对齐需求输出技术方案（DESIGN 块）。")
-                    design = extract_block(text, "DESIGN")
                     if not design:
-                        self._log("系统", "未解析到 DESIGN，请让主程补充或再输入「对齐」。")
+                        self._log(
+                            "系统",
+                            "尚无 DESIGN，请继续与主程对话直至其输出方案块。",
+                        )
                         continue
+                    self._log("系统", "开始实现...")
                     return requirements, design
-                lead.send(user_input)
+                text = lead.send(user_input)
+                if block := extract_block(text, "REQUIREMENTS"):
+                    requirements = block
+                if block := extract_block(text, "DESIGN"):
+                    design = block
 
     def _phase_design_revision(
         self, requirements: str, design: str, feedback: str
     ) -> str:
-        lead_prompt = load_role_prompt("lead")
-        with AgentSession(
-            "lead",
-            lead_prompt,
-            client=self.client,
-            mode="plan",
-            api_key=self.api_key,
-            cwd=self.project_root,
-            echo_plan=True,
-            run_logger=self._run_logger,
-        ) as lead:
+        with self._lead_session() as lead:
             text = lead.send(
                 "审查结论为 redo。请修订方案（DESIGN 块），避免下一任执行程序重复犯错。\n\n"
                 f"原需求：\n{requirements}\n\n原方案：\n{design}\n\n审查意见：\n{feedback}"
@@ -264,17 +255,7 @@ class WorkflowOrchestrator:
     def _phase_review(
         self, requirements: str, design: str, executor_index: int
     ):
-        lead_prompt = load_role_prompt("lead")
-        with AgentSession(
-            "lead",
-            lead_prompt,
-            client=self.client,
-            mode="plan",
-            api_key=self.api_key,
-            cwd=self.project_root,
-            echo_plan=True,
-            run_logger=self._run_logger,
-        ) as lead:
+        with self._lead_session() as lead:
             for cycle in range(1, MAX_REVIEW_CYCLES + 1):
                 prompt = (
                     f"请审查执行程序 #{executor_index} 的实现（对照 git diff）。\n\n"
@@ -298,9 +279,7 @@ class WorkflowOrchestrator:
                         f"审查结果: {review.verdict.value}（第 {cycle} 轮）",
                     )
                     return review
-                if cycle == MAX_REVIEW_CYCLES:
-                    raise RuntimeError("主程审查未产出有效 REVIEW")
-            raise RuntimeError("unreachable")
+        raise RuntimeError("主程审查未产出有效 REVIEW")
 
     def _apply_git_clean(self, reason: str) -> None:
         self._log("系统", f"git clean（{reason}）...")

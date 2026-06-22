@@ -198,10 +198,6 @@ class AgentSession:
         )
         self._agent = Agent.create(options, client=client)
 
-    @property
-    def agent_id(self) -> str:
-        return self._agent.agent_id
-
     def send(self, user_message: str, *, stream: bool = True) -> str:
         if not self._bootstrapped:
             prompt = f"{self.system_prompt}\n\n---\n\n{user_message}"
