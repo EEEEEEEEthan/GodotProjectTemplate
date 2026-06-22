@@ -196,20 +196,21 @@ class WorkflowOrchestrator:
                     self._log("系统", "开始实现...")
                     return requirements, design
                 text = lead.send(user_input)
-                if block := extract_block(text, "REQUIREMENTS"):
+                extraction_text = lead.text_for_block_extraction()
+                if block := extract_block(extraction_text, "REQUIREMENTS"):
                     requirements = block
-                if block := extract_block(text, "DESIGN"):
+                if block := extract_block(extraction_text, "DESIGN"):
                     design = block
 
     def _phase_design_revision(
         self, requirements: str, design: str, feedback: str
     ) -> str:
         with self._lead_session() as lead:
-            text = lead.send(
+            lead.send(
                 "审查结论为 redo。请修订方案（DESIGN 块），避免下一任执行程序重复犯错。\n\n"
                 f"原需求：\n{requirements}\n\n原方案：\n{design}\n\n审查意见：\n{feedback}"
             )
-        revised = extract_block(text, "DESIGN")
+            revised = extract_block(lead.text_for_block_extraction(), "DESIGN")
         if not revised:
             raise RuntimeError("主程未输出修订后的 DESIGN 块")
         return revised

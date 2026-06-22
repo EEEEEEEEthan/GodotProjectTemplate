@@ -187,6 +187,8 @@ class AgentSession:
         self._bootstrapped = False
         self._echo_plan = echo_plan
         self._run_logger = run_logger
+        self._last_response_text = ""
+        self._last_plan_text: str | None = None
         options = AgentOptions(
             api_key=api_key,
             model=model,
@@ -222,12 +224,21 @@ class AgentSession:
         if result.status == "error":
             raise RuntimeError(f"[{self.console_tag}] 运行失败 run_id={run.id}")
         response_text = run.text()
+        self._last_response_text = response_text
+        self._last_plan_text = None
         if self._echo_plan:
-            self._print_plan(run, response_text)
+            self._last_plan_text = extract_plan(
+                run=run, agent=self._agent, response_text=response_text
+            )
+            self._print_plan(self._last_plan_text)
         return response_text
 
-    def _print_plan(self, run, response_text: str) -> None:
-        plan = extract_plan(run=run, agent=self._agent, response_text=response_text)
+    def text_for_block_extraction(self) -> str:
+        """合并 assistant 回复与 plan 文本，供编排器解析结构化块。"""
+        parts = [self._last_response_text, self._last_plan_text or ""]
+        return "\n\n".join(part for part in parts if part.strip())
+
+    def _print_plan(self, plan: str | None) -> None:
         if plan:
             print_role(
                 f"{self.console_tag}/plan",
