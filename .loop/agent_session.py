@@ -6,6 +6,7 @@ from pathlib import Path
 from cursor_sdk import Agent, AgentOptions, Client, CursorAgentError, LocalAgentOptions
 
 from config import DEFAULT_MODEL, PROJECT_ROOT, SETTINGS_DIR, load_role_setting_sources
+from plan_extract import extract_plan
 
 
 def load_role_prompt(role_key: str) -> str:
@@ -40,11 +41,13 @@ class AgentSession:
         api_key: str | None = None,
         cwd: Path = PROJECT_ROOT,
         console_tag: str | None = None,
+        echo_plan: bool = False,
     ) -> None:
         self.role_key = role_key
         self.console_tag = console_tag or role_key
         self.system_prompt = system_prompt
         self._bootstrapped = False
+        self._echo_plan = echo_plan
         options = AgentOptions(
             api_key=api_key,
             model=model,
@@ -81,7 +84,17 @@ class AgentSession:
             raise
         if result.status == "error":
             raise RuntimeError(f"[{self.console_tag}] 运行失败 run_id={run.id}")
-        return run.text()
+        response_text = run.text()
+        if self._echo_plan:
+            self._print_plan(run, response_text)
+        return response_text
+
+    def _print_plan(self, run, response_text: str) -> None:
+        plan = extract_plan(run=run, agent=self._agent, response_text=response_text)
+        if plan:
+            print_role(f"{self.console_tag}/plan", plan)
+        else:
+            print_role(f"{self.console_tag}/plan", "（本轮未检测到 plan）")
 
     def close(self) -> None:
         self._agent.close()

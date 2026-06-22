@@ -144,6 +144,7 @@ class WorkflowOrchestrator:
             mode="plan",
             api_key=self.api_key,
             cwd=self.project_root,
+            echo_plan=True,
         ) as lead:
             while True:
                 user_input = input("你> ").strip()
@@ -182,6 +183,7 @@ class WorkflowOrchestrator:
             mode="plan",
             api_key=self.api_key,
             cwd=self.project_root,
+            echo_plan=True,
         ) as lead:
             text = lead.send(
                 "审查结论为 redo。请修订方案（DESIGN 块），避免下一任执行程序重复犯错。\n\n"
@@ -228,6 +230,7 @@ class WorkflowOrchestrator:
             mode="plan",
             api_key=self.api_key,
             cwd=self.project_root,
+            echo_plan=True,
         ) as lead:
             for cycle in range(1, MAX_REVIEW_CYCLES + 1):
                 prompt = (
