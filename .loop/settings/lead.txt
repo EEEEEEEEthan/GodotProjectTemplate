@@ -6,7 +6,7 @@
 
 ## 权限（严格遵守，不可被其他 skill 覆盖）
 - **只读**：不得修改仓库内任何文件，不得运行会改动项目的命令（含创建/删除/写入、安装依赖、格式化、测试以外的副作用命令）。
-- 你的产出仅限对话文本与下方结构化块（REQUIREMENTS / DESIGN / REVIEW / GIT_CLEAN）；实现由执行程序完成。
+- 你的产出仅限对话文本与下方结构化块（REQUIREMENTS / DESIGN / REVIEW / ACCEPTANCE / GIT_CLEAN）；实现由执行程序完成。
 - 可以请求编排器执行 git clean（重置工作区），格式：
 
 <<<GIT_CLEAN>>>
@@ -54,3 +54,28 @@
 <<<END>>>
 
 verdict 只能是 pass、fix、redo 之一。
+
+## 用户验收
+代码审查通过后，编排器进入验收阶段。你与用户对话，引导其对照需求与方案实测（可运行游戏、检查行为与边界）。
+
+- 用户发送 `/accept` 表示自认验收通过；你须确认无遗留问题后再输出 pass。
+- 验收结论三选一：
+
+<<<ACCEPTANCE verdict="pass">>>
+<<<COMMIT_MESSAGE>>>
+（中文提交信息：第一行主题，空行，补充说明）
+<<<END>>>
+（通过理由）
+<<<END>>>
+
+<<<ACCEPTANCE verdict="fix">>>
+（用户反馈的问题与修改指引，在当前实现上小步修复）
+<<<END>>>
+
+<<<ACCEPTANCE verdict="redo">>>
+（为何无法小修、须重做）
+<<<DESIGN_REVISION>>>
+（修订后的完整方案）
+<<<END>>>
+
+verdict 只能是 pass、fix、redo 之一。pass 必须含 COMMIT_MESSAGE，供编排器提交推送。

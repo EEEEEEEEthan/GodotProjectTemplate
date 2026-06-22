@@ -1,4 +1,4 @@
-"""用户↔主程(需求+设计)→实现→优化→全量测试→审查 流水线编排。"""
+"""用户↔主程(需求+设计)→实现→优化→全量测试→审查→用户验收→提交 流水线编排。"""
 
 import subprocess
 from contextlib import contextmanager
@@ -8,19 +8,22 @@ from cursor_sdk import Client
 
 from agent_session import AgentSession, load_role_prompt, print_role
 from config import (
+    MAX_ACCEPTANCE_CYCLES,
     MAX_EXECUTOR_ROUNDS,
     MAX_REDO_CYCLES,
     MAX_REVIEW_CYCLES,
     PROJECT_ROOT,
     ensure_cursor_api_key_env,
 )
-from git_ops import git_clean_worktree, git_diff
+from git_ops import git_clean_worktree, git_commit_all, git_diff, git_push
 from loop_log import LoopRunLogger
 from markers import (
+    AcceptanceVerdict,
     ReviewVerdict,
     extract_block,
     has_executor_done,
     has_git_clean_request,
+    parse_acceptance,
     parse_review,
 )
 
@@ -123,7 +126,7 @@ class WorkflowOrchestrator:
         banner = (
             f"=== Dev Loop ===\n"
             f"项目: {self.project_root}\n"
-            f"主程: 与主程澄清并定稿需求/方案后输入 /execute 开始实现"
+            f"主程: 定稿需求/方案后输入 /execute 开始实现；验收满意后输入 /accept"
         )
         print(f"{banner}\n")
         if self._run_logger is not None:
@@ -145,30 +148,50 @@ class WorkflowOrchestrator:
                 need_execute = False
 
             review = self._phase_review(requirements, design, executor_index)
-            if review.verdict == ReviewVerdict.PASS:
-                self._log("系统", "审查通过，流程结束。")
-                return
-
             if review.verdict == ReviewVerdict.FIX:
                 self._phase_execute_fix(requirements, design, review.feedback)
                 continue
 
-            redo_count += 1
-            if redo_count > MAX_REDO_CYCLES:
-                self._log("系统", f"已达最大重做次数 ({MAX_REDO_CYCLES})，流程终止。")
+            if review.verdict == ReviewVerdict.REDO:
+                advanced = self._advance_after_redo(
+                    requirements=requirements,
+                    design=design,
+                    feedback=review.feedback,
+                    design_revision=review.design_revision,
+                    clean_reason="主程审查要求重做",
+                    redo_count=redo_count,
+                    executor_index=executor_index,
+                )
+                if advanced is None:
+                    return
+                executor_index, design, redo_count = advanced
+                need_execute = True
+                continue
+
+            acceptance = self._phase_acceptance(requirements, design, executor_index)
+            if acceptance.verdict == AcceptanceVerdict.PASS:
+                self._git_commit_and_push(acceptance.commit_message)
+                self._log("系统", "验收通过，已提交并推送，流程结束。")
                 return
 
-            self._close_executor()
-            self._apply_git_clean("主程要求重做")
-            if review.design_revision:
-                design = review.design_revision
-            else:
-                design = self._phase_design_revision(
-                    requirements, design, review.feedback
-                )
-            executor_index += 1
+            if acceptance.verdict == AcceptanceVerdict.FIX:
+                self._log("系统", "验收未通过，在当前基础上修复。")
+                self._phase_execute_fix(requirements, design, acceptance.feedback)
+                continue
+
+            advanced = self._advance_after_redo(
+                requirements=requirements,
+                design=design,
+                feedback=acceptance.feedback,
+                design_revision=acceptance.design_revision,
+                clean_reason="验收未通过，主程要求重做",
+                redo_count=redo_count,
+                executor_index=executor_index,
+            )
+            if advanced is None:
+                return
+            executor_index, design, redo_count = advanced
             need_execute = True
-            self._log("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
 
     def _phase_intake(self) -> tuple[str, str]:
         with self._lead_session() as lead:
@@ -267,12 +290,14 @@ class WorkflowOrchestrator:
                     prompt = (
                         "未解析到有效 REVIEW 块，请严格按格式重新输出。\n\n" + prompt
                     )
-                text = lead.send(prompt)
-                if has_git_clean_request(text):
-                    self._apply_git_clean("主程审查要求清空工作区")
-                    text = lead.send(
+                text = self._lead_reply_after_git_clean(
+                    lead,
+                    lead.send(prompt),
+                    clean_reason="主程审查要求清空工作区",
+                    retry_prompt=(
                         "工作区已 git clean。请输出 REVIEW 块，verdict=redo，并附 DESIGN_REVISION。"
-                    )
+                    ),
+                )
                 review = parse_review(text)
                 if review:
                     self._log(
@@ -282,12 +307,115 @@ class WorkflowOrchestrator:
                     return review
         raise RuntimeError("主程审查未产出有效 REVIEW")
 
-    def _apply_git_clean(self, reason: str) -> None:
-        self._log("系统", f"git clean（{reason}）...")
-        log = git_clean_worktree(self.project_root)
+    def _phase_acceptance(
+        self, requirements: str, design: str, executor_index: int
+    ):
+        self._log("系统", "代码审查已通过，进入用户验收。请实测并与主程确认是否符合预期。")
+        with self._lead_session() as lead:
+            lead.send(
+                "代码审查已通过，进入用户验收阶段。请引导用户对照需求与方案实测验收。\n\n"
+                f"需求：\n{requirements}\n\n方案：\n{design}\n\n"
+                "用户满意时输出 ACCEPTANCE verdict=pass（须含 COMMIT_MESSAGE）；"
+                "可小修则 verdict=fix；须重做则 verdict=redo 并附 DESIGN_REVISION。"
+            )
+            for cycle in range(1, MAX_ACCEPTANCE_CYCLES + 1):
+                while True:
+                    user_input = input("你> ").strip()
+                    if not user_input:
+                        continue
+                    if self._run_logger is not None:
+                        self._run_logger.log_user(user_input)
+                    if user_input == "/accept":
+                        text = lead.send(
+                            "用户表示验收通过。请输出 ACCEPTANCE verdict=pass，"
+                            "并附中文 COMMIT_MESSAGE（一句话主题 + 空行 + 补充说明）。"
+                        )
+                    else:
+                        text = lead.send(user_input)
+                    text = self._lead_reply_after_git_clean(
+                        lead,
+                        text,
+                        clean_reason="主程验收阶段要求清空工作区",
+                        retry_prompt=(
+                            "工作区已 git clean。请输出 ACCEPTANCE verdict=redo，并附 DESIGN_REVISION。"
+                        ),
+                    )
+                    acceptance = parse_acceptance(lead.text_for_block_extraction())
+                    if acceptance:
+                        self._log(
+                            "系统",
+                            f"验收结果: {acceptance.verdict.value}（第 {cycle} 轮）",
+                        )
+                        if (
+                            acceptance.verdict == AcceptanceVerdict.PASS
+                            and not acceptance.commit_message
+                        ):
+                            text = lead.send(
+                                "ACCEPTANCE pass 缺少 COMMIT_MESSAGE，请补全后重新输出。"
+                            )
+                            continue
+                        return acceptance
+                    break
+                if cycle == MAX_ACCEPTANCE_CYCLES:
+                    break
+        raise RuntimeError("主程验收未产出有效 ACCEPTANCE")
+
+    def _log_git_operation(self, tag: str, log: str) -> None:
         print(log)
         if self._run_logger is not None:
-            self._run_logger.log_role("系统/git clean", log)
+            self._run_logger.log_role(tag, log)
+
+    def _lead_reply_after_git_clean(
+        self,
+        lead: AgentSession,
+        text: str,
+        *,
+        clean_reason: str,
+        retry_prompt: str,
+    ) -> str:
+        if not has_git_clean_request(text):
+            return text
+        self._apply_git_clean(clean_reason)
+        return lead.send(retry_prompt)
+
+    def _advance_after_redo(
+        self,
+        *,
+        requirements: str,
+        design: str,
+        feedback: str,
+        design_revision: str | None,
+        clean_reason: str,
+        redo_count: int,
+        executor_index: int,
+    ) -> tuple[int, str, int] | None:
+        redo_count += 1
+        if redo_count > MAX_REDO_CYCLES:
+            self._log("系统", f"已达最大重做次数 ({MAX_REDO_CYCLES})，流程终止。")
+            return None
+        self._close_executor()
+        self._apply_git_clean(clean_reason)
+        if design_revision:
+            design = design_revision
+        else:
+            design = self._phase_design_revision(requirements, design, feedback)
+        executor_index += 1
+        self._log("系统", f"已 git clean，交由执行程序 #{executor_index}（新上下文）")
+        return executor_index, design, redo_count
+
+    def _git_commit_and_push(self, commit_message: str | None) -> None:
+        if not commit_message or not commit_message.strip():
+            raise RuntimeError("验收通过但缺少 COMMIT_MESSAGE")
+        self._log("系统", "验收通过，正在 git commit & push...")
+        self._log_git_operation(
+            "系统/git commit",
+            git_commit_all(self.project_root, commit_message.strip()),
+        )
+        self._log_git_operation("系统/git push", git_push(self.project_root))
+
+    def _apply_git_clean(self, reason: str) -> None:
+        self._log("系统", f"git clean（{reason}）...")
+        self._log_git_operation("系统/git clean", git_clean_worktree(self.project_root))
 
     def _run_autotest(self) -> tuple[bool, str]:
         self._log("系统", "运行全量自动化测试...")
