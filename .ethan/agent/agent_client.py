@@ -18,6 +18,7 @@ import agent.agent_tools
 import agent.data_loader
 import agent.skill_index
 import agent.tools.file_edit_tool
+import agent.tools.game_command_tool
 import agent.tools.grep_search_tool
 import agent.tools.memory_tool
 import agent.tools.read_file_tool
@@ -62,7 +63,7 @@ class AgentClient:
             skills=AgentClient.__get_string_array(merged_config, "skills")
             or list(agent.agent_config.DEFAULT_SKILLS),
             tool_whitelist=AgentClient.__get_string_array(merged_config, "tools")
-            or list(agent.agent_tools.FULL_TOOL_LIST),
+            or list(agent.agent_tools.TOOL_SCHEMAS),
             system_prompt=AgentClient.__get_string(merged_config, "systemPrompt")
             or agent.agent_config.DEFAULT_SYSTEM_PROMPT,
         )
@@ -175,6 +176,9 @@ class AgentClient:
                     ),
                     "read_file_tool_read_whole_file": (
                         agent.tools.read_file_tool.ReadFileTool.read_whole_file
+                    ),
+                    "game_command_tool_send_command": (
+                        agent.tools.game_command_tool.GameCommandTool.send_command
                     ),
                 }
             ),

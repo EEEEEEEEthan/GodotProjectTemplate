@@ -24,7 +24,7 @@ from agent.agent_events import TextDelta
 ### 说明
 
 - `from __future__ import annotations` 是语言级特性，无法用 `__future__.annotations` 替代，因此保留。
-- 包内互相引用同样遵循上述规则，例如 `import agent.agent_tools`，使用 `agent.agent_tools.FULL_TOOL_LIST`。
+- 包内互相引用同样遵循上述规则，例如 `import agent.agent_tools`，使用 `agent.agent_tools.TOOL_SCHEMAS`。
 - `agent/tools/__init__.py` 如需对外 re-export，用属性赋值，不要用 `from ... import ...`：
 
 ```python

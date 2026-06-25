@@ -24,7 +24,7 @@ DEFAULT_MODEL: dict[str, str] = {
 DEFAULT_CONFIG: dict[str, str | list[str]] = {
     "systemPrompt": agent.agent_config.DEFAULT_SYSTEM_PROMPT,
     "skills": list(agent.agent_config.DEFAULT_SKILLS),
-    "tools": list(agent.agent_tools.FULL_TOOL_LIST),
+    "tools": list(agent.agent_tools.TOOL_SCHEMAS),
 }
 
 

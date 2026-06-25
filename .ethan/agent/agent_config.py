@@ -18,6 +18,6 @@ class AgentConfig:
 
     skills: list[str] = dataclasses.field(default_factory=lambda: list(DEFAULT_SKILLS))
     tool_whitelist: list[str] = dataclasses.field(
-        default_factory=lambda: list(agent.agent_tools.FULL_TOOL_LIST)
+        default_factory=lambda: list(agent.agent_tools.TOOL_SCHEMAS)
     )
     system_prompt: str = DEFAULT_SYSTEM_PROMPT

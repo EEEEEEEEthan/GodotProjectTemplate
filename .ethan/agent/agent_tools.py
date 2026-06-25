@@ -6,26 +6,7 @@ import collections.abc
 import json
 import typing
 
-FULL_TOOL_LIST = [
-    "skill_tool_learn_skill",
-    "skill_tool_run_skill_script",
-    "file_edit_tool_create_file",
-    "file_edit_tool_apply_patch",
-    "grep_search_tool_grep_search",
-    "walk_files_tool_walk_files",
-    "system_info_tool_system_info",
-    "memory_tool_add_item",
-    "memory_tool_remove_item",
-    "memory_tool_update_item",
-    "memory_tool_list_items",
-    "memory_tool_find_str",
-    "read_file_tool_read_file_outline_cs",
-    "read_file_tool_read_file_outline_md",
-    "read_file_tool_read_lines",
-    "read_file_tool_read_whole_file",
-]
-
-__TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
+TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     "skill_tool_learn_skill": {
         "type": "function",
         "function": {
@@ -338,6 +319,44 @@ __TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
             },
         },
     },
+    "game_command_tool_send_command": {
+        "type": "function",
+        "function": {
+            "name": "game_command_tool_send_command",
+            "description": (
+                "向运行中的 Godot 游戏 MCP HTTP 服务发送协议命令。"
+                "游戏须已启动；端口取自启动日志「Game MCP: HTTP 服务已启动，端口 XXXX」，"
+                "缺省 8765。已注册命令：ping、eval（执行 GDScript，优先传 data.file）。"
+                "使用 eval 前请 learn_skill godot-mcp-eval。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "游戏侧已注册的协议名，如 ping、eval",
+                    },
+                    "data": {
+                        "type": "object",
+                        "description": "传给游戏 handle 的载荷，不含 command 字段",
+                    },
+                    "port": {
+                        "type": "integer",
+                        "description": "游戏 MCP 端口，缺省 8765",
+                    },
+                    "host": {
+                        "type": "string",
+                        "description": "游戏主机地址，缺省 127.0.0.1",
+                    },
+                    "timeout_seconds": {
+                        "type": "number",
+                        "description": "等待游戏响应的最长时间（秒），缺省 30",
+                    },
+                },
+                "required": ["command"],
+            },
+        },
+    },
 }
 
 
@@ -345,15 +364,15 @@ def select_advertised_tools(whitelist: list[str]) -> list[dict[str, typing.Any]]
     """按白名单筛选 OpenAI tools schema。"""
     allowed = set(whitelist)
     return [
-        __TOOL_SCHEMAS[name]
-        for name in FULL_TOOL_LIST
+        TOOL_SCHEMAS[name]
+        for name in TOOL_SCHEMAS
         if name in allowed
     ]
 
 
 def resolve_tool_name(openai_name: str) -> str | None:
     """校验 OpenAI function name 是否为已注册工具名。"""
-    if openai_name in __TOOL_SCHEMAS:
+    if openai_name in TOOL_SCHEMAS:
         return openai_name
     return None
 
@@ -368,7 +387,7 @@ def build_tool_dispatch(
     async def invoke(openai_name: str, arguments: dict[str, typing.Any]) -> str:
         tool_name = resolve_tool_name(openai_name)
         if tool_name is None:
-            allowed_tools = "、".join(FULL_TOOL_LIST)
+            allowed_tools = "、".join(TOOL_SCHEMAS)
             return (
                 f"错误：未知工具 {openai_name}。"
                 f"请使用 {allowed_tools}。"
