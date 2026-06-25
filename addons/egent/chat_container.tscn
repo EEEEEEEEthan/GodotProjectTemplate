@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://dxo2dobad7ifx"]
+
+[ext_resource type="PackedScene" uid="uid://hb0s4wjdis0t" path="res://addons/egent/chat_queue.tscn" id="1_7e0kr"]
+
+[sub_resource type="GDScript" id="GDScript_vaaaq"]
+script/source = "extends VBoxContainer
+
+func get_random_color(my_seed: int) -> Color:
+	seed(my_seed)
+	var r = randf() * 0.5
+	var g = randf() * 0.5
+	var b = randf() * 0.5
+	return Color(r, g, b, 1)
+
+func get_color(name: String) -> Color:
+	return get_random_color(name.hash())
+
+var last_chat_queue
+
+func add_message(is_me: bool, name: String, message: String) -> void:
+	if not last_chat_queue:
+		last_chat_queue = %ChatQueuePlaceHolder.create_instance()
+		last_chat_queue.is_me = is_me
+		last_chat_queue.title = name
+		last_chat_queue.avatar_color = get_color(name)
+	last_chat_queue.add_bubble(message)
+"
+
+[node name="ChatContainer" type="VBoxContainer" unique_id=1019007054]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -783.0
+grow_horizontal = 2
+grow_vertical = 2
+script = SubResource("GDScript_vaaaq")
+
+[node name="ChatQueuePlaceHolder" parent="." unique_id=771348400 instance=ExtResource("1_7e0kr")]
+unique_name_in_owner = true
+layout_mode = 2
