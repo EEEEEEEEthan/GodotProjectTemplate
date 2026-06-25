@@ -98,10 +98,8 @@ class LaunchGameTool:
 
         mode_label = "无头模式" if headless else "窗口模式"
         return (
-            f"游戏已启动（{mode_label}）。\n"
-            f"引擎：{_ENGINE_RELATIVE.as_posix()}\n"
-            f"工作目录：{project_root}\n"
-            f"额外日志：{relative_log_path}\n"
+            "游戏已启动\n"
+            f"日志：{relative_log_path}\n"
             "请在上述日志或游戏控制台中查找「Game MCP: HTTP 服务已启动，端口 XXXX」，"
             "再使用 MCP game_command 连接。"
         )
