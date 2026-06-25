@@ -25,7 +25,13 @@ func _init() -> void:
 func run_named(test_name: String) -> void:
 	match test_name:
 		"hellotest":
+			var HelloTest = load("res://tests/hello_test.gd")
 			HelloTest.run(self)
+			return
+		"offsidetest":
+			var OffsideTest = load("res://tests/offside_test.gd")
+			OffsideTest.run(self)
+			return
 			return
 	push_error("'%s' not found" % test_name)
 	quit(1)

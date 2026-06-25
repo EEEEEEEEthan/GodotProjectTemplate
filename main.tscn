@@ -1,3 +1,9 @@
 [gd_scene format=3 uid="uid://deunuw8hi83nq"]
 
-[node name="Main" type="Node" unique_id=1563110197]
+[ext_resource type="Script" path="res://offside_tool.gd" id="1"]
+
+[node name="Main" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
