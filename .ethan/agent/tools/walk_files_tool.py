@@ -6,8 +6,37 @@ import fnmatch
 import functools
 import os
 import pathlib
+import typing
 
 import agent.tools._path_util
+
+TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
+    "walk_files_tool_walk_files": {
+        "type": "function",
+        "function": {
+            "name": "walk_files_tool_walk_files",
+            "description": "遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "要遍历的目录（相对工作目录）",
+                    },
+                    "filter": {
+                        "type": "string",
+                        "description": "文件与文件夹名通配符，缺省 *",
+                    },
+                    "depth": {
+                        "type": "integer",
+                        "description": "最大层级深度，0 表示不限制，缺省 1",
+                    },
+                },
+                "required": ["directory"],
+            },
+        },
+    },
+}
 
 IGNORE_PATTERNS: tuple[str, ...] = (
     ".git",

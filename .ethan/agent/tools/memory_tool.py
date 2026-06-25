@@ -2,7 +2,89 @@
 
 from __future__ import annotations
 
+import typing
+
 import agent.tools._memory_store
+
+TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
+    "memory_tool_add_item": {
+        "type": "function",
+        "function": {
+            "name": "memory_tool_add_item",
+            "description": "添加长期记忆条目。标题为唯一键（大小写不敏感）",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string", "description": "记忆标题"},
+                    "value": {"type": "string", "description": "记忆正文"},
+                },
+                "required": ["key", "value"],
+            },
+        },
+    },
+    "memory_tool_remove_item": {
+        "type": "function",
+        "function": {
+            "name": "memory_tool_remove_item",
+            "description": "删除长期记忆条目",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string", "description": "记忆标题"},
+                },
+                "required": ["key"],
+            },
+        },
+    },
+    "memory_tool_update_item": {
+        "type": "function",
+        "function": {
+            "name": "memory_tool_update_item",
+            "description": "更新长期记忆条目",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string", "description": "记忆标题"},
+                    "value": {"type": "string", "description": "更新后的记忆正文"},
+                },
+                "required": ["key", "value"],
+            },
+        },
+    },
+    "memory_tool_list_items": {
+        "type": "function",
+        "function": {
+            "name": "memory_tool_list_items",
+            "description": "列出长期记忆条目，可按标题正则筛选。每次对话开始建议先查询相关记忆",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filter": {
+                        "type": "string",
+                        "description": "可选：标题筛选正则，忽略大小写",
+                    },
+                },
+            },
+        },
+    },
+    "memory_tool_find_str": {
+        "type": "function",
+        "function": {
+            "name": "memory_tool_find_str",
+            "description": "在记忆标题与正文中正则搜索（忽略大小写）",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pattern": {
+                        "type": "string",
+                        "description": "搜索用正则表达式",
+                    },
+                },
+                "required": ["pattern"],
+            },
+        },
+    },
+}
 
 
 class MemoryTool:

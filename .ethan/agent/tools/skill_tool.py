@@ -5,12 +5,62 @@ from __future__ import annotations
 import asyncio
 import os
 import subprocess
+import typing
 import uuid
 
 import pathlib
 
 import agent.skill_index
 
+TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
+    "skill_tool_learn_skill": {
+        "type": "function",
+        "function": {
+            "name": "skill_tool_learn_skill",
+            "description": "读取技能",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "skill_id": {
+                        "type": "string",
+                        "description": "技能id，与系统消息中列表一致",
+                    },
+                    "relative_path": {
+                        "type": "string",
+                        "description": "相对技能根目录的文件路径，缺省表示 SKILL.md",
+                    },
+                },
+                "required": ["skill_id"],
+            },
+        },
+    },
+    "skill_tool_run_skill_script": {
+        "type": "function",
+        "function": {
+            "name": "skill_tool_run_skill_script",
+            "description": "在 Agent 当前工作目录下执行技能包内脚本，标准输出与标准错误合并返回。使用脚本前请使用learn_skill工具阅读技能文档",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "skill_id": {
+                        "type": "string",
+                        "description": "技能 id，与系统消息中列表一致",
+                    },
+                    "relative_path": {
+                        "type": "string",
+                        "description": "相对技能根目录的脚本文件路径",
+                    },
+                    "script_args": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "可选：按顺序传给脚本的命令行参数",
+                    },
+                },
+                "required": ["skill_id", "relative_path"],
+            },
+        },
+    },
+}
 
 class SkillTool:
     """读取 skill 文档并执行 skill 包内脚本。"""

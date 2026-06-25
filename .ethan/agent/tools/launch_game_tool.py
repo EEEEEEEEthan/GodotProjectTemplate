@@ -6,11 +6,46 @@ import os
 import pathlib
 import subprocess
 import sys
+import typing
 from datetime import datetime
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
 _LAUNCH_LOG_DIRECTORY = pathlib.Path(".ethan") / ".temp"
+
+TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
+    "launch_game_tool_launch_game": {
+        "type": "function",
+        "function": {
+            "name": "launch_game_tool_launch_game",
+            "description": (
+                "启动 Godot 游戏。会输出端口号，可以用mcp连接游戏。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "headless": {
+                        "type": "boolean",
+                        "description": "是否以无头模式启动，缺省 false（窗口模式）",
+                    },
+                    "skip_prepare": {
+                        "type": "boolean",
+                        "description": "是否跳过 .engine-prepare.bat，缺省 false",
+                    },
+                    "skip_import": {
+                        "type": "boolean",
+                        "description": "是否跳过 --headless --import 资源导入，缺省 false",
+                    },
+                    "extra_arguments": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "追加传给引擎的命令行参数",
+                    },
+                },
+            },
+        },
+    },
+}
 
 
 class LaunchGameTool:

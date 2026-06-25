@@ -3,6 +3,56 @@
 from __future__ import annotations
 
 import pathlib
+import typing
+
+TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
+    "file_edit_tool_create_file": {
+        "type": "function",
+        "function": {
+            "name": "file_edit_tool_create_file",
+            "description": "创建新文件，不覆盖已有文件",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "目标文件路径（相对工作目录，不接受绝对路径）",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "文件初始内容，缺省创建空文件",
+                    },
+                },
+                "required": ["file_path"],
+            },
+        },
+    },
+    "file_edit_tool_apply_patch": {
+        "type": "function",
+        "function": {
+            "name": "file_edit_tool_apply_patch",
+            "description": "替换文本",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "目标文件路径，可为绝对路径或相对当前工作目录",
+                    },
+                    "old_text": {
+                        "type": "string",
+                        "description": "要被替换的原文片段，须在文件中出现且仅出现一次",
+                    },
+                    "new_text": {
+                        "type": "string",
+                        "description": "替换后的内容",
+                    },
+                },
+                "required": ["file_path", "old_text"],
+            },
+        },
+    },
+}
 
 
 class FileEditTool:
