@@ -357,6 +357,39 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
             },
         },
     },
+    "game_command_tool_launch_game": {
+        "type": "function",
+        "function": {
+            "name": "game_command_tool_launch_game",
+            "description": (
+                "使用项目根目录 .engine/.engine.exe 启动 Godot 游戏。"
+                "缺省会先执行 .engine-prepare.bat 与 --headless --import，再以窗口模式后台启动。"
+                "启动后查看控制台日志中的 MCP 端口，再用 game_command_tool_send_command 连接。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "headless": {
+                        "type": "boolean",
+                        "description": "是否以无头模式启动，缺省 false（窗口模式）",
+                    },
+                    "skip_prepare": {
+                        "type": "boolean",
+                        "description": "是否跳过 .engine-prepare.bat，缺省 false",
+                    },
+                    "skip_import": {
+                        "type": "boolean",
+                        "description": "是否跳过 --headless --import 资源导入，缺省 false",
+                    },
+                    "extra_arguments": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "追加传给引擎的命令行参数",
+                    },
+                },
+            },
+        },
+    },
 }
 
 

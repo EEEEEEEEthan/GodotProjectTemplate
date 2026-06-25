@@ -180,6 +180,9 @@ class AgentClient:
                     "game_command_tool_send_command": (
                         agent.tools.game_command_tool.GameCommandTool.send_command
                     ),
+                    "game_command_tool_launch_game": (
+                        agent.tools.game_command_tool.GameCommandTool.launch_game
+                    ),
                 }
             ),
         )
