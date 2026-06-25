@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://hb0s4wjdis0t"]
+
+[ext_resource type="PackedScene" uid="uid://vbcis2xh060x" path="res://addons/egent/chat_bubble.tscn" id="1_ryk2e"]
+
+[node name="ChatQueue" type="HBoxContainer" unique_id=771348400]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1339687989]
+custom_minimum_size = Vector2(64, 64)
+custom_maximum_size = Vector2(64, 64)
+layout_mode = 2
+color = Color(0.1978561, 0.1106508, 0.45342904, 1)
+
+[node name="AvatarLabel" type="Label" parent="ColorRect" unique_id=152391362]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "E"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1376502054]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer" unique_id=1117159124]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ethan"
+
+[node name="PanelContainer" parent="VBoxContainer" unique_id=636334402 instance=ExtResource("1_ryk2e")]
+layout_mode = 2

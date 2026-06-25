@@ -1,0 +1,28 @@
+# Jason agent 行为配置
+# 加载优先级：%LOCALAPPDATA%\Ethan\config.toml → .ethan/config.toml → 本文件
+
+systemPrompt = "你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.\n你应该在合适的时候查看和更新你的memory"
+
+skills = [
+  ".agents/skills/godot-autotest",
+  ".agents/skills/godot-mcp-eval",
+]
+
+tools = [
+  "skill_tool_learn_skill",
+  "skill_tool_run_skill_script",
+  "file_edit_tool_create_file",
+  "file_edit_tool_apply_patch",
+  "grep_search_tool_grep_search",
+  "walk_files_tool_walk_files",
+  "system_info_tool_system_info",
+  "memory_tool_add_item",
+  "memory_tool_remove_item",
+  "memory_tool_update_item",
+  "memory_tool_list_items",
+  "memory_tool_find_str",
+  "read_file_tool_read_file_outline_cs",
+  "read_file_tool_read_file_outline_md",
+  "read_file_tool_read_lines",
+  "read_file_tool_read_whole_file",
+]

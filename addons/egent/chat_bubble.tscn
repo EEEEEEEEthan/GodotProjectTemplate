@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://vbcis2xh060x"]
+
+[sub_resource type="GDScript" id="GDScript_4mk2m"]
+script/source = "@tool
+extends RichTextLabel
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	print(self.size)
+"
+
+[node name="PanelContainer" type="PanelContainer" unique_id=636334402]
+offset_right = 218.0
+offset_bottom = 46.0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=2079479805]
+layout_mode = 2
+text = "This is a long long message"
+fit_content = true
+script = SubResource("GDScript_4mk2m")
