@@ -16,7 +16,8 @@ _MCP_READY_LOG_PATTERN = re.compile(
 )
 _MCP_BIND_FAILED_MARKER = "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
 _MCP_READY_POLL_INTERVAL_SECONDS = 0.2
-_MCP_READY_POLL_TIMEOUT_SECONDS = 60.0
+_MCP_READY_POLL_TIMEOUT_SECONDS = 3.0
+_MCP_PROCESS_TERMINATE_TIMEOUT_SECONDS = 3.0
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
@@ -97,15 +98,15 @@ class LaunchGameTool:
         relative_log_path = log_path.relative_to(project_root).as_posix()
         launch_arguments = ["--log-file", relative_log_path, *launch_arguments]
 
-        process_error = LaunchGameTool.__start_detached_process(
+        process = LaunchGameTool.__start_detached_process(
             project_root,
             engine_executable,
             launch_arguments,
         )
-        if process_error is not None:
-            return process_error
+        if isinstance(process, str):
+            return process
 
-        port_result = LaunchGameTool.__wait_for_mcp_port(log_path)
+        port_result = LaunchGameTool.__wait_for_mcp_port(log_path, process)
         if isinstance(port_result, str):
             return port_result
 
@@ -160,7 +161,7 @@ class LaunchGameTool:
         project_root: pathlib.Path,
         engine_executable: pathlib.Path,
         launch_arguments: list[str],
-    ) -> str | None:
+    ) -> subprocess.Popen[bytes] | str:
         command = [str(engine_executable), *launch_arguments]
         creation_flags = 0
         if sys.platform == "win32":
@@ -168,7 +169,7 @@ class LaunchGameTool:
                 subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
             )
         try:
-            subprocess.Popen(
+            return subprocess.Popen(
                 command,
                 cwd=os.fspath(project_root),
                 creationflags=creation_flags,
@@ -176,10 +177,39 @@ class LaunchGameTool:
             )
         except OSError as error:
             return f"错误：无法启动游戏进程：{error}"
-        return None
 
     @staticmethod
-    def __wait_for_mcp_port(log_path: pathlib.Path) -> int | str:
+    def __terminate_process(process: subprocess.Popen[bytes]) -> None:
+        if process.poll() is not None:
+            return
+        try:
+            process.terminate()
+            try:
+                process.wait(timeout=_MCP_PROCESS_TERMINATE_TIMEOUT_SECONDS)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+        except OSError:
+            pass
+
+    @staticmethod
+    def __read_log_tail(log_path: pathlib.Path, *, max_lines: int = 20) -> str:
+        if not log_path.is_file():
+            return ""
+        try:
+            lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            return ""
+        if not lines:
+            return ""
+        tail = "\n".join(lines[-max_lines:])
+        return f"--- 日志末尾 ---\n{tail}"
+
+    @staticmethod
+    def __wait_for_mcp_port(
+        log_path: pathlib.Path,
+        process: subprocess.Popen[bytes],
+    ) -> int | str:
         deadline = time.monotonic() + _MCP_READY_POLL_TIMEOUT_SECONDS
         while time.monotonic() < deadline:
             if log_path.is_file():
@@ -188,15 +218,20 @@ class LaunchGameTool:
                 except OSError as error:
                     return f"错误：无法读取启动日志（{log_path.as_posix()}）：{error}"
                 if _MCP_BIND_FAILED_MARKER in content:
+                    LaunchGameTool.__terminate_process(process)
                     return (
-                        f"错误：游戏 MCP 无法绑定端口（{log_path.as_posix()}）。"
+                        f"错误：游戏 MCP 无法绑定端口（{log_path.as_posix()}）。\n"
+                        f"{LaunchGameTool.__read_log_tail(log_path)}"
                     )
                 match = _MCP_READY_LOG_PATTERN.search(content)
                 if match:
                     return int(match.group(1))
             time.sleep(_MCP_READY_POLL_INTERVAL_SECONDS)
+        LaunchGameTool.__terminate_process(process)
         return (
-            f"错误：超时未在日志中找到 MCP 握手标记 <<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=…>>>（{log_path.as_posix()}）。"
+            f"错误：{int(_MCP_READY_POLL_TIMEOUT_SECONDS)} 秒内未在日志中找到 MCP 握手标记，"
+            f"已终止游戏进程（{log_path.as_posix()}）。\n"
+            f"{LaunchGameTool.__read_log_tail(log_path)}"
         )
 
     @staticmethod
