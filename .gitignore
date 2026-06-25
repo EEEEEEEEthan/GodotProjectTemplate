@@ -2,9 +2,6 @@
 /.engine/
 /.export/
 /.temp/
-# 本地密钥（Dev Loop 从项目根 .env 读取 CURSOR_API_KEY）
-.env
-/.loop/.env
 /.local.settings
 /.idea/
 __pycache__/

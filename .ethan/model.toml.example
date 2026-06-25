@@ -1,0 +1,12 @@
+# 模型与 API 连接配置
+# 复制为 model.toml 后填写 apiKey；也可放到 agents/<name>/model.toml 覆盖单 agent。
+# 加载优先级：%LOCALAPPDATA%\Ethan\model.toml → .ethan/model.toml → .ethan/agents/<name>/model.toml
+
+model = "gpt-4o-mini"
+baseUrl = "https://api.openai.com/v1"
+apiKey = "sk-..."
+
+# 常见 baseUrl 示例：
+# OpenAI:    https://api.openai.com/v1
+# DeepSeek:  https://api.deepseek.com/v1
+# 通义千问:  https://dashscope.aliyuncs.com/compatible-mode/v1

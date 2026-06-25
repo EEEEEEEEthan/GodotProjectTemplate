@@ -1,0 +1,3 @@
+/.temp/
+model.toml
+/agents/*/model.toml/
