@@ -1,26 +1,20 @@
-"""向运行中 Godot 游戏 MCP HTTP 服务发送协议命令，并启动游戏进程。"""
+"""启动本地 Godot 游戏进程。"""
 
 from __future__ import annotations
 
-import importlib
-import json
 import os
 import pathlib
 import subprocess
 import sys
-import typing
 from datetime import datetime
-
-_game_client = importlib.import_module("agent.tools._game_client")
-_output_util = importlib.import_module("agent.tools._output_util")
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
 _LAUNCH_LOG_DIRECTORY = pathlib.Path(".ethan") / ".temp"
 
 
-class GameCommandTool:
-    """连接游戏 HTTP 服务、发送已注册协议，并启动本地 Godot 实例。"""
+class LaunchGameTool:
+    """使用 .engine/.engine.exe 启动 Godot 游戏。"""
 
     @staticmethod
     def launch_game(
@@ -36,7 +30,7 @@ class GameCommandTool:
         prepare_script = (project_root / _PREPARE_BAT).resolve()
 
         if not skip_prepare:
-            prepare_error = GameCommandTool.__run_prepare(project_root, prepare_script)
+            prepare_error = LaunchGameTool.__run_prepare(project_root, prepare_script)
             if prepare_error is not None:
                 return prepare_error
 
@@ -47,7 +41,7 @@ class GameCommandTool:
             )
 
         if not skip_import:
-            import_error = GameCommandTool.__run_import(project_root, engine_executable)
+            import_error = LaunchGameTool.__run_import(project_root, engine_executable)
             if import_error is not None:
                 return import_error
 
@@ -55,11 +49,11 @@ class GameCommandTool:
         if headless:
             launch_arguments = ["--headless", *launch_arguments]
 
-        log_path = GameCommandTool.__create_launch_log_path(project_root)
+        log_path = LaunchGameTool.__create_launch_log_path(project_root)
         relative_log_path = log_path.relative_to(project_root).as_posix()
         launch_arguments = ["--log-file", relative_log_path, *launch_arguments]
 
-        process_error = GameCommandTool.__start_detached_process(
+        process_error = LaunchGameTool.__start_detached_process(
             project_root,
             engine_executable,
             launch_arguments,
@@ -74,43 +68,8 @@ class GameCommandTool:
             f"工作目录：{project_root}\n"
             f"额外日志：{relative_log_path}\n"
             "请在上述日志或游戏控制台中查找「Game MCP: HTTP 服务已启动，端口 XXXX」，"
-            "再使用 game_command_tool_send_command 连接。"
+            "再使用 MCP game_command 连接。"
         )
-
-    @staticmethod
-    def send_command(
-        command: str,
-        data: dict[str, typing.Any] | None = None,
-        *,
-        port: int | None = None,
-        host: str | None = None,
-        timeout_seconds: float = 30.0,
-    ) -> str:
-        """向游戏 MCP 服务发送协议并返回 JSON 结果。"""
-        if not command or not command.strip():
-            return "错误：command 不能为空。"
-        resolved_port = (
-            port
-            if port is not None
-            else _game_client.DEFAULT_PORT
-        )
-        if resolved_port <= 0:
-            return "错误：port 必须是正整数。"
-        resolved_host = (host or _game_client.DEFAULT_HOST).strip()
-
-        try:
-            result = _game_client.send_command(
-                resolved_port,
-                command.strip(),
-                data,
-                host=resolved_host or _game_client.DEFAULT_HOST,
-                timeout_seconds=timeout_seconds,
-            )
-        except _game_client.GameCommandError as error:
-            return f"错误：{error}"
-
-        formatted = json.dumps(result, ensure_ascii=False, indent=2)
-        return _output_util.truncate_output(formatted)
 
     @staticmethod
     def __run_prepare(
@@ -119,14 +78,14 @@ class GameCommandTool:
     ) -> str | None:
         if not prepare_script.is_file():
             return f"错误：未找到 {prepare_script.name}。"
-        completed = GameCommandTool.__run_synchronous(
+        completed = LaunchGameTool.__run_synchronous(
             ["cmd.exe", "/c", str(prepare_script)],
             project_root=project_root,
         )
         if isinstance(completed, str):
             return completed
         if completed.returncode != 0:
-            return GameCommandTool.__format_process_failure(
+            return LaunchGameTool.__format_process_failure(
                 "引擎准备失败",
                 completed,
             )
@@ -137,14 +96,14 @@ class GameCommandTool:
         project_root: pathlib.Path,
         engine_executable: pathlib.Path,
     ) -> str | None:
-        completed = GameCommandTool.__run_synchronous(
+        completed = LaunchGameTool.__run_synchronous(
             [str(engine_executable), "--headless", "--import"],
             project_root=project_root,
         )
         if isinstance(completed, str):
             return completed
         if completed.returncode != 0:
-            return GameCommandTool.__format_process_failure(
+            return LaunchGameTool.__format_process_failure(
                 "资源导入失败",
                 completed,
             )

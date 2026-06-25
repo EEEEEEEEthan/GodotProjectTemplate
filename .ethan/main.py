@@ -30,7 +30,9 @@ def write_line_colored(value: str, *, dim: bool = True) -> None:
 
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
-    with agent.agent_client.AgentClient.load_agent("jason") as client:
+    client = agent.agent_client.AgentClient.load_agent("jason")
+    try:
+        await client.prepare()
         write_line_colored(f"@{client.name}, {client.model}, {client.base_url}")
         tool_lines = ["loading tools..."] + [f"  - {tool}" for tool in client.tool_whitelist]
         write_line_colored("\n".join(tool_lines))
@@ -60,6 +62,8 @@ async def main() -> None:
                     if event.result:
                         write_line_colored(event.result)
             sys.stdout.write("\n")
+    finally:
+        await client.aclose()
 
 
 if __name__ == "__main__":

@@ -319,48 +319,10 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
             },
         },
     },
-    "game_command_tool_send_command": {
+    "launch_game_tool_launch_game": {
         "type": "function",
         "function": {
-            "name": "game_command_tool_send_command",
-            "description": (
-                "向运行中的 Godot 游戏 MCP HTTP 服务发送协议命令。"
-                "游戏须已启动；端口取自启动日志「Game MCP: HTTP 服务已启动，端口 XXXX」，"
-                "缺省 8765。已注册命令：ping、eval（执行 GDScript，优先传 data.file）。"
-                "使用 eval 前请 learn_skill godot-mcp-eval。"
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "游戏侧已注册的协议名，如 ping、eval",
-                    },
-                    "data": {
-                        "type": "object",
-                        "description": "传给游戏 handle 的载荷，不含 command 字段",
-                    },
-                    "port": {
-                        "type": "integer",
-                        "description": "游戏 MCP 端口，缺省 8765",
-                    },
-                    "host": {
-                        "type": "string",
-                        "description": "游戏主机地址，缺省 127.0.0.1",
-                    },
-                    "timeout_seconds": {
-                        "type": "number",
-                        "description": "等待游戏响应的最长时间（秒），缺省 30",
-                    },
-                },
-                "required": ["command"],
-            },
-        },
-    },
-    "game_command_tool_launch_game": {
-        "type": "function",
-        "function": {
-            "name": "game_command_tool_launch_game",
+            "name": "launch_game_tool_launch_game",
             "description": (
                 "使用项目根目录 .engine/.engine.exe 启动 Godot 游戏。"
                 "缺省会先执行 .engine-prepare.bat 与 --headless --import，再以窗口模式后台启动。"
@@ -393,19 +355,30 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
 }
 
 
-def select_advertised_tools(whitelist: list[str]) -> list[dict[str, typing.Any]]:
+def select_advertised_tools(
+    whitelist: list[str],
+    extra_schemas: dict[str, dict[str, typing.Any]] | None = None,
+) -> list[dict[str, typing.Any]]:
     """按白名单筛选 OpenAI tools schema。"""
     allowed = set(whitelist)
+    all_schemas = dict(TOOL_SCHEMAS)
+    if extra_schemas:
+        all_schemas.update(extra_schemas)
     return [
-        TOOL_SCHEMAS[name]
-        for name in TOOL_SCHEMAS
+        all_schemas[name]
+        for name in all_schemas
         if name in allowed
     ]
 
 
-def resolve_tool_name(openai_name: str) -> str | None:
+def resolve_tool_name(
+    openai_name: str,
+    extra_schemas: dict[str, dict[str, typing.Any]] | None = None,
+) -> str | None:
     """校验 OpenAI function name 是否为已注册工具名。"""
     if openai_name in TOOL_SCHEMAS:
+        return openai_name
+    if extra_schemas and openai_name in extra_schemas:
         return openai_name
     return None
 
@@ -415,18 +388,31 @@ ToolHandler = typing.Callable[..., str | collections.abc.Awaitable[str]]
 
 def build_tool_dispatch(
     handlers: dict[str, ToolHandler],
+    *,
+    extra_schemas: dict[str, dict[str, typing.Any]] | None = None,
+    mcp_invoke: typing.Callable[
+        [str, dict[str, typing.Any]],
+        collections.abc.Awaitable[str],
+    ] | None = None,
 ) -> typing.Callable[[str, dict[str, typing.Any]], collections.abc.Awaitable[str]]:
     """构建 OpenAI 工具名到 handler 的异步分发函数。"""
     async def invoke(openai_name: str, arguments: dict[str, typing.Any]) -> str:
-        tool_name = resolve_tool_name(openai_name)
+        tool_name = resolve_tool_name(openai_name, extra_schemas)
         if tool_name is None:
-            allowed_tools = "、".join(TOOL_SCHEMAS)
+            allowed_tools = "、".join({*TOOL_SCHEMAS, *(extra_schemas or {})})
             return (
                 f"错误：未知工具 {openai_name}。"
                 f"请使用 {allowed_tools}。"
             )
         handler = handlers.get(tool_name)
         if handler is None:
+            if mcp_invoke is not None and openai_name.startswith("mcp__"):
+                try:
+                    if "__parse_error__" in arguments:
+                        return f"错误：工具参数 JSON 无效：{arguments['__parse_error__']}"
+                    return await mcp_invoke(openai_name, arguments)
+                except TypeError as exception:
+                    return f"错误：工具参数无效（{tool_name}）：{exception}"
             return f"错误：工具未注册 {tool_name}"
         try:
             if "__parse_error__" in arguments:

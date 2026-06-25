@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import collections.abc
 import contextlib
 import dataclasses
@@ -16,9 +17,9 @@ import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
 import agent.data_loader
+import agent.mcp_bridge
 import agent.skill_index
 import agent.tools.file_edit_tool
-import agent.tools.game_command_tool
 import agent.tools.grep_search_tool
 import agent.tools.memory_tool
 import agent.tools.read_file_tool
@@ -43,6 +44,12 @@ class _AgentTooling:
     skill_index: agent.skill_index.SkillIndex
     system_prompt: str
     invoke: typing.Callable[[str, dict[str, typing.Any]], collections.abc.Awaitable[str]]
+    static_handlers: dict[str, agent.agent_tools.ToolHandler]
+    mcp_bridge: agent.mcp_bridge.McpBridge | None = None
+    mcp_schemas: dict[str, dict[str, typing.Any]] = dataclasses.field(
+        default_factory=dict,
+    )
+    mcp_ready: bool = False
 
 
 class AgentClient:
@@ -66,6 +73,7 @@ class AgentClient:
             or list(agent.agent_tools.TOOL_SCHEMAS),
             system_prompt=AgentClient.__get_string(merged_config, "systemPrompt")
             or agent.agent_config.DEFAULT_SYSTEM_PROMPT,
+            mcp_servers=agent.data_loader.load_mcp_servers(),
         )
         return AgentClient(path, agent_model, agent_config)
 
@@ -136,56 +144,104 @@ class AgentClient:
         )
         skill_tool = agent.tools.skill_tool.SkillTool(skill_index, self.name)
         memory_tool = agent.tools.memory_tool.MemoryTool(self.name)
+        mcp_bridge_instance = (
+            agent.mcp_bridge.McpBridge(config.mcp_servers)
+            if config.mcp_servers
+            else None
+        )
+        static_handlers = {
+            "skill_tool_learn_skill": skill_tool.learn_skill,
+            "skill_tool_run_skill_script": skill_tool.run_skill_script,
+            "file_edit_tool_create_file": (
+                agent.tools.file_edit_tool.FileEditTool.create_file
+            ),
+            "file_edit_tool_apply_patch": (
+                agent.tools.file_edit_tool.FileEditTool.apply_patch
+            ),
+            "grep_search_tool_grep_search": (
+                agent.tools.grep_search_tool.GrepSearchTool.grep_search
+            ),
+            "walk_files_tool_walk_files": (
+                agent.tools.walk_files_tool.WalkFilesTool.walk_files
+            ),
+            "system_info_tool_system_info": (
+                agent.tools.system_info_tool.SystemInfoTool.system_info
+            ),
+            "memory_tool_add_item": memory_tool.add_item,
+            "memory_tool_remove_item": memory_tool.remove_item,
+            "memory_tool_update_item": memory_tool.update_item,
+            "memory_tool_list_items": memory_tool.list_items,
+            "memory_tool_find_str": memory_tool.find_str,
+            "read_file_tool_read_file_outline_cs": (
+                agent.tools.read_file_tool.ReadFileTool.read_file_outline_cs
+            ),
+            "read_file_tool_read_file_outline_md": (
+                agent.tools.read_file_tool.ReadFileTool.read_file_outline_md
+            ),
+            "read_file_tool_read_lines": (
+                agent.tools.read_file_tool.ReadFileTool.read_lines
+            ),
+            "read_file_tool_read_whole_file": (
+                agent.tools.read_file_tool.ReadFileTool.read_whole_file
+            ),
+            "launch_game_tool_launch_game": (
+                agent.tools.launch_game_tool.LaunchGameTool.launch_game
+            ),
+        }
         return _AgentTooling(
             whitelist=tool_whitelist,
             advertised_tools=agent.agent_tools.select_advertised_tools(tool_whitelist),
             skill_index=skill_index,
             system_prompt=system_prompt,
-            invoke=agent.agent_tools.build_tool_dispatch(
-                {
-                    "skill_tool_learn_skill": skill_tool.learn_skill,
-                    "skill_tool_run_skill_script": skill_tool.run_skill_script,
-                    "file_edit_tool_create_file": (
-                        agent.tools.file_edit_tool.FileEditTool.create_file
-                    ),
-                    "file_edit_tool_apply_patch": (
-                        agent.tools.file_edit_tool.FileEditTool.apply_patch
-                    ),
-                    "grep_search_tool_grep_search": (
-                        agent.tools.grep_search_tool.GrepSearchTool.grep_search
-                    ),
-                    "walk_files_tool_walk_files": (
-                        agent.tools.walk_files_tool.WalkFilesTool.walk_files
-                    ),
-                    "system_info_tool_system_info": (
-                        agent.tools.system_info_tool.SystemInfoTool.system_info
-                    ),
-                    "memory_tool_add_item": memory_tool.add_item,
-                    "memory_tool_remove_item": memory_tool.remove_item,
-                    "memory_tool_update_item": memory_tool.update_item,
-                    "memory_tool_list_items": memory_tool.list_items,
-                    "memory_tool_find_str": memory_tool.find_str,
-                    "read_file_tool_read_file_outline_cs": (
-                        agent.tools.read_file_tool.ReadFileTool.read_file_outline_cs
-                    ),
-                    "read_file_tool_read_file_outline_md": (
-                        agent.tools.read_file_tool.ReadFileTool.read_file_outline_md
-                    ),
-                    "read_file_tool_read_lines": (
-                        agent.tools.read_file_tool.ReadFileTool.read_lines
-                    ),
-                    "read_file_tool_read_whole_file": (
-                        agent.tools.read_file_tool.ReadFileTool.read_whole_file
-                    ),
-                    "game_command_tool_send_command": (
-                        agent.tools.game_command_tool.GameCommandTool.send_command
-                    ),
-                    "game_command_tool_launch_game": (
-                        agent.tools.game_command_tool.GameCommandTool.launch_game
-                    ),
-                }
-            ),
+            static_handlers=static_handlers,
+            mcp_bridge=mcp_bridge_instance,
+            invoke=AgentClient.__build_invoke(static_handlers, None, None),
         )
+
+    @staticmethod
+    def __build_invoke(
+        static_handlers: dict[str, agent.agent_tools.ToolHandler],
+        extra_schemas: dict[str, dict[str, typing.Any]] | None,
+        mcp_bridge: agent.mcp_bridge.McpBridge | None,
+    ) -> typing.Callable[[str, dict[str, typing.Any]], collections.abc.Awaitable[str]]:
+        async def invoke_mcp_tool(
+            openai_name: str,
+            arguments: dict[str, typing.Any],
+        ) -> str:
+            if mcp_bridge is None:
+                return f"错误：MCP 未配置 {openai_name}"
+            return await mcp_bridge.invoke(openai_name, arguments)
+
+        return agent.agent_tools.build_tool_dispatch(
+            static_handlers,
+            extra_schemas=extra_schemas,
+            mcp_invoke=invoke_mcp_tool if mcp_bridge is not None else None,
+        )
+
+    async def __ensure_mcp_ready(self) -> None:
+        tooling = self.__tooling
+        if tooling.mcp_bridge is None or tooling.mcp_ready:
+            return
+        await tooling.mcp_bridge.start()
+        tooling.mcp_schemas = tooling.mcp_bridge.select_schemas(tooling.whitelist)
+        expanded_whitelist = list(tooling.whitelist)
+        for openai_name in tooling.mcp_schemas:
+            if openai_name not in expanded_whitelist:
+                expanded_whitelist.append(openai_name)
+        tooling.advertised_tools = agent.agent_tools.select_advertised_tools(
+            expanded_whitelist,
+            tooling.mcp_schemas,
+        )
+        tooling.invoke = AgentClient.__build_invoke(
+            tooling.static_handlers,
+            tooling.mcp_schemas,
+            tooling.mcp_bridge,
+        )
+        tooling.mcp_ready = True
+
+    async def prepare(self) -> None:
+        """启动 MCP 并刷新可用工具列表。"""
+        await self.__ensure_mcp_ready()
 
     async def summarize(self) -> None:
         """将当前对话历史压缩为摘要并替换旧消息。"""
@@ -231,6 +287,7 @@ class AgentClient:
         add_to_history: bool = True,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送多条消息，可选写入历史与日志。"""
+        await self.__ensure_mcp_ready()
         conversation = self.__conversation
         chat_history = list(conversation.history)
         chat_history.extend(contents)
@@ -325,7 +382,13 @@ class AgentClient:
                 tool_call["function"]["arguments"],
             )
             result = await self.__tooling.invoke(openai_name, arguments)
-            tool_name = agent.agent_tools.resolve_tool_name(openai_name) or openai_name
+            tool_name = (
+                agent.agent_tools.resolve_tool_name(
+                    openai_name,
+                    self.__tooling.mcp_schemas,
+                )
+                or openai_name
+            )
             yield agent.agent_events.ToolInvoked(
                 tool_name,
                 agent.agent_tools.format_tool_arguments(arguments),
@@ -380,8 +443,15 @@ class AgentClient:
 
     @property
     def tool_whitelist(self) -> list[str]:
-        """当前 agent 允许调用的工具白名单。"""
-        return list(self.__tooling.whitelist)
+        """当前 agent 允许调用的工具白名单（含已展开的 MCP 工具）。"""
+        tooling = self.__tooling
+        if not tooling.mcp_schemas:
+            return list(tooling.whitelist)
+        expanded = list(tooling.whitelist)
+        for openai_name in tooling.mcp_schemas:
+            if openai_name not in expanded:
+                expanded.append(openai_name)
+        return expanded
 
     @property
     def model(self) -> str:
@@ -392,6 +462,14 @@ class AgentClient:
     def base_url(self) -> str:
         """OpenAI 兼容 API 的 base URL。"""
         return self.__model.base_url.strip() or "https://api.openai.com/v1"
+
+    async def aclose(self) -> None:
+        """关闭 MCP 连接与会话日志。"""
+        tooling = self.__tooling
+        if tooling.mcp_bridge is not None and tooling.mcp_ready:
+            await tooling.mcp_bridge.close()
+            tooling.mcp_ready = False
+        self.__conversation.resources.close()
 
     def close(self) -> None:
         """关闭会话日志文件。"""
@@ -412,4 +490,11 @@ class AgentClient:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
+        tooling = self.__tooling
+        if tooling.mcp_bridge is not None and tooling.mcp_ready:
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                asyncio.run(self.aclose())
+                return
         self.close()

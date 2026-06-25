@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import os
 import pathlib
 import tomllib
 
 import agent.agent_config
 import agent.agent_tools
+import agent.mcp_bridge
 
 ETHAN_ROOT = pathlib.Path.cwd() / ".ethan"
 AGENTS_ROOT = ETHAN_ROOT / "agents"
@@ -16,6 +18,17 @@ GLOBAL_MODEL_FILE = GLOBAL_ETHAN_ROOT / "model.toml"
 GLOBAL_CONFIG_FILE = GLOBAL_ETHAN_ROOT / "config.toml"
 DEFAULT_MODEL_FILE = ETHAN_ROOT / "model.toml"
 DEFAULT_CONFIG_FILE = ETHAN_ROOT / "config.toml"
+GLOBAL_MCP_FILE = GLOBAL_ETHAN_ROOT / "mcp.json"
+DEFAULT_MCP_FILE = ETHAN_ROOT / "mcp.json"
+
+DEFAULT_MCP: dict[str, dict[str, object]] = {
+    "mcpServers": {
+        "godot-game": {
+            "command": "python",
+            "args": [".mcp/server.py"],
+        },
+    },
+}
 
 DEFAULT_MODEL: dict[str, str] = {
     "model": "gpt-4o-mini",
@@ -53,6 +66,16 @@ def load_config_toml(agent_name: str) -> dict:
     )
 
 
+def load_mcp_servers() -> dict[str, agent.mcp_bridge.McpServerConfig]:
+    """加载合并后的 mcp.json（global → project）。"""
+    merged = __load_merged_json(
+        GLOBAL_MCP_FILE,
+        DEFAULT_MCP_FILE,
+        DEFAULT_MCP,
+    )
+    return agent.mcp_bridge.parse_mcp_servers(merged)
+
+
 def __resolve_agent_directory(agent_name: str) -> pathlib.Path:
     if not agent_name or not agent_name.strip():
         raise ValueError("agent_name 不能为空")
@@ -67,6 +90,41 @@ def __load_toml_object(filepath: pathlib.Path) -> dict:
     if not isinstance(data, dict):
         raise ValueError(f"配置文件格式无效：{filepath}")
     return data
+
+
+def __load_json_object(filepath: pathlib.Path) -> dict:
+    data = json.loads(filepath.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"配置文件格式无效：{filepath}")
+    return data
+
+
+def __merge_mcp_layers(*layers: dict | None) -> dict:
+    merged_servers: dict[str, object] = {}
+    for layer in layers:
+        if layer is None:
+            continue
+        raw_servers = layer.get("mcpServers")
+        if isinstance(raw_servers, dict):
+            merged_servers.update(raw_servers)
+    return {"mcpServers": merged_servers}
+
+
+def __load_merged_json(
+    global_filepath: pathlib.Path,
+    project_filepath: pathlib.Path,
+    default_value: dict,
+) -> dict:
+    global_json = (
+        __load_json_object(global_filepath) if global_filepath.is_file() else None
+    )
+    project_json = (
+        __load_json_object(project_filepath) if project_filepath.is_file() else None
+    )
+    if global_json is None and project_json is None:
+        __write_json_object(project_filepath, default_value)
+        project_json = __load_json_object(project_filepath)
+    return __merge_mcp_layers(global_json, project_json)
 
 
 def __load_merged_toml(
@@ -150,5 +208,13 @@ def __write_toml_object(
     filepath.parent.mkdir(parents=True, exist_ok=True)
     filepath.write_text(
         __format_toml_document(data, header=header, footer_lines=footer_lines),
+        encoding="utf-8",
+    )
+
+
+def __write_json_object(filepath: pathlib.Path, data: dict) -> None:
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    filepath.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )

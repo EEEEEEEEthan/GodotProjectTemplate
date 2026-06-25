@@ -3,8 +3,8 @@
 import importlib
 
 __file_edit_tool = importlib.import_module(".file_edit_tool", __name__)
-__game_command_tool = importlib.import_module(".game_command_tool", __name__)
 __grep_search_tool = importlib.import_module(".grep_search_tool", __name__)
+__launch_game_tool = importlib.import_module(".launch_game_tool", __name__)
 __memory_tool = importlib.import_module(".memory_tool", __name__)
 __read_file_tool = importlib.import_module(".read_file_tool", __name__)
 __skill_tool = importlib.import_module(".skill_tool", __name__)
@@ -12,7 +12,7 @@ __system_info_tool = importlib.import_module(".system_info_tool", __name__)
 __walk_files_tool = importlib.import_module(".walk_files_tool", __name__)
 
 FileEditTool = __file_edit_tool.FileEditTool
-GameCommandTool = __game_command_tool.GameCommandTool
+LaunchGameTool = __launch_game_tool.LaunchGameTool
 GrepSearchTool = __grep_search_tool.GrepSearchTool
 MemoryTool = __memory_tool.MemoryTool
 ReadFileTool = __read_file_tool.ReadFileTool
@@ -22,7 +22,7 @@ WalkFilesTool = __walk_files_tool.WalkFilesTool
 
 __all__ = [
     "FileEditTool",
-    "GameCommandTool",
+    "LaunchGameTool",
     "GrepSearchTool",
     "MemoryTool",
     "ReadFileTool",

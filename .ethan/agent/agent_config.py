@@ -1,8 +1,10 @@
 """Agent 默认配置：系统提示词与内置 skill 路径。"""
 
 import dataclasses
+import typing
 
 import agent.agent_tools
+
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
 
@@ -21,3 +23,4 @@ class AgentConfig:
         default_factory=lambda: list(agent.agent_tools.TOOL_SCHEMAS)
     )
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
+    mcp_servers: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
