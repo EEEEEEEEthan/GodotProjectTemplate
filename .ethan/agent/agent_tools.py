@@ -438,6 +438,30 @@ def format_tool_arguments(arguments: dict[str, typing.Any]) -> str:
     )
 
 
+def format_tool_arguments_brief(
+    arguments: dict[str, typing.Any],
+    *,
+    max_value_length: int = 80,
+) -> str:
+    """将工具参数格式化为简短摘要，长值截断。"""
+    if not arguments:
+        return ""
+    parts: list[str] = []
+    for key, value in arguments.items():
+        if key == "__parse_error__":
+            continue
+        if isinstance(value, str):
+            text = value
+        elif isinstance(value, (dict, list)):
+            text = json.dumps(value, ensure_ascii=False)
+        else:
+            text = repr(value)
+        if len(text) > max_value_length:
+            text = f"{text[:max_value_length]}..."
+        parts.append(f"{key}={text}")
+    return ", ".join(parts)
+
+
 def parse_tool_arguments(arguments_text: str) -> dict[str, typing.Any]:
     """解析 LLM 返回的工具参数 JSON。"""
     if not arguments_text:

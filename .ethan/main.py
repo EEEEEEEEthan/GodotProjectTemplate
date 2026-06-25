@@ -1,10 +1,12 @@
 """Ethan 交互式 REPL 入口。"""
 
+import argparse
 import asyncio
 import sys
 
 import agent.agent_client
 import agent.agent_events
+import agent.agent_tools
 
 __DIM = "\033[90m"
 __RESET = "\033[0m"
@@ -28,8 +30,35 @@ def write_line_colored(value: str, *, dim: bool = True) -> None:
         sys.stdout.write(f"{value}\n")
 
 
+def parse_args() -> argparse.Namespace:
+    """解析命令行参数。"""
+    parser = argparse.ArgumentParser(description="Ethan 交互式 REPL")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="显示工具调用的完整参数与返回结果",
+    )
+    return parser.parse_args()
+
+
+def format_tool_header(
+    event: agent.agent_events.ToolInvoked,
+    *,
+    debug: bool,
+) -> str:
+    """按调试模式格式化工具调用摘要行。"""
+    if debug:
+        arguments_text = agent.agent_tools.format_tool_arguments(event.arguments)
+    else:
+        arguments_text = agent.agent_tools.format_tool_arguments_brief(event.arguments)
+    if not arguments_text:
+        return f"[{event.name}]"
+    return f"[{event.name}] {arguments_text}"
+
+
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
+    args = parse_args()
     client = agent.agent_client.AgentClient.load_agent("jason")
     try:
         await client.prepare()
@@ -53,13 +82,10 @@ async def main() -> None:
                             sys.stdout.write("\n")
                     except OSError:
                         pass
-                    tool_header = (
-                        f"[{event.name}]"
-                        if not event.arguments
-                        else f"[{event.name}] {event.arguments}"
+                    write_line_colored(
+                        format_tool_header(event, debug=args.debug)
                     )
-                    write_line_colored(tool_header)
-                    if event.result:
+                    if args.debug and event.result:
                         write_line_colored(event.result)
             sys.stdout.write("\n")
     finally:

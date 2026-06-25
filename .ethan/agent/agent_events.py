@@ -1,6 +1,9 @@
 """Agent 流式事件类型：文本增量、工具调用与回合结束。"""
 
+from __future__ import annotations
+
 import dataclasses
+import typing
 
 
 @dataclasses.dataclass(frozen=True)
@@ -20,7 +23,7 @@ class ToolInvoked(AgentEvent):
     """一次工具调用及其返回结果。"""
 
     name: str
-    arguments: str
+    arguments: dict[str, typing.Any]
     result: str
 
 

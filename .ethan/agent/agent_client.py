@@ -309,7 +309,10 @@ class AgentClient:
                     tool_header = (
                         f"[{event.name}]"
                         if not event.arguments
-                        else f"[{event.name}] {event.arguments}"
+                        else (
+                            f"[{event.name}] "
+                            f"{agent.agent_tools.format_tool_arguments(event.arguments)}"
+                        )
                     )
                     conversation.log.write(f"{tool_header}\n")
                     if event.result:
@@ -391,7 +394,7 @@ class AgentClient:
             )
             yield agent.agent_events.ToolInvoked(
                 tool_name,
-                agent.agent_tools.format_tool_arguments(arguments),
+                arguments,
                 result,
             )
             messages.append(
