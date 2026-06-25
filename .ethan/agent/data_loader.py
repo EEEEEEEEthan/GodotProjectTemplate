@@ -25,7 +25,7 @@ DEFAULT_MCP: dict[str, dict[str, object]] = {
     "mcpServers": {
         "godot-game": {
             "command": "python",
-            "args": [".mcp/server.py"],
+            "args": [".ethan/mcp/server.py"],
         },
     },
 }

@@ -16,7 +16,7 @@
 安装依赖：
 
 ```bash
-pip install -r .mcp/requirements.txt
+pip install -r requirements.txt
 ```
 
 在 Cursor 的 MCP 设置（`~/.cursor/mcp.json` 或项目 `.cursor/mcp.json`）中添加：
@@ -26,7 +26,7 @@ pip install -r .mcp/requirements.txt
   "mcpServers": {
 	"godot-game": {
 	  "command": "python",
-	  "args": ["C:/Projects/Template/.mcp/server.py"]
+	  "args": ["C:/Projects/Template/.ethan/mcp/server.py"]
 	}
   }
 }
