@@ -15,7 +15,7 @@ description: 通过 Game MCP eval 命令在运行中的 Godot 实例执行 GDScr
 game_command(port=PORT, command="eval", data={"file": "res://path/to/script.gd"})
 ```
 
-`PORT` 取自游戏启动日志：`Game MCP: HTTP 服务已启动，端口 XXXX`。
+`PORT` 优先取自 `launch_game_tool_launch_game` 返回值；否则在启动日志中查找 `<<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=XXXX>>>`。
 
 ## 脚本存放位置
 

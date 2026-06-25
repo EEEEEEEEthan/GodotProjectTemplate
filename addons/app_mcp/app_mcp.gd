@@ -6,6 +6,8 @@ const PLUGIN_CONFIG_PATH := "res://addons/app_mcp/plugin.cfg"
 const DEFAULT_PORT := 8765
 const MAX_PORT_ATTEMPTS := 100
 const ROUTE_PATH := "/mcp"
+const READY_LOG_TEMPLATE := "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=%d>>>"
+const BIND_FAILED_LOG_LINE := "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
 
 var _handler = func(command: String, data: Dictionary, respond: Callable) -> void: pass
 var _tcp_server := TCPServer.new()
@@ -17,7 +19,7 @@ func _init(handler: Callable) -> void:
 	_handler = handler
 	var port: int = start()
 	if port > 0:
-		print("Game MCP: HTTP 服务已启动，端口 %d" % port)
+		print(READY_LOG_TEMPLATE % port)
 
 func register_handle(handle: Object) -> void:
 	var command_name := _resolve_command_name(handle)
@@ -42,7 +44,8 @@ func start(preferred_port: int = 0) -> int:
 			set_process(true)
 			return port
 		port += 1
-	push_error("Game MCP: 无法绑定端口")
+	push_error(BIND_FAILED_LOG_LINE)
+	print(BIND_FAILED_LOG_LINE)
 	return -1
 
 

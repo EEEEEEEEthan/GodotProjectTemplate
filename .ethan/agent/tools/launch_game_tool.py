@@ -4,10 +4,19 @@ from __future__ import annotations
 
 import os
 import pathlib
+import re
 import subprocess
 import sys
+import time
 import typing
 from datetime import datetime
+
+_MCP_READY_LOG_PATTERN = re.compile(
+    r"<<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=(\d+)>>>"
+)
+_MCP_BIND_FAILED_MARKER = "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
+_MCP_READY_POLL_INTERVAL_SECONDS = 0.2
+_MCP_READY_POLL_TIMEOUT_SECONDS = 60.0
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
@@ -96,12 +105,16 @@ class LaunchGameTool:
         if process_error is not None:
             return process_error
 
+        port_result = LaunchGameTool.__wait_for_mcp_port(log_path)
+        if isinstance(port_result, str):
+            return port_result
+
         mode_label = "无头模式" if headless else "窗口模式"
         return (
-            "游戏已启动\n"
+            f"游戏已启动（{mode_label}）。\n"
+            f"MCP 端口：{port_result}\n"
             f"日志：{relative_log_path}\n"
-            "请在上述日志或游戏控制台中查找「Game MCP: HTTP 服务已启动，端口 XXXX」，"
-            "再使用 MCP game_command 连接。"
+            "可使用 MCP game_command 连接。"
         )
 
     @staticmethod
@@ -164,6 +177,27 @@ class LaunchGameTool:
         except OSError as error:
             return f"错误：无法启动游戏进程：{error}"
         return None
+
+    @staticmethod
+    def __wait_for_mcp_port(log_path: pathlib.Path) -> int | str:
+        deadline = time.monotonic() + _MCP_READY_POLL_TIMEOUT_SECONDS
+        while time.monotonic() < deadline:
+            if log_path.is_file():
+                try:
+                    content = log_path.read_text(encoding="utf-8", errors="replace")
+                except OSError as error:
+                    return f"错误：无法读取启动日志（{log_path.as_posix()}）：{error}"
+                if _MCP_BIND_FAILED_MARKER in content:
+                    return (
+                        f"错误：游戏 MCP 无法绑定端口（{log_path.as_posix()}）。"
+                    )
+                match = _MCP_READY_LOG_PATTERN.search(content)
+                if match:
+                    return int(match.group(1))
+            time.sleep(_MCP_READY_POLL_INTERVAL_SECONDS)
+        return (
+            f"错误：超时未在日志中找到 MCP 握手标记 <<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=…>>>（{log_path.as_posix()}）。"
+        )
 
     @staticmethod
     def __create_launch_log_path(project_root: pathlib.Path) -> pathlib.Path:
