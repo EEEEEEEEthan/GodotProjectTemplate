@@ -9,12 +9,14 @@ import pathlib
 import subprocess
 import sys
 import typing
+from datetime import datetime
 
 _game_client = importlib.import_module("agent.tools._game_client")
 _output_util = importlib.import_module("agent.tools._output_util")
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
+_LAUNCH_LOG_DIRECTORY = pathlib.Path(".ethan") / ".temp"
 
 
 class GameCommandTool:
@@ -53,6 +55,10 @@ class GameCommandTool:
         if headless:
             launch_arguments = ["--headless", *launch_arguments]
 
+        log_path = GameCommandTool.__create_launch_log_path(project_root)
+        relative_log_path = log_path.relative_to(project_root).as_posix()
+        launch_arguments = ["--log-file", relative_log_path, *launch_arguments]
+
         process_error = GameCommandTool.__start_detached_process(
             project_root,
             engine_executable,
@@ -66,7 +72,8 @@ class GameCommandTool:
             f"游戏已启动（{mode_label}）。\n"
             f"引擎：{_ENGINE_RELATIVE.as_posix()}\n"
             f"工作目录：{project_root}\n"
-            "请在游戏控制台日志中查找「Game MCP: HTTP 服务已启动，端口 XXXX」，"
+            f"额外日志：{relative_log_path}\n"
+            "请在上述日志或游戏控制台中查找「Game MCP: HTTP 服务已启动，端口 XXXX」，"
             "再使用 game_command_tool_send_command 连接。"
         )
 
@@ -161,12 +168,17 @@ class GameCommandTool:
                 cwd=os.fspath(project_root),
                 creationflags=creation_flags,
                 close_fds=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
             )
         except OSError as error:
             return f"错误：无法启动游戏进程：{error}"
         return None
+
+    @staticmethod
+    def __create_launch_log_path(project_root: pathlib.Path) -> pathlib.Path:
+        log_directory = project_root / _LAUNCH_LOG_DIRECTORY
+        log_directory.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return log_directory / f"game_{timestamp}.log"
 
     @staticmethod
     def __run_synchronous(

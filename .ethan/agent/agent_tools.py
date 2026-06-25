@@ -364,7 +364,7 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
             "description": (
                 "使用项目根目录 .engine/.engine.exe 启动 Godot 游戏。"
                 "缺省会先执行 .engine-prepare.bat 与 --headless --import，再以窗口模式后台启动。"
-                "启动后查看控制台日志中的 MCP 端口，再用 game_command_tool_send_command 连接。"
+                "启动后引擎输出会额外写入 .ethan/.temp/game_时间戳.log，便于查找 MCP 端口。"
             ),
             "parameters": {
                 "type": "object",
