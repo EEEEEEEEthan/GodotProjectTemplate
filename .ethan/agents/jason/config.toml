@@ -8,6 +8,24 @@ skills = [
   ".agents/skills/godot-mcp-eval",
 ]
 
+# 忽略文件：目录树遍历时跳过的文件/文件夹名（fnmatch 通配符）
+ignoreFiles = [
+  ".git",
+  ".idea",
+  ".vs",
+  "__pycache__",
+  "node_modules",
+  "bin",
+  "obj",
+  "*.pyc",
+  ".agents",
+  ".cursor",
+  ".claude",
+  ".ethan",
+  ".venv",
+  ".temp",
+]
+
 tools = [
   "skill_tool_learn_skill",
   "skill_tool_run_skill_script",

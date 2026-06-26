@@ -39,6 +39,7 @@ DEFAULT_CONFIG: dict[str, str | list[str]] = {
     "systemPrompt": agent.agent_config.DEFAULT_SYSTEM_PROMPT,
     "skills": list(agent.agent_config.DEFAULT_SKILLS),
     "tools": list(agent.agent_tools.TOOL_SCHEMAS),
+    "ignoreFiles": list(agent.agent_config.DEFAULT_IGNORE_FILES),
 }
 
 
@@ -67,11 +68,13 @@ def load_config_toml(agent_name: str) -> dict:
     )
 
 
-def load_mcp_servers() -> dict[str, agent.mcp_bridge.McpServerConfig]:
-    """加载合并后的 mcp.json（global → project）。"""
+def load_mcp_servers(agent_name: str) -> dict[str, agent.mcp_bridge.McpServerConfig]:
+    """加载合并后的 mcp.json（global → project → agent）。"""
+    agent_directory = __resolve_agent_directory(agent_name)
     merged = __load_merged_json(
         GLOBAL_MCP_FILE,
         DEFAULT_MCP_FILE,
+        agent_directory / "mcp.json",
         DEFAULT_MCP,
     )
     return agent.mcp_bridge.parse_mcp_servers(merged)
@@ -114,6 +117,7 @@ def __merge_mcp_layers(*layers: dict | None) -> dict:
 def __load_merged_json(
     global_filepath: pathlib.Path,
     project_filepath: pathlib.Path,
+    agent_filepath: pathlib.Path,
     default_value: dict,
 ) -> dict:
     global_json = (
@@ -122,10 +126,13 @@ def __load_merged_json(
     project_json = (
         __load_json_object(project_filepath) if project_filepath.is_file() else None
     )
-    if global_json is None and project_json is None:
+    agent_json = (
+        __load_json_object(agent_filepath) if agent_filepath.is_file() else None
+    )
+    if global_json is None and project_json is None and agent_json is None:
         __write_json_object(project_filepath, default_value)
         project_json = __load_json_object(project_filepath)
-    return __merge_mcp_layers(global_json, project_json)
+    return __merge_mcp_layers(global_json, project_json, agent_json)
 
 
 def __load_merged_toml(

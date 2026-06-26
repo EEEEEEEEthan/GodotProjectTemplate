@@ -32,29 +32,15 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     ),
 }
 
-IGNORE_PATTERNS: tuple[str, ...] = (
-    ".git",
-    ".idea",
-    ".vs",
-    "__pycache__",
-    "node_modules",
-    "bin",
-    "obj",
-    "*.pyc",
-    ".agents",
-    ".cursor",
-    ".claude",
-    ".ethan",
-    ".venv",
-    ".temp",
-)
-
 
 class WalkFilesTool:
     """深度优先遍历目录并缩进输出文件名。"""
 
-    @staticmethod
+    def __init__(self, ignore_patterns: typing.Sequence[str]) -> None:
+        self.__ignore_patterns = tuple(ignore_patterns)
+
     def walk_files(
+        self,
         directory: str,
         filter: str | None = None,  # pylint: disable=redefined-builtin
         depth: int | None = None,
@@ -71,7 +57,7 @@ class WalkFilesTool:
         filter_pattern = filter.strip() if filter else "*"
         max_depth = depth if depth is not None else 1
         output_lines: list[str] = []
-        WalkFilesTool.__walk_files(
+        self.__walk_files(
             str(root),
             filter_pattern,
             max_depth,
@@ -81,57 +67,64 @@ class WalkFilesTool:
             return "(空目录)"
         return "\n".join(output_lines)
 
-    @staticmethod
-    def __is_ignored(name: str) -> bool:
-        return any(fnmatch.fnmatch(name, pattern) for pattern in IGNORE_PATTERNS)
+    def __is_ignored(self, name: str) -> bool:
+        return any(
+            fnmatch.fnmatch(name, pattern) for pattern in self.__ignore_patterns
+        )
 
     @staticmethod
     @functools.lru_cache(maxsize=None)
-    def __has_matching_descendants(path: str, filter_pattern: str) -> bool:
+    def __has_matching_descendants(
+        path: str,
+        filter_pattern: str,
+        ignore_patterns: tuple[str, ...],
+    ) -> bool:
         if filter_pattern == "*":
             return True
         try:
             for entry in os.scandir(path):
-                if WalkFilesTool.__is_ignored(entry.name):
+                if any(fnmatch.fnmatch(entry.name, pattern) for pattern in ignore_patterns):
                     continue
                 if entry.is_file(follow_symlinks=False) and fnmatch.fnmatch(
                     entry.name, filter_pattern
                 ):
                     return True
                 if entry.is_dir(follow_symlinks=False) and WalkFilesTool.__has_matching_descendants(
-                    entry.path, filter_pattern
+                    entry.path, filter_pattern, ignore_patterns
                 ):
                     return True
         except OSError:
             return False
         return False
 
-    @staticmethod
-    def __should_show(entry: os.DirEntry[str], filter_pattern: str) -> bool:
+    def __should_show(self, entry: os.DirEntry[str], filter_pattern: str) -> bool:
         if fnmatch.fnmatch(entry.name, filter_pattern):
             return True
         return (
             entry.is_dir(follow_symlinks=False)
             and filter_pattern != "*"
-            and WalkFilesTool.__has_matching_descendants(entry.path, filter_pattern)
+            and self.__has_matching_descendants(
+                entry.path, filter_pattern, self.__ignore_patterns
+            )
         )
 
-    @staticmethod
-    def __should_recurse(entry: os.DirEntry[str], filter_pattern: str) -> bool:
+    def __should_recurse(self, entry: os.DirEntry[str], filter_pattern: str) -> bool:
         if not entry.is_dir(follow_symlinks=False):
             return False
         if filter_pattern == "*":
             return True
         if fnmatch.fnmatch(entry.name, filter_pattern):
             return True
-        return WalkFilesTool.__has_matching_descendants(entry.path, filter_pattern)
+        return self.__has_matching_descendants(
+            entry.path, filter_pattern, self.__ignore_patterns
+        )
 
     @staticmethod
     def __format_prefix(prefixes: list[bool]) -> str:
         return "".join(" " if last else "│" for last in prefixes)
 
-    @staticmethod
     def __walk_files(
+        self,
         root: str,
         filter_pattern: str,
         max_depth: int,
@@ -153,19 +146,19 @@ class WalkFilesTool:
         entries = [
             entry
             for entry in entries
-            if not WalkFilesTool.__is_ignored(entry.name)
+            if not self.__is_ignored(entry.name)
             and (entry.is_dir(follow_symlinks=False) or entry.is_file(follow_symlinks=False))
         ]
         entries = [
             entry
             for entry in entries
-            if WalkFilesTool.__should_show(entry, filter_pattern)
-            or WalkFilesTool.__should_recurse(entry, filter_pattern)
+            if self.__should_show(entry, filter_pattern)
+            or self.__should_recurse(entry, filter_pattern)
         ]
 
         for index, entry in enumerate(entries):
             is_last = index == len(entries) - 1
-            show = WalkFilesTool.__should_show(entry, filter_pattern)
+            show = self.__should_show(entry, filter_pattern)
 
             if show:
                 connector = "└ " if is_last else "├ "
@@ -174,8 +167,8 @@ class WalkFilesTool:
                     WalkFilesTool.__format_prefix(prefixes) + connector + name
                 )
 
-            if WalkFilesTool.__should_recurse(entry, filter_pattern):
-                WalkFilesTool.__walk_files(
+            if self.__should_recurse(entry, filter_pattern):
+                self.__walk_files(
                     entry.path,
                     filter_pattern,
                     max_depth,

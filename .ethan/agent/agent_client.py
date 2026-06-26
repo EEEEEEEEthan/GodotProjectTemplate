@@ -73,7 +73,9 @@ class AgentClient:
             or list(agent.agent_tools.TOOL_SCHEMAS),
             system_prompt=AgentClient.__get_string(merged_config, "systemPrompt")
             or agent.agent_config.DEFAULT_SYSTEM_PROMPT,
-            mcp_servers=agent.data_loader.load_mcp_servers(),
+            ignore_files=AgentClient.__get_string_array(merged_config, "ignoreFiles")
+            or list(agent.agent_config.DEFAULT_IGNORE_FILES),
+            mcp_servers=agent.data_loader.load_mcp_servers(path),
         )
         return AgentClient(path, agent_model, agent_config)
 
@@ -144,6 +146,7 @@ class AgentClient:
         )
         skill_tool = agent.tools.skill_tool.SkillTool(skill_index, self.name)
         memory_tool = agent.tools.memory_tool.MemoryTool(self.name)
+        walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(config.ignore_files)
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
@@ -161,9 +164,7 @@ class AgentClient:
             "grep_search_tool_grep_search": (
                 agent.tools.grep_search_tool.GrepSearchTool.grep_search
             ),
-            "walk_files_tool_walk_files": (
-                agent.tools.walk_files_tool.WalkFilesTool.walk_files
-            ),
+            "walk_files_tool_walk_files": walk_files_tool.walk_files,
             "system_info_tool_system_info": (
                 agent.tools.system_info_tool.SystemInfoTool.system_info
             ),

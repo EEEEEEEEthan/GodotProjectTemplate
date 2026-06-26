@@ -13,6 +13,23 @@ DEFAULT_SKILLS = [
     ".ethan/builtin-skills/create-file",
 ]
 
+DEFAULT_IGNORE_FILES: tuple[str, ...] = (
+    ".git",
+    ".idea",
+    ".vs",
+    "__pycache__",
+    "node_modules",
+    "bin",
+    "obj",
+    "*.pyc",
+    ".agents",
+    ".cursor",
+    ".claude",
+    ".ethan",
+    ".venv",
+    ".temp",
+)
+
 
 @dataclasses.dataclass
 class AgentConfig:
@@ -23,4 +40,7 @@ class AgentConfig:
         default_factory=lambda: list(agent.agent_tools.TOOL_SCHEMAS)
     )
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
+    ignore_files: list[str] = dataclasses.field(
+        default_factory=lambda: list(DEFAULT_IGNORE_FILES)
+    )
     mcp_servers: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
