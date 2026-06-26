@@ -5,37 +5,31 @@ from __future__ import annotations
 import fnmatch
 import functools
 import os
-import pathlib
 import typing
 
-import agent.tools._path_util
+from . import _path_util as path_util
+from . import _schema_util as schema_util
 
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "walk_files_tool_walk_files": {
-        "type": "function",
-        "function": {
-            "name": "walk_files_tool_walk_files",
-            "description": "遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "directory": {
-                        "type": "string",
-                        "description": "要遍历的目录（相对工作目录）",
-                    },
-                    "filter": {
-                        "type": "string",
-                        "description": "文件与文件夹名通配符，缺省 *",
-                    },
-                    "depth": {
-                        "type": "integer",
-                        "description": "最大层级深度，0 表示不限制，缺省 1",
-                    },
-                },
-                "required": ["directory"],
+    "walk_files_tool_walk_files": schema_util.function_schema(
+        "walk_files_tool_walk_files",
+        "遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件",
+        {
+            "directory": {
+                "type": "string",
+                "description": "要遍历的目录（相对工作目录）",
+            },
+            "filter": {
+                "type": "string",
+                "description": "文件与文件夹名通配符，缺省 *",
+            },
+            "depth": {
+                "type": "integer",
+                "description": "最大层级深度，0 表示不限制，缺省 1",
             },
         },
-    },
+        required=["directory"],
+    ),
 }
 
 IGNORE_PATTERNS: tuple[str, ...] = (
@@ -66,16 +60,13 @@ class WalkFilesTool:
         depth: int | None = None,
     ) -> str:
         """遍历目标目录下的文件与文件夹。"""
-        relative_directory, directory_error = agent.tools._path_util.resolve_relative_path(
+        root, directory_error = path_util.resolve_directory(
             directory,
             label="目录",
+            display=directory,
         )
         if directory_error is not None:
             return directory_error
-
-        root = (pathlib.Path.cwd() / relative_directory).resolve()
-        if not root.is_dir():
-            return f"错误：目录不存在：{directory}"
 
         filter_pattern = filter.strip() if filter else "*"
         max_depth = depth if depth is not None else 1

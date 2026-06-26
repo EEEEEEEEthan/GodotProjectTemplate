@@ -4,46 +4,39 @@ from __future__ import annotations
 
 import fnmatch
 import os
-import pathlib
 import re
 import typing
 
-import agent.tools._path_util
+from . import _path_util as path_util
+from . import _schema_util as schema_util
 
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "grep_search_tool_grep_search": {
-        "type": "function",
-        "function": {
-            "name": "grep_search_tool_grep_search",
-            "description": "在工作区内用正则全目录搜索文件内容。用于查找符号引用、字符串、模式匹配等；取得行号后可配合 read_lines 阅读上下文",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "pattern": {
-                        "type": "string",
-                        "description": "正则表达式（搜索每行内容）",
-                    },
-                    "directory": {
-                        "type": "string",
-                        "description": "搜索根目录（相对工作目录），缺省 .",
-                    },
-                    "filter": {
-                        "type": "string",
-                        "description": "文件名通配符（fnmatch），缺省 *",
-                    },
-                    "ignore_case": {
-                        "type": "boolean",
-                        "description": "忽略大小写",
-                    },
-                    "max_matches": {
-                        "type": "integer",
-                        "description": "最多输出匹配行数，缺省 500",
-                    },
-                },
-                "required": ["pattern"],
+    "grep_search_tool_grep_search": schema_util.function_schema(
+        "grep_search_tool_grep_search",
+        "在工作区内用正则全目录搜索文件内容。用于查找符号引用、字符串、模式匹配等；取得行号后可配合 read_lines 阅读上下文",
+        {
+            "pattern": schema_util.pattern_property(
+                "正则表达式（搜索每行内容）"
+            ),
+            "directory": {
+                "type": "string",
+                "description": "搜索根目录（相对工作目录），缺省 .",
+            },
+            "filter": {
+                "type": "string",
+                "description": "文件名通配符（fnmatch），缺省 *",
+            },
+            "ignore_case": {
+                "type": "boolean",
+                "description": "忽略大小写",
+            },
+            "max_matches": {
+                "type": "integer",
+                "description": "最多输出匹配行数，缺省 500",
             },
         },
-    },
+        required=["pattern"],
+    ),
 }
 
 DEFAULT_SKIP_DIRS = frozenset({".git", "bin", "obj", "node_modules", ".vs", "__pycache__"})
@@ -64,17 +57,12 @@ class GrepSearchTool:
         if not pattern or not pattern.strip():
             return "错误：pattern 不能为空。"
 
-        directory_text = directory.strip() if directory else "."
-        relative_directory, directory_error = agent.tools._path_util.resolve_relative_path(
-            directory_text,
+        root, directory_error = path_util.resolve_directory(
+            directory,
             label="目录",
         )
         if directory_error is not None:
             return directory_error
-
-        root = (pathlib.Path.cwd() / relative_directory).resolve()
-        if not root.is_dir():
-            return f"错误：目录不存在：{directory_text}"
 
         filter_pattern = filter.strip() if filter else "*"
         match_limit = max_matches if max_matches is not None else 500

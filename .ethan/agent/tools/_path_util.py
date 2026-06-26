@@ -21,3 +21,26 @@ def resolve_relative_path(
             f"错误：{label}必须是相对工作目录的路径，不接受绝对路径：{raw}",
         )
     return path, None
+
+
+def resolve_directory(
+    raw: str | None,
+    *,
+    label: str = "目录",
+    default: str = ".",
+    display: str | None = None,
+) -> tuple[pathlib.Path | None, str | None]:
+    """校验相对目录路径并解析为绝对路径；不存在或非目录时返回错误。"""
+    directory_text = raw.strip() if raw else default
+    relative_directory, directory_error = resolve_relative_path(
+        directory_text,
+        label=label,
+    )
+    if directory_error is not None:
+        return None, directory_error
+
+    root = (pathlib.Path.cwd() / relative_directory).resolve()
+    if not root.is_dir():
+        shown = display if display is not None else directory_text
+        return None, f"错误：目录不存在：{shown}"
+    return root, None

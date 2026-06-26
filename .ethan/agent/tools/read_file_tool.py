@@ -6,87 +6,58 @@ import pathlib
 import re
 import typing
 
-import agent.tools._cs_outline
-import agent.tools._output_util
-import agent.tools._path_util
+from . import _cs_outline as cs_outline
+from . import _output_util as output_util
+from . import _path_util as path_util
+from . import _schema_util as schema_util
+
+_RELATIVE_FILE_PATH = schema_util.file_path_property(
+    "文件路径（相对工作目录）"
+)
 
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "read_file_tool_read_file_outline_cs": {
-        "type": "function",
-        "function": {
-            "name": "read_file_tool_read_file_outline_cs",
-            "description": "读取 C# 源文件大纲（namespace / 类型 / 成员）。阅读 .cs 文件时先读大纲",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "C# 源文件路径（相对工作目录）",
-                    },
-                },
-                "required": ["file_path"],
+    "read_file_tool_read_file_outline_cs": schema_util.function_schema(
+        "read_file_tool_read_file_outline_cs",
+        "读取 C# 源文件大纲（namespace / 类型 / 成员）。阅读 .cs 文件时先读大纲",
+        {
+            "file_path": schema_util.file_path_property(
+                "C# 源文件路径（相对工作目录）"
+            ),
+        },
+        required=["file_path"],
+    ),
+    "read_file_tool_read_file_outline_md": schema_util.function_schema(
+        "read_file_tool_read_file_outline_md",
+        "读取 Markdown 文件标题大纲。阅读 .md 文件时先读大纲",
+        {
+            "file_path": schema_util.file_path_property(
+                "Markdown 文件路径（相对工作目录）"
+            ),
+        },
+        required=["file_path"],
+    ),
+    "read_file_tool_read_lines": schema_util.function_schema(
+        "read_file_tool_read_lines",
+        "按行号范围读取文件片段（1-based，含首尾）。通常在 grep_search 或大纲取得行号后使用",
+        {
+            "file_path": _RELATIVE_FILE_PATH,
+            "start_line": {
+                "type": "integer",
+                "description": "起始行号（1-based，含）",
+            },
+            "end_line": {
+                "type": "integer",
+                "description": "结束行号（1-based，含）",
             },
         },
-    },
-    "read_file_tool_read_file_outline_md": {
-        "type": "function",
-        "function": {
-            "name": "read_file_tool_read_file_outline_md",
-            "description": "读取 Markdown 文件标题大纲。阅读 .md 文件时先读大纲",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "Markdown 文件路径（相对工作目录）",
-                    },
-                },
-                "required": ["file_path"],
-            },
-        },
-    },
-    "read_file_tool_read_lines": {
-        "type": "function",
-        "function": {
-            "name": "read_file_tool_read_lines",
-            "description": "按行号范围读取文件片段（1-based，含首尾）。通常在 grep_search 或大纲取得行号后使用",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "文件路径（相对工作目录）",
-                    },
-                    "start_line": {
-                        "type": "integer",
-                        "description": "起始行号（1-based，含）",
-                    },
-                    "end_line": {
-                        "type": "integer",
-                        "description": "结束行号（1-based，含）",
-                    },
-                },
-                "required": ["file_path", "start_line", "end_line"],
-            },
-        },
-    },
-    "read_file_tool_read_whole_file": {
-        "type": "function",
-        "function": {
-            "name": "read_file_tool_read_whole_file",
-            "description": "读取文件全文。用于非 .cs/.md 文件，或大纲策略无法定位细节时的 fallback",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "文件路径（相对工作目录）",
-                    },
-                },
-                "required": ["file_path"],
-            },
-        },
-    },
+        required=["file_path", "start_line", "end_line"],
+    ),
+    "read_file_tool_read_whole_file": schema_util.function_schema(
+        "read_file_tool_read_whole_file",
+        "读取文件全文。用于非 .cs/.md 文件，或大纲策略无法定位细节时的 fallback",
+        {"file_path": _RELATIVE_FILE_PATH},
+        required=["file_path"],
+    ),
 }
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
@@ -111,7 +82,7 @@ class ReadFileTool:
         except OSError as error:
             return f"错误：无法读取文件：{error}"
 
-        return warning + agent.tools._cs_outline.outline_cs_text(lines)
+        return warning + cs_outline.outline_cs_text(lines)
 
     @staticmethod
     def read_file_outline_md(file_path: str) -> str:
@@ -162,7 +133,7 @@ class ReadFileTool:
 
         clamped_end = min(end_line, total)
         content = "".join(lines[line_no - 1] for line_no in range(start_line, clamped_end + 1))
-        return agent.tools._output_util.truncate_output(content)
+        return output_util.truncate_output(content)
 
     @staticmethod
     def read_whole_file(file_path: str) -> str:
@@ -174,11 +145,11 @@ class ReadFileTool:
             content = absolute_path.read_text(encoding="utf-8")
         except OSError as error:
             return f"错误：无法读取文件：{error}"
-        return agent.tools._output_util.truncate_output(content)
+        return output_util.truncate_output(content)
 
     @staticmethod
     def __resolve_file(file_path: str) -> tuple[pathlib.Path | None, str | None]:
-        relative_path, path_error = agent.tools._path_util.resolve_relative_path(
+        relative_path, path_error = path_util.resolve_relative_path(
             file_path,
             label="文件路径",
         )
