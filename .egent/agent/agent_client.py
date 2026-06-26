@@ -13,6 +13,8 @@ import typing
 import httpx
 import openai
 
+import agent_config
+
 import agent.agent_config
 import agent.agent_events
 import agent.agent_model
@@ -63,37 +65,27 @@ class AgentClient:
 
     @staticmethod
     def load_agent(path: str) -> AgentClient:
-        """从 .egent/agents/{path} 加载 agent。"""
-        merged_model = agent.data_loader.load_model_toml(path)
-        merged_config = agent.data_loader.load_config_toml(path)
+        """从 agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
+        definition = agent_config.get_definition(path)
+        agent.data_loader.resolve_agent_directory(path)
+        api_keys = agent.data_loader.load_api_keys()
+        api_key = api_keys.get(definition.key)
+        if not api_key:
+            raise ValueError(
+                f"model.toml 中未找到 API Key：{definition.key!r}（Agent：{path}）"
+            )
         agent_model = agent.agent_model.AgentModel(
-            api_key=AgentClient.__get_string(merged_model, "apiKey"),
-            model=AgentClient.__get_string(merged_model, "model") or "gpt-4o-mini",
-            base_url=AgentClient.__get_string(merged_model, "baseUrl")
-            or "https://api.openai.com/v1",
+            api_key=api_key,
+            model=definition.model,
+            base_url=definition.base_url,
         )
-        agent_config = agent.agent_config.AgentConfig(
-            skills=AgentClient.__get_string_array(merged_config, "skills")
-            or list(agent.agent_config.DEFAULT_SKILLS),
-            system_prompt=AgentClient.__get_string(merged_config, "systemPrompt")
-            or agent.agent_config.DEFAULT_SYSTEM_PROMPT,
-            ignore_files=AgentClient.__get_string_array(merged_config, "ignoreFiles")
-            or list(agent.agent_config.DEFAULT_IGNORE_FILES),
-            mcp_servers=agent.data_loader.load_mcp_servers(path),
+        runtime_config = agent.agent_config.AgentConfig(
+            skills=list(definition.skills),
+            system_prompt=definition.system_prompt,
+            ignore_files=list(definition.ignore_files),
+            mcp_servers=agent.data_loader.load_mcp_servers(),
         )
-        return AgentClient(path, agent_model, agent_config)
-
-    @staticmethod
-    def __get_string(data: dict, key: str) -> str | None:
-        value = data.get(key)
-        return value if isinstance(value, str) else None
-
-    @staticmethod
-    def __get_string_array(data: dict, key: str) -> list[str] | None:
-        value = data.get(key)
-        if not isinstance(value, list):
-            return None
-        return [item for item in value if isinstance(item, str)]
+        return AgentClient(path, agent_model, runtime_config)
 
     def __init__(
         self,
