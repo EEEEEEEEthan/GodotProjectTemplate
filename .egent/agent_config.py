@@ -39,10 +39,10 @@ AGENTS: dict[str, AgentDefinition] = {
         key="volc",
         model="glm-4-7-251222",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
-        system_prompt=(
-            "你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.\n"
-            "你应该在合适的时候查看和更新你的memory"
-        ),
+        system_prompt="""
+你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.
+你应该在合适的时候查看和更新你的memory
+""".strip(),
         skills=(
             ".agents/skills/godot-autotest",
             ".agents/skills/godot-mcp-eval",
