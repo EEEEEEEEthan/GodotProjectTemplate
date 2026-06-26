@@ -16,10 +16,10 @@ AGENTS_ROOT = ETHAN_ROOT / "agents"
 GLOBAL_ETHAN_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Ethan"
 GLOBAL_MODEL_FILE = GLOBAL_ETHAN_ROOT / "model.toml"
 GLOBAL_CONFIG_FILE = GLOBAL_ETHAN_ROOT / "config.toml"
-DEFAULT_MODEL_FILE = ETHAN_ROOT / "model.toml"
-DEFAULT_CONFIG_FILE = ETHAN_ROOT / "config.toml"
+DEFAULT_MODEL_FILE = AGENTS_ROOT / "model.toml"
+DEFAULT_CONFIG_FILE = AGENTS_ROOT / "config.toml"
 GLOBAL_MCP_FILE = GLOBAL_ETHAN_ROOT / "mcp.json"
-DEFAULT_MCP_FILE = ETHAN_ROOT / "mcp.json"
+DEFAULT_MCP_FILE = AGENTS_ROOT / "mcp.json"
 
 DEFAULT_MCP: dict[str, dict[str, object]] = {
     "mcpServers": {

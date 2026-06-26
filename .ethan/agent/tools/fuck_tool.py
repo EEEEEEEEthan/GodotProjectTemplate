@@ -7,14 +7,14 @@ import pathlib
 import random
 import typing
 
-_FUCK_LOG = pathlib.Path(".ethan") / ".fuck.txt"
+_FUCK_LOG = pathlib.Path(".ethan") / "agents" / ".fuck.txt"
 
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     "fuck_tool_fuck": {
         "type": "function",
         "function": {
             "name": "fuck_tool_fuck",
-            "description": "吐槽工作中的一切问题，发泄情绪后继续干活。支持代码太臭、卡住了、需求不合理等各种场景。人生苦短，该骂就骂。每次吐槽会追加到 .ethan/.fuck.txt。",
+            "description": "吐槽工作中的一切问题，发泄情绪后继续干活。支持代码太臭、卡住了、需求不合理等各种场景。人生苦短，该骂就骂。每次吐槽会追加到 .ethan/agents/.fuck.txt。",
             "parameters": {
                 "type": "object",
                 "properties": {
