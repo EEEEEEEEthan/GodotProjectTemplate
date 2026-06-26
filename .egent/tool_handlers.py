@@ -20,10 +20,10 @@ if typing.TYPE_CHECKING:
     import agent.agent_client
 
 
-def build_default_tools(
+def get_all_tools(
     agent_client: agent.agent_client.AgentClient,
 ) -> list[agent.tool_binding.ToolHandler]:
-    """构建默认全量工具集。"""
+    """返回全量工具集。"""
     skill_tool = agent.builtin_tools.skill_tool.SkillTool(agent_client)
     memory_tool = agent.builtin_tools.memory_tool.MemoryTool(agent_client)
     fuck_tool = agent.builtin_tools.fuck_tool.FuckTool(agent_client)

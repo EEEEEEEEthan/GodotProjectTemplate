@@ -71,7 +71,7 @@ async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
     client = agent.agent_client.AgentClient.load_agent(args.agent)
-    client.tools = tool_handlers.build_default_tools(client)
+    client.tools = tool_handlers.get_all_tools(client)
     try:
         await client.prepare()
         write_line_colored(f"@{client.name}, {client.model}, {client.base_url}")

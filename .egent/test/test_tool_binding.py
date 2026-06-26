@@ -50,7 +50,7 @@ def test_bind_all_builtin_names() -> None:
         AgentModel(api_key="", model="test", base_url="https://example.com/v1"),
         AgentConfig(),
     )
-    client.tools = tool_handlers.build_default_tools(client)
+    client.tools = tool_handlers.get_all_tools(client)
     resolved = sorted(
         agent.tool_binding.resolve_tool_name(handler)
         for handler in client.tools
