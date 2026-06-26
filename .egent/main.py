@@ -10,10 +10,23 @@ import openai
 import agent.agent_client
 import agent.agent_events
 import agent.agent_tools
+import agent_config
 import tool_handlers
 
 __DIM = "\033[90m"
 __RESET = "\033[0m"
+
+
+def _build_agent_client(name: str) -> agent.agent_client.AgentClient:
+    """从 agent_config 构造单个 AgentClient 并绑定工具。"""
+    client = agent.agent_client.AgentClient.load_agent(name)
+    client.tools = tool_handlers.get_all_tools(client)
+    return client
+
+
+AGENT_CLIENTS: dict[str, agent.agent_client.AgentClient] = {
+    name: _build_agent_client(name) for name in agent_config.AGENTS
+}
 
 
 def read_prompt() -> str | None:
@@ -70,8 +83,11 @@ def format_tool_header(
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    client = agent.agent_client.AgentClient.load_agent(args.agent)
-    client.tools = tool_handlers.get_all_tools(client)
+    client = AGENT_CLIENTS.get(args.agent)
+    if client is None:
+        known = ", ".join(sorted(AGENT_CLIENTS))
+        write_line_colored(f"未知 Agent：{args.agent}（可用：{known}）", dim=False)
+        return
     try:
         await client.prepare()
         write_line_colored(f"@{client.name}, {client.model}, {client.base_url}")
