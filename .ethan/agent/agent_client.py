@@ -148,6 +148,7 @@ class AgentClient:
         )
         skill_tool = agent.tools.skill_tool.SkillTool(skill_index, self.name)
         memory_tool = agent.tools.memory_tool.MemoryTool(self.name)
+        fuck_tool = agent.tools.fuck_tool.FuckTool(self.name)
         walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(config.ignore_files)
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
@@ -183,7 +184,7 @@ class AgentClient:
                 agent.tools.system_info_tool.SystemInfoTool.system_info
             ),
             "fuck_tool_fuck": (
-                agent.tools.fuck_tool.FuckTool.fuck
+                fuck_tool.fuck
             ),
             "memory_tool_add_item": memory_tool.add_item,
             "memory_tool_remove_item": memory_tool.remove_item,
