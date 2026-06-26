@@ -1,4 +1,4 @@
-"""从 .egent 目录加载 model.toml（API Key）与 mcp.json。"""
+"""从 .egent/loop 目录加载 model.toml（API Key）与 mcp.json。"""
 
 from __future__ import annotations
 
@@ -7,19 +7,20 @@ import os
 import pathlib
 import tomllib
 
-import agent_config
 import agent.mcp_bridge
+import loop.agent_config
 
 _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 EGENT_ROOT = _PACKAGE_DIR.parent
+LOOP_ROOT = EGENT_ROOT / "loop"
 PROJECT_ROOT = EGENT_ROOT.parent
 EGENT_TEMP_DIR = EGENT_ROOT / ".temp"
 DATA_ROOT = EGENT_ROOT / ".data"
 GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
 GLOBAL_MODEL_KEYS_FILE = GLOBAL_EGENT_ROOT / "model.toml"
-DEFAULT_MODEL_KEYS_FILE = EGENT_ROOT / "model.toml"
+DEFAULT_MODEL_KEYS_FILE = LOOP_ROOT / "model.toml"
 GLOBAL_MCP_FILE = GLOBAL_EGENT_ROOT / "mcp.json"
-DEFAULT_MCP_FILE = EGENT_ROOT / "mcp.json"
+DEFAULT_MCP_FILE = LOOP_ROOT / "mcp.json"
 
 DEFAULT_MCP: dict[str, dict[str, object]] = {
     "mcpServers": {
@@ -51,7 +52,7 @@ def __ensure_model_keys_file() -> None:
     if DEFAULT_MODEL_KEYS_FILE.is_file():
         return
     required_keys = {
-        definition.key for definition in agent_config.AGENTS.values()
+        definition.key for definition in loop.agent_config.AGENTS.values()
     }
     __write_toml_object(
         DEFAULT_MODEL_KEYS_FILE,

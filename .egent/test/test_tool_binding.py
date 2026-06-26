@@ -43,14 +43,14 @@ def test_bind_all_builtin_names() -> None:
     from agent.agent_client import AgentClient
     from agent.agent_model import AgentModel
 
-    import tool_handlers
+    import loop.tool_handlers
 
     client = AgentClient(
         "test",
         AgentModel(api_key="", model="test", base_url="https://example.com/v1"),
         AgentConfig(),
     )
-    client.tools = tool_handlers.get_all_tools(client)
+    client.tools = loop.tool_handlers.get_all_tools(client)
     resolved = sorted(
         agent.tool_binding.resolve_tool_name(handler)
         for handler in client.tools

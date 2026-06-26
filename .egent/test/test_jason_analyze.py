@@ -16,7 +16,7 @@ def main() -> int:
     print(f"=== test_jason_analyze ===")
     print(f"Working directory: {PROJECT_ROOT}")
 
-    cmd = [sys.executable, ".egent/main.py", "jason"]
+    cmd = [sys.executable, ".egent/loop/main.py", "jason"]
 
     try:
         result = subprocess.run(

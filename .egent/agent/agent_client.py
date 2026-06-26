@@ -13,9 +13,8 @@ import typing
 import httpx
 import openai
 
-import agent_config
-
 import agent.agent_config
+import loop.agent_config
 import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
@@ -65,8 +64,8 @@ class AgentClient:
 
     @staticmethod
     def load_agent(path: str) -> AgentClient:
-        """从 agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
-        definition = agent_config.get_definition(path)
+        """从 loop/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
+        definition = loop.agent_config.get_definition(path)
         agent.data_loader.resolve_agent_directory(path)
         api_keys = agent.data_loader.load_api_keys()
         api_key = api_keys.get(definition.key)
