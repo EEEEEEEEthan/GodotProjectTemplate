@@ -39,14 +39,14 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     ),
 }
 
-DEFAULT_SKIP_DIRS = frozenset({".git", "bin", "obj", "node_modules", ".vs", "__pycache__"})
-
-
 class GrepSearchTool:
     """在工作区内用正则搜索文件内容。"""
 
-    @staticmethod
+    def __init__(self, agent: typing.Any) -> None:
+        self.__ignore_patterns = tuple(agent.config.ignore_files)
+
     def grep_search(
+        self,
         pattern: str,
         directory: str | None = None,
         filter: str | None = None,  # pylint: disable=redefined-builtin
@@ -83,13 +83,13 @@ class GrepSearchTool:
         total = 0
         truncated = False
 
-        for file_path in GrepSearchTool.__iter_matching_files(str(root), filter_pattern):
+        for file_path in self.__iter_matching_files(str(root), filter_pattern):
             remaining = match_limit - total
             if remaining <= 0:
                 truncated = True
                 break
             matched, file_truncated, file_lines, file_warnings = (
-                GrepSearchTool.__search_file(file_path, compiled, cwd, remaining)
+                self.__search_file(file_path, compiled, cwd, remaining)
             )
             output_lines.extend(file_lines)
             warnings.extend(file_warnings)
@@ -110,19 +110,19 @@ class GrepSearchTool:
             return "(无匹配)"
         return "\n".join(parts)
 
-    @staticmethod
-    def __iter_matching_files(root: str, filter_pattern: str):
+    def __iter_matching_files(self, root: str, filter_pattern: str):
         root = os.path.abspath(root)
         for dirpath, dirnames, filenames in os.walk(root):
             dirnames[:] = sorted(
-                name for name in dirnames if name not in DEFAULT_SKIP_DIRS
+                name for name in dirnames
+                if not any(fnmatch.fnmatch(name, pattern) for pattern in self.__ignore_patterns)
             )
             for name in sorted(filenames, key=str.lower):
                 if fnmatch.fnmatch(name, filter_pattern):
                     yield os.path.join(dirpath, name)
 
-    @staticmethod
     def __search_file(
+        self,
         file_path: str,
         compiled: re.Pattern[str],
         rel_root: str,

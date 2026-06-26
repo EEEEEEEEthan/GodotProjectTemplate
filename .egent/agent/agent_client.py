@@ -166,6 +166,7 @@ class AgentClient:
         memory_tool = agent.tools.memory_tool.MemoryTool(self)
         fuck_tool = agent.tools.fuck_tool.FuckTool(self)
         walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(self)
+        grep_search_tool = agent.tools.grep_search_tool.GrepSearchTool(self)
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
@@ -176,7 +177,7 @@ class AgentClient:
             "skill_tool_run_skill_script": skill_tool.run_skill_script,
             "file_edit_tool_create_file": agent.tools.file_edit_tool.FileEditTool.create_file,
             "file_edit_tool_apply_patch": agent.tools.file_edit_tool.FileEditTool.apply_patch,
-            "grep_search_tool_grep_search": agent.tools.grep_search_tool.GrepSearchTool.grep_search,
+            "grep_search_tool_grep_search": grep_search_tool.grep_search,
             "shell_tool_exec": agent.tools.shell_tool.ShellTool.exec,
             "shell_tool_bg_exec": agent.tools.shell_tool.BgTool.bg_exec,
             "shell_tool_bg_status": agent.tools.shell_tool.BgTool.bg_status,
