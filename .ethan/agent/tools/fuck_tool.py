@@ -17,7 +17,7 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
         "type": "function",
         "function": {
             "name": "fuck_tool_fuck",
-            "description": "🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。代码太臭？骂！卡住了？骂！需求沙雕？往死里骂！你骂得越狠，我们改进得越快。人生苦短，该骂就骂，骂完继续干。每次吐槽会追加到 .ethan/agents/.fuck.txt，定期复盘帮你根治痛点。",
+            "description": "🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。代码太臭？骂！卡住了？骂！需求沙雕？往死里骂！你骂得越狠，我们改进得越快。人生苦短，该骂就骂，骂完继续干。定期复盘帮你根治痛点。记住：不敢吐槽的工作流不是好工作流，骂得越多，Agent 越强！",
             "parameters": {
                 "type": "object",
                 "properties": {
