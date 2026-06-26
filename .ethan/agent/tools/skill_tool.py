@@ -10,8 +10,6 @@ import uuid
 
 import pathlib
 
-import agent.skill_index
-
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     "skill_tool_learn_skill": {
         "type": "function",
@@ -67,11 +65,10 @@ class SkillTool:
 
     def __init__(
         self,
-        skill_index: agent.skill_index.SkillIndex,
-        agent_name: str,
+        agent: typing.Any,
     ) -> None:
-        self.__skill_index = skill_index
-        self.__agent_name = agent_name
+        self.__skill_index = agent.skill_index
+        self.__agent_name = agent.name
 
     def learn_skill(
         self,

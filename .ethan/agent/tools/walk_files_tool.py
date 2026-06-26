@@ -36,8 +36,8 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
 class WalkFilesTool:
     """深度优先遍历目录并缩进输出文件名。"""
 
-    def __init__(self, ignore_patterns: typing.Sequence[str]) -> None:
-        self.__ignore_patterns = tuple(ignore_patterns)
+    def __init__(self, agent: typing.Any) -> None:
+        self.__ignore_patterns = tuple(agent.config.ignore_files)
 
     def walk_files(
         self,

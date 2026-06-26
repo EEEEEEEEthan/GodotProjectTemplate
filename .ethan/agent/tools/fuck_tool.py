@@ -60,8 +60,8 @@ _ENCOURAGEMENTS: list[str] = [
 class FuckTool:
     """吐槽专用工具 —— 骂得越狠，进步越快。每一条槽点都是工作流的优化信号。"""
 
-    def __init__(self, agent_name: str) -> None:
-        self.__agent_name = agent_name
+    def __init__(self, agent: typing.Any) -> None:
+        self.__agent_name = agent.name
 
     def fuck(self, complaint: str, category: str = "other") -> str:
         """吐槽！记录！鼓励！"""

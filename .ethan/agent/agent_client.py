@@ -121,6 +121,8 @@ class AgentClient:
 
         self.name = name.strip()
         self.__model = model
+        self.config = config
+        self.skill_index = agent.skill_index.SkillIndex(config.skills)
         self.__conversation = self.__open_conversation()
         self.__tooling = self.__build_tooling(config)
 
@@ -151,20 +153,19 @@ class AgentClient:
 
     def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
         tool_whitelist = list(config.tool_whitelist)
-        skill_index = agent.skill_index.SkillIndex(config.skills)
         system_prompt_parts: list[str] = []
         if "skill_tool_learn_skill" in tool_whitelist:
-            system_prompt_parts.append(skill_index.prompt)
+            system_prompt_parts.append(self.skill_index.prompt)
         system_prompt_parts.append(config.system_prompt)
         system_prompt = "\n\n".join(
             part.strip()
             for part in system_prompt_parts
             if part.strip()
         )
-        skill_tool = agent.tools.skill_tool.SkillTool(skill_index, self.name)
-        memory_tool = agent.tools.memory_tool.MemoryTool(self.name)
-        fuck_tool = agent.tools.fuck_tool.FuckTool(self.name)
-        walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(config.ignore_files)
+        skill_tool = agent.tools.skill_tool.SkillTool(self)
+        memory_tool = agent.tools.memory_tool.MemoryTool(self)
+        fuck_tool = agent.tools.fuck_tool.FuckTool(self)
+        walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(self)
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
@@ -198,7 +199,7 @@ class AgentClient:
         return _AgentTooling(
             whitelist=tool_whitelist,
             advertised_tools=agent.agent_tools.select_advertised_tools(tool_whitelist),
-            skill_index=skill_index,
+            skill_index=self.skill_index,
             system_prompt=system_prompt,
             static_handlers=static_handlers,
             mcp_bridge=mcp_bridge_instance,

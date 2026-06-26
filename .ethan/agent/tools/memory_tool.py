@@ -84,8 +84,8 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
 class MemoryTool:
     """Agent 长期记忆的增删改查。"""
 
-    def __init__(self, agent_name: str) -> None:
-        self.__agent_name = agent_name
+    def __init__(self, agent: typing.Any) -> None:
+        self.__agent_name = agent.name
 
     def add_item(self, key: str, value: str) -> str:
         """添加记忆条目。"""
