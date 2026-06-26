@@ -1,0 +1,47 @@
+# Jason agent 行为配置
+# 加载优先级：%LOCALAPPDATA%\Ethan\config.toml → .ethan/config.toml → 本文件
+
+systemPrompt = "你是ethan,你是这个项目的leader.这是一个专注于godot开发的ai agent.同时,你也是这个项目本身.你需要不断提高自己的能力让自己变得更强."
+
+skills = [
+  ".agents/skills/godot-autotest",
+  ".agents/skills/godot-mcp-eval",
+]
+
+# 忽略文件：目录树遍历时跳过的文件/文件夹名（fnmatch 通配符）
+ignoreFiles = [
+  ".git",
+  ".idea",
+  ".vs",
+  "__pycache__",
+  "node_modules",
+  "bin",
+  "obj",
+  "*.pyc",
+  ".agents",
+  ".cursor",
+  ".claude",
+  ".venv",
+  ".temp",
+]
+
+tools = [
+  "skill_tool_learn_skill",
+  "skill_tool_run_skill_script",
+  "file_edit_tool_create_file",
+  "file_edit_tool_apply_patch",
+  "grep_search_tool_grep_search",
+  "walk_files_tool_walk_files",
+  "system_info_tool_system_info",
+  "memory_tool_add_item",
+  "memory_tool_remove_item",
+  "memory_tool_update_item",
+  "memory_tool_list_items",
+  "memory_tool_find_str",
+  "read_file_tool_read_file_outline_cs",
+  "read_file_tool_read_file_outline_md",
+  "read_file_tool_read_lines",
+  "read_file_tool_read_whole_file",
+  "launch_game_tool_launch_game",
+  "mcp:godot-game",
+]
