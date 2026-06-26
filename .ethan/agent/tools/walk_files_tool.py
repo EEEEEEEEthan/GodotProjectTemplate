@@ -52,6 +52,7 @@ IGNORE_PATTERNS: tuple[str, ...] = (
     ".claude",
     ".ethan",
     ".venv",
+    ".temp",
 )
 
 
