@@ -11,6 +11,7 @@ import agent.tools.grep_search_tool as grep_search_tool
 import agent.tools.launch_game_tool as launch_game_tool
 import agent.tools.memory_tool as memory_tool
 import agent.tools.read_file_tool as read_file_tool
+import agent.tools.shell_tool as shell_tool
 import agent.tools.skill_tool as skill_tool
 import agent.tools.system_info_tool as system_info_tool
 import agent.tools.walk_files_tool as walk_files_tool
@@ -24,6 +25,7 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     **memory_tool.TOOL_SCHEMAS,
     **read_file_tool.TOOL_SCHEMAS,
     **launch_game_tool.TOOL_SCHEMAS,
+    **shell_tool.TOOL_SCHEMAS,
 }
 
 

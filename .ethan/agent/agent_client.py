@@ -23,6 +23,7 @@ import agent.tools.file_edit_tool
 import agent.tools.grep_search_tool
 import agent.tools.memory_tool
 import agent.tools.read_file_tool
+import agent.tools.shell_tool
 import agent.tools.skill_tool
 import agent.tools.system_info_tool
 import agent.tools.walk_files_tool
@@ -163,6 +164,9 @@ class AgentClient:
             ),
             "grep_search_tool_grep_search": (
                 agent.tools.grep_search_tool.GrepSearchTool.grep_search
+            ),
+            "shell_tool_exec": (
+                agent.tools.shell_tool.ShellTool.exec
             ),
             "walk_files_tool_walk_files": walk_files_tool.walk_files,
             "system_info_tool_system_info": (
