@@ -26,7 +26,8 @@ pip install -r requirements.txt
   "mcpServers": {
 	"godot-game": {
 	  "command": "python",
-	  "args": ["C:/Projects/Template/.ethan/mcp/server.py"]
+	  "args": ["-m", "godot_mcp.server"],
+	  "cwd": "C:/Projects/Template/.ethan"
 	}
   }
 }

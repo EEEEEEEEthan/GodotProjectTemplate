@@ -8,7 +8,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from game_client import GameCommandError, send_command
+from godot_mcp.game_client import GameCommandError, send_command
 
 mcp = FastMCP("godot-game")
 

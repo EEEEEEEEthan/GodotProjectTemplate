@@ -265,7 +265,7 @@ def build_stdio_server_parameters(
         command = sys.executable
 
     resolved_args = [
-        resolve_project_path(project_root, argument)
+        resolve_launch_argument(project_root, argument)
         for argument in server_config.args
     ]
     working_directory = server_config.cwd
@@ -282,6 +282,22 @@ def build_stdio_server_parameters(
         cwd=working_directory,
         env=server_config.env,
     )
+
+
+def resolve_launch_argument(project_root: pathlib.Path, argument: str) -> str:
+    """解析启动参数：仅对路径类参数做项目根相对解析。"""
+    if argument.startswith("-"):
+        return argument
+    path = pathlib.Path(argument)
+    if (
+        path.is_absolute()
+        or argument.startswith(".")
+        or "/" in argument
+        or "\\" in argument
+        or path.suffix == ".py"
+    ):
+        return resolve_project_path(project_root, argument)
+    return argument
 
 
 def resolve_project_path(project_root: pathlib.Path, value: str) -> str:
