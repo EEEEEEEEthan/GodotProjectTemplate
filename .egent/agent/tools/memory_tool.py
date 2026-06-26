@@ -12,7 +12,7 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
         "type": "function",
         "function": {
             "name": "memory_tool_add_item",
-            "description": "添加长期记忆条目。标题为唯一键（大小写不敏感）",
+            "description": "💾 **重要！** 添加长期记忆条目。当你学到项目目标、架构决策、用户偏好等关键信息时，**必须立即记录**，避免遗忘或重复询问。标题为唯一键（大小写不敏感）",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -56,7 +56,7 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
         "type": "function",
         "function": {
             "name": "memory_tool_list_items",
-            "description": "列出长期记忆条目，可按标题正则筛选。每次对话开始建议先查询相关记忆",
+            "description": "📋 **每次对话开始前先调用！** 列出长期记忆条目。快速恢复上下文，避免重复询问已知信息。可按标题正则筛选。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -70,7 +70,7 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     },
     "memory_tool_find_str": schema_util.function_schema(
         "memory_tool_find_str",
-        "在记忆标题与正文中正则搜索（忽略大小写）",
+        "🔍 在记忆中搜索。找不到答案时再问用户，节省时间。在记忆标题与正文中正则搜索（忽略大小写）",
         {
             "pattern": schema_util.pattern_property(
                 "搜索用正则表达式"
