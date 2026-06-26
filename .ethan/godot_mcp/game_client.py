@@ -23,6 +23,7 @@ def send_command(
     host: str = DEFAULT_HOST,
     timeout_seconds: float = 30.0,
 ) -> dict[str, Any]:
+    """向指定端口的游戏实例发送 MCP 命令，成功时返回响应 data 字典。"""
     payload = {
         "command": command,
         "data": data or {},
