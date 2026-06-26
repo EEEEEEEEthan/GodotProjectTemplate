@@ -9,7 +9,6 @@ import tomllib
 
 import agent.agent_config
 import agent.mcp_bridge
-import agent.tool_binding
 
 _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 EGENT_ROOT = _PACKAGE_DIR.parent
@@ -41,7 +40,6 @@ DEFAULT_MODEL: dict[str, str] = {
 DEFAULT_CONFIG: dict[str, str | list[str]] = {
     "systemPrompt": agent.agent_config.DEFAULT_SYSTEM_PROMPT,
     "skills": list(agent.agent_config.DEFAULT_SKILLS),
-    "tools": list(agent.tool_binding.BUILTIN_TOOL_NAMES),
     "ignoreFiles": list(agent.agent_config.DEFAULT_IGNORE_FILES),
 }
 

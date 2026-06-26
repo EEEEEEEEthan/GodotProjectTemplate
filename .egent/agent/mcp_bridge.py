@@ -20,7 +20,6 @@ import agent.builtin_tools._output_util as output_util
 
 
 MCP_TOOL_PREFIX = "mcp__"
-MCP_SERVER_WHITELIST_PREFIX = "mcp:"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -74,16 +73,11 @@ class McpBridge:
         self.__bindings.clear()
         self.__started = False
 
-    def select_schemas(
-        self,
-        whitelist: list[str],
-    ) -> dict[str, dict[str, typing.Any]]:
-        """按白名单筛选 MCP 工具的 OpenAI schema。"""
-        allowed_names = resolve_mcp_tool_whitelist(whitelist, self.__bindings)
+    def all_schemas(self) -> dict[str, dict[str, typing.Any]]:
+        """返回全部已发现 MCP 工具的 OpenAI schema。"""
         return {
-            name: self.__bindings[name].schema
-            for name in allowed_names
-            if name in self.__bindings
+            name: binding.schema
+            for name, binding in self.__bindings.items()
         }
 
     async def invoke(
@@ -192,34 +186,6 @@ def parse_mcp_openai_tool_name(openai_name: str) -> tuple[str, str] | None:
     if not separator or not server_id or not tool_name:
         return None
     return server_id, tool_name
-
-
-def is_mcp_server_whitelist_entry(entry: str) -> bool:
-    """是否为 mcp:server_id 形式的白名单项。"""
-    return (
-        entry.startswith(MCP_SERVER_WHITELIST_PREFIX)
-        and "__" not in entry[len(MCP_SERVER_WHITELIST_PREFIX) :]
-    )
-
-
-def resolve_mcp_tool_whitelist(
-    whitelist: list[str],
-    bindings: dict[str, McpToolBinding],
-) -> set[str]:
-    """将 mcp:server_id 展开为具体 MCP 工具名。"""
-    allowed_servers = {
-        entry[len(MCP_SERVER_WHITELIST_PREFIX) :]
-        for entry in whitelist
-        if is_mcp_server_whitelist_entry(entry)
-    }
-    allowed_names: set[str] = set()
-    for entry in whitelist:
-        if entry.startswith(MCP_TOOL_PREFIX):
-            allowed_names.add(entry)
-    for openai_name, binding in bindings.items():
-        if binding.server_id in allowed_servers:
-            allowed_names.add(openai_name)
-    return allowed_names
 
 
 def convert_mcp_tool_schema(

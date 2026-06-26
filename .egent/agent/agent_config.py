@@ -3,8 +3,6 @@
 import dataclasses
 import typing
 
-import agent.tool_binding
-
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
 
@@ -33,12 +31,9 @@ DEFAULT_IGNORE_FILES: tuple[str, ...] = (
 
 @dataclasses.dataclass
 class AgentConfig:
-    """Agent 运行时配置：skills、工具白名单与系统提示词。"""
+    """Agent 运行时配置：skills、系统提示词与 MCP。"""
 
     skills: list[str] = dataclasses.field(default_factory=lambda: list(DEFAULT_SKILLS))
-    tool_whitelist: list[str] = dataclasses.field(
-        default_factory=lambda: list(agent.tool_binding.BUILTIN_TOOL_NAMES)
-    )
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
     ignore_files: list[str] = dataclasses.field(
         default_factory=lambda: list(DEFAULT_IGNORE_FILES)

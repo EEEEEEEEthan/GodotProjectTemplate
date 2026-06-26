@@ -25,25 +25,3 @@ ignoreFiles = [
   ".venv",
   ".temp",
 ]
-
-tools = [
-  "skill_tool_learn_skill",
-  "skill_tool_run_skill_script",
-  "file_edit_tool_create_file",
-  "file_edit_tool_apply_patch",
-  "grep_search_tool_grep_search",
-  "walk_files_tool_walk_files",
-  "system_info_tool_system_info",
-  "memory_tool_add_item",
-  "memory_tool_remove_item",
-  "memory_tool_update_item",
-  "memory_tool_list_items",
-  "memory_tool_find_str",
-  "read_file_tool_read_file_outline_cs",
-  "read_file_tool_read_file_outline_md",
-  "read_file_tool_read_file_outline_py",
-  "read_file_tool_read_lines",
-  "read_file_tool_read_whole_file",
-  "launch_game_tool_launch_game",
-  "mcp:godot-game",
-]

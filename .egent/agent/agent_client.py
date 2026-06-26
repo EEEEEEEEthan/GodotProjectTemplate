@@ -48,7 +48,6 @@ class _ConversationState:
 
 @dataclasses.dataclass
 class _AgentTooling:
-    whitelist: list[str]
     all_bindings: dict[str, agent.tool_binding.ToolBinding]
     skill_index: agent.skill_index.SkillIndex
     system_prompt: str
@@ -76,8 +75,6 @@ class AgentClient:
         agent_config = agent.agent_config.AgentConfig(
             skills=AgentClient.__get_string_array(merged_config, "skills")
             or list(agent.agent_config.DEFAULT_SKILLS),
-            tool_whitelist=AgentClient.__get_string_array(merged_config, "tools")
-            or list(agent.tool_binding.BUILTIN_TOOL_NAMES),
             system_prompt=AgentClient.__get_string(merged_config, "systemPrompt")
             or agent.agent_config.DEFAULT_SYSTEM_PROMPT,
             ignore_files=AgentClient.__get_string_array(merged_config, "ignoreFiles")
@@ -146,27 +143,35 @@ class AgentClient:
             base_history_count=0,
         )
 
-    def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
-        tool_whitelist = list(config.tool_whitelist)
-        system_prompt_parts: list[str] = []
-        if "skill_tool_learn_skill" in tool_whitelist:
-            system_prompt_parts.append(self.skill_index.prompt)
-        system_prompt_parts.append(config.system_prompt)
-        system_prompt = "\n\n".join(
+    def __compose_system_prompt(
+        self,
+        base_prompt: str,
+        all_bindings: dict[str, agent.tool_binding.ToolBinding],
+    ) -> str:
+        parts: list[str] = []
+        if "skill_tool_learn_skill" in all_bindings:
+            parts.append(self.skill_index.prompt)
+        parts.append(base_prompt)
+        return "\n\n".join(
             part.strip()
-            for part in system_prompt_parts
+            for part in parts
             if part.strip()
         )
+
+    def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
+        all_bindings = agent.tool_binding.bind_tools(*self.__tools)
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
             else None
         )
         return _AgentTooling(
-            whitelist=tool_whitelist,
-            all_bindings=agent.tool_binding.bind_tools(*self.__tools),
+            all_bindings=all_bindings,
             skill_index=self.skill_index,
-            system_prompt=system_prompt,
+            system_prompt=self.__compose_system_prompt(
+                config.system_prompt,
+                all_bindings,
+            ),
             mcp_bridge=mcp_bridge_instance,
         )
 
@@ -175,7 +180,7 @@ class AgentClient:
         if tooling.mcp_bridge is None or tooling.mcp_ready:
             return
         await tooling.mcp_bridge.start()
-        tooling.mcp_schemas = tooling.mcp_bridge.select_schemas(tooling.whitelist)
+        tooling.mcp_schemas = tooling.mcp_bridge.all_schemas()
         tooling.mcp_ready = True
 
     def __resolve_active_bindings(
@@ -184,14 +189,7 @@ class AgentClient:
     ) -> dict[str, agent.tool_binding.ToolBinding]:
         if tools is not None:
             return agent.tool_binding.bind_tools(*tools)
-        expanded_whitelist = list(self.__tooling.whitelist)
-        for openai_name in self.__tooling.mcp_schemas:
-            if openai_name not in expanded_whitelist:
-                expanded_whitelist.append(openai_name)
-        return agent.tool_binding.select_bindings(
-            self.__tooling.all_bindings,
-            expanded_whitelist,
-        )
+        return dict(self.__tooling.all_bindings)
 
     def __build_advertised_tools(
         self,
@@ -201,14 +199,9 @@ class AgentClient:
     ) -> list[dict[str, typing.Any]]:
         if not include_mcp:
             return agent.tool_binding.to_openai_tools(active_bindings)
-        expanded_whitelist = list(self.__tooling.whitelist)
-        for openai_name in self.__tooling.mcp_schemas:
-            if openai_name not in expanded_whitelist:
-                expanded_whitelist.append(openai_name)
         return agent.tool_binding.merge_advertised_tools(
             active_bindings,
             self.__tooling.mcp_schemas,
-            expanded_whitelist,
         )
 
     def __build_invoke(
@@ -551,6 +544,15 @@ class AgentClient:
     def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
         self.__tools = list(handlers)
         self.__tooling.all_bindings = agent.tool_binding.bind_tools(*self.__tools)
+        self.__tooling.system_prompt = self.__compose_system_prompt(
+            self.config.system_prompt,
+            self.__tooling.all_bindings,
+        )
+        if (
+            self.__conversation.history
+            and self.__conversation.history[0].get("role") == "system"
+        ):
+            self.__conversation.history[0]["content"] = self.__tooling.system_prompt
 
     @property
     def system_prompt(self) -> str:
@@ -559,15 +561,13 @@ class AgentClient:
 
     @property
     def tool_whitelist(self) -> list[str]:
-        """当前 agent 允许调用的工具白名单（含已展开的 MCP 工具）。"""
+        """当前 agent 可调用工具名（内置 + MCP）。"""
         tooling = self.__tooling
-        if not tooling.mcp_schemas:
-            return list(tooling.whitelist)
-        expanded = list(tooling.whitelist)
-        for openai_name in tooling.mcp_schemas:
-            if openai_name not in expanded:
-                expanded.append(openai_name)
-        return expanded
+        names = sorted(tooling.all_bindings)
+        for openai_name in sorted(tooling.mcp_schemas):
+            if openai_name not in tooling.all_bindings:
+                names.append(openai_name)
+        return names
 
     @property
     def model(self) -> str:
