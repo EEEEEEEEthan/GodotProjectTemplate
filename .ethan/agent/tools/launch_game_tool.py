@@ -255,6 +255,7 @@ class LaunchGameTool:
                 text=True,
                 encoding="utf-8",
                 errors="replace",
+                check=False,
             )
         except OSError as error:
             return f"错误：无法执行命令：{error}"

@@ -1,4 +1,4 @@
 extends RefCounted
 
-func run(scene_tree: SceneTree) -> Variant:
+func run(_scene_tree: SceneTree) -> Variant:
 	return {&"pong": true}
