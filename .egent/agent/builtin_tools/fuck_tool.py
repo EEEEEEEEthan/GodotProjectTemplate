@@ -10,7 +10,7 @@ import pathlib
 import random
 import typing
 
-_FUCK_LOG = pathlib.Path(".egent") / "agents" / ".fuck.txt"
+_FUCK_LOG = pathlib.Path(__file__).resolve().parents[2] / ".data" / ".fuck.txt"
 
 FuckCategory = typing.Literal[
     "code",

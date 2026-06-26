@@ -14,7 +14,7 @@ _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 EGENT_ROOT = _PACKAGE_DIR.parent
 PROJECT_ROOT = EGENT_ROOT.parent
 EGENT_TEMP_DIR = EGENT_ROOT / ".temp"
-AGENTS_ROOT = EGENT_ROOT / "agents"
+DATA_ROOT = EGENT_ROOT / ".data"
 GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
 GLOBAL_MODEL_KEYS_FILE = GLOBAL_EGENT_ROOT / "model.toml"
 DEFAULT_MODEL_KEYS_FILE = EGENT_ROOT / "model.toml"
@@ -71,10 +71,10 @@ def load_mcp_servers() -> dict[str, agent.mcp_bridge.McpServerConfig]:
 
 
 def resolve_agent_directory(agent_name: str) -> pathlib.Path:
-    """解析并校验 agents/<name> 目录。"""
+    """解析并校验 .data/<name> 目录。"""
     if not agent_name or not agent_name.strip():
         raise ValueError("agent_name 不能为空")
-    agent_directory = AGENTS_ROOT / agent_name.strip()
+    agent_directory = DATA_ROOT / agent_name.strip()
     if not agent_directory.is_dir():
         raise FileNotFoundError(f"Agent 目录不存在：{agent_directory}")
     return agent_directory

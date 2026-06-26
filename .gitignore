@@ -5,7 +5,7 @@
 .egent/.temp/
 .egent/.egent/
 /.local.settings
-/.egent/agents/.fuck.txt
+.egent/.data/
 /.idea/
 __pycache__/
 /.loop/.venv/

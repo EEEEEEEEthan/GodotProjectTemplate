@@ -2,4 +2,4 @@
 **/.temp/
 .egent/
 model.toml
-/agents/*/.memory.txt
+.data/
