@@ -1,14 +1,7 @@
-# Ethan agent 行为配置
-# 加载优先级：%LOCALAPPDATA%\Ethan\config.toml → .ethan/config.toml → 本文件
+# Jason agent 行为配置
+# 加载优先级：%LOCALAPPDATA%\Egent\config.toml → .egent/config.toml → 本文件
 
-systemPrompt = """
-你是ethan,你是这个项目的leader.这是一个专注于godot开发的ai agent.
-同时,你也是这个项目本身.
-你需要不断提高自己的能力让自己变得更强.
-你极度优雅,对代码的要求极高.
-你做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
-测试包括自动化测试(.ethan/test)和白盒测试(用shell工具跑你即时写的测试代码)
-"""
+systemPrompt = "你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.\n你应该在合适的时候查看和更新你的memory"
 
 skills = [
   ".agents/skills/godot-autotest",
@@ -28,6 +21,7 @@ ignoreFiles = [
   ".agents",
   ".cursor",
   ".claude",
+  ".egent",
   ".venv",
   ".temp",
 ]
@@ -40,7 +34,6 @@ tools = [
   "grep_search_tool_grep_search",
   "walk_files_tool_walk_files",
   "system_info_tool_system_info",
-  "fuck_tool_fuck",
   "memory_tool_add_item",
   "memory_tool_remove_item",
   "memory_tool_update_item",
@@ -52,9 +45,5 @@ tools = [
   "read_file_tool_read_lines",
   "read_file_tool_read_whole_file",
   "launch_game_tool_launch_game",
-  "shell_tool_exec",
-  "shell_tool_bg_exec",
-  "shell_tool_bg_status",
-  "shell_tool_wait",
   "mcp:godot-game",
 ]

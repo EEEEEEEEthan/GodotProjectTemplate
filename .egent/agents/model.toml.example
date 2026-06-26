@@ -1,6 +1,6 @@
 # 模型与 API 连接配置
 # 复制为 model.toml 后填写 apiKey；也可放到 agents/<name>/model.toml 覆盖单 agent。
-# 加载优先级：%LOCALAPPDATA%\Ethan\model.toml → .ethan/model.toml → .ethan/agents/<name>/model.toml
+# 加载优先级：%LOCALAPPDATA%\Egent\model.toml → .egent/model.toml → .egent/agents/<name>/model.toml
 
 model = "gpt-4o-mini"
 baseUrl = "https://api.openai.com/v1"

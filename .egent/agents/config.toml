@@ -1,5 +1,5 @@
 # Jason agent 行为配置
-# 加载优先级：%LOCALAPPDATA%\Ethan\config.toml → .ethan/config.toml → 本文件
+# 加载优先级：%LOCALAPPDATA%\Egent\config.toml → .egent/config.toml → 本文件
 
 systemPrompt = "我的私人助理"
 
@@ -21,7 +21,7 @@ ignoreFiles = [
   ".agents",
   ".cursor",
   ".claude",
-  ".ethan",
+  ".egent",
   ".venv",
   ".temp",
 ]

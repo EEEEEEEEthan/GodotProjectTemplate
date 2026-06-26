@@ -1,4 +1,4 @@
-"""Ethan 交互式 REPL 入口。"""
+"""Egent 交互式 REPL 入口。"""
 
 import argparse
 import asyncio
@@ -35,7 +35,7 @@ def write_line_colored(value: str, *, dim: bool = True) -> None:
 
 def parse_args() -> argparse.Namespace:
     """解析命令行参数。"""
-    parser = argparse.ArgumentParser(description="Ethan 交互式 REPL")
+    parser = argparse.ArgumentParser(description="Egent 交互式 REPL")
     parser.add_argument(
         "agent",
         nargs="?",

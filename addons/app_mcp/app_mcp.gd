@@ -6,8 +6,8 @@ const PLUGIN_CONFIG_PATH := "res://addons/app_mcp/plugin.cfg"
 const DEFAULT_PORT := 8765
 const MAX_PORT_ATTEMPTS := 100
 const ROUTE_PATH := "/mcp"
-const READY_LOG_TEMPLATE := "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=%d>>>"
-const BIND_FAILED_LOG_LINE := "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
+const READY_LOG_TEMPLATE := "<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=%d>>>"
+const BIND_FAILED_LOG_LINE := "<<<EGENT::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
 
 var _handler = func(command: String, data: Dictionary, respond: Callable) -> void: pass
 var _tcp_server := TCPServer.new()

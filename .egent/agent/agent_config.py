@@ -9,8 +9,8 @@ import agent.agent_tools
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
 
 DEFAULT_SKILLS = [
-    ".ethan/builtin-skills/auto-test",
-    ".ethan/builtin-skills/create-file",
+    ".egent/builtin-skills/auto-test",
+    ".egent/builtin-skills/create-file",
 ]
 
 DEFAULT_IGNORE_FILES: tuple[str, ...] = (
@@ -25,7 +25,7 @@ DEFAULT_IGNORE_FILES: tuple[str, ...] = (
     ".agents",
     ".cursor",
     ".claude",
-    ".ethan",
+    ".egent",
     ".venv",
     ".temp",
 )

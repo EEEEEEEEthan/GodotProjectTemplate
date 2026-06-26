@@ -27,7 +27,7 @@ def game_command(
     """向指定端口的游戏实例发送协议命令。
 
     Args:
-        port: launch_game 返回值中的 MCP 端口，或日志行 <<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=XXXX>>> 或用户指定端口。
+        port: launch_game 返回值中的 MCP 端口，或日志行 <<<EGENT::GAME_MCP::HANDSHAKE::v1::port=XXXX>>> 或用户指定端口。
         command: 已在游戏侧 register_handle 注册的命令名。
         data: 传给 handle.on_receive 的载荷，不含 command 字段。
         timeout_seconds: 等待游戏回调 func_return 的最长时间（秒）。

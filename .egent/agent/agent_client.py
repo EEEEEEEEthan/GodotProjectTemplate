@@ -74,7 +74,7 @@ class AgentClient:
 
     @staticmethod
     def load_agent(path: str) -> AgentClient:
-        """从 .ethan/agents/{path} 加载 agent。"""
+        """从 .egent/agents/{path} 加载 agent。"""
         merged_model = agent.data_loader.load_model_toml(path)
         merged_config = agent.data_loader.load_config_toml(path)
         agent_model = agent.agent_model.AgentModel(
@@ -132,7 +132,7 @@ class AgentClient:
         self.__conversation.base_history_count = len(self.__conversation.history)
 
     def __open_conversation(self) -> _ConversationState:
-        log_directory = pathlib.Path.cwd() / ".ethan" / ".temp"
+        log_directory = pathlib.Path.cwd() / ".egent" / ".temp"
         log_directory.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         resources = contextlib.ExitStack()

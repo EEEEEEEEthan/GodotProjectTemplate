@@ -182,7 +182,7 @@ class BgTool:
         process_id = uuid.uuid4().hex[:8]
 
         # 创建日志目录
-        log_dir = os.path.join(os.getcwd(), ".ethan", ".temp", "bg_logs")
+        log_dir = os.path.join(os.getcwd(), ".egent", ".temp", "bg_logs")
         os.makedirs(log_dir, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         log_path = os.path.join(log_dir, f"bg_{process_id}_{timestamp}.log")

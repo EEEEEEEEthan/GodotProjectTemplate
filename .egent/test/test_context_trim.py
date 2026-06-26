@@ -3,8 +3,8 @@
 import pathlib
 import sys
 
-ETHAN_ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ETHAN_ROOT))
+EGENT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(EGENT_ROOT))
 
 import agent.agent_client
 

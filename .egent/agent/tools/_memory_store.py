@@ -27,7 +27,7 @@ def storage_path(agent_name: str) -> pathlib.Path:
     safe_name, error = sanitize_agent_name(agent_name)
     if error is not None:
         raise ValueError(error)
-    return (pathlib.Path.cwd() / ".ethan" / "agents" / safe_name / ".memory.txt").resolve()
+    return (pathlib.Path.cwd() / ".egent" / "agents" / safe_name / ".memory.txt").resolve()
 
 
 def current_timestamp() -> str:

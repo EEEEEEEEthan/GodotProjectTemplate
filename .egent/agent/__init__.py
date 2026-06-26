@@ -1,4 +1,4 @@
-"""Ethan agent 包公共 API 重导出。"""
+"""Egent agent 包公共 API 重导出。"""
 
 import agent.agent_client
 import agent.agent_config

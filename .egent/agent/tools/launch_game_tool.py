@@ -12,16 +12,16 @@ import typing
 from datetime import datetime
 
 _MCP_READY_LOG_PATTERN = re.compile(
-    r"<<<ETHAN::GAME_MCP::HANDSHAKE::v1::port=(\d+)>>>"
+    r"<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=(\d+)>>>"
 )
-_MCP_BIND_FAILED_MARKER = "<<<ETHAN::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
+_MCP_BIND_FAILED_MARKER = "<<<EGENT::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
 _MCP_READY_POLL_INTERVAL_SECONDS = 0.2
 _MCP_READY_POLL_TIMEOUT_SECONDS = 3.0
 _MCP_PROCESS_TERMINATE_TIMEOUT_SECONDS = 3.0
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
-_LAUNCH_LOG_DIRECTORY = pathlib.Path(".ethan") / ".temp"
+_LAUNCH_LOG_DIRECTORY = pathlib.Path(".egent") / ".temp"
 
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     "launch_game_tool_launch_game": {

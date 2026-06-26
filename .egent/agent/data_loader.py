@@ -1,4 +1,4 @@
-"""从 .ethan 目录加载 model.toml、config.toml。"""
+"""从 .egent 目录加载 model.toml、config.toml。"""
 
 from __future__ import annotations
 
@@ -11,14 +11,14 @@ import agent.agent_config
 import agent.agent_tools
 import agent.mcp_bridge
 
-ETHAN_ROOT = pathlib.Path.cwd() / ".ethan"
-AGENTS_ROOT = ETHAN_ROOT / "agents"
-GLOBAL_ETHAN_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Ethan"
-GLOBAL_MODEL_FILE = GLOBAL_ETHAN_ROOT / "model.toml"
-GLOBAL_CONFIG_FILE = GLOBAL_ETHAN_ROOT / "config.toml"
+EGENT_ROOT = pathlib.Path.cwd() / ".egent"
+AGENTS_ROOT = EGENT_ROOT / "agents"
+GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
+GLOBAL_MODEL_FILE = GLOBAL_EGENT_ROOT / "model.toml"
+GLOBAL_CONFIG_FILE = GLOBAL_EGENT_ROOT / "config.toml"
 DEFAULT_MODEL_FILE = AGENTS_ROOT / "model.toml"
 DEFAULT_CONFIG_FILE = AGENTS_ROOT / "config.toml"
-GLOBAL_MCP_FILE = GLOBAL_ETHAN_ROOT / "mcp.json"
+GLOBAL_MCP_FILE = GLOBAL_EGENT_ROOT / "mcp.json"
 DEFAULT_MCP_FILE = AGENTS_ROOT / "mcp.json"
 
 DEFAULT_MCP: dict[str, dict[str, object]] = {
@@ -26,7 +26,7 @@ DEFAULT_MCP: dict[str, dict[str, object]] = {
         "godot-game": {
             "command": "python",
             "args": ["-m", "godot_mcp.server"],
-            "cwd": ".ethan",
+            "cwd": ".egent",
         },
     },
 }

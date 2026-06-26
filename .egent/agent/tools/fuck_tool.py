@@ -10,7 +10,7 @@ import pathlib
 import random
 import typing
 
-_FUCK_LOG = pathlib.Path(".ethan") / "agents" / ".fuck.txt"
+_FUCK_LOG = pathlib.Path(".egent") / "agents" / ".fuck.txt"
 
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     "fuck_tool_fuck": {

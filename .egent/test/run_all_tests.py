@@ -1,5 +1,5 @@
 """
-运行 .ethan/test/ 下所有 test_*.py 测试脚本
+运行 .egent/test/ 下所有 test_*.py 测试脚本
 通过条件：所有测试的退出码都是 0
 """
 
@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 TESTS_DIR = pathlib.Path(__file__).resolve().parent
-PROJECT_ROOT = TESTS_DIR.parent.parent  # .ethan/test -> .ethan -> 根目录
+PROJECT_ROOT = TESTS_DIR.parent.parent  # .egent/test -> .egent -> 根目录
 
 
 def main() -> int:
