@@ -19,7 +19,7 @@ GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
 GLOBAL_MODEL_KEYS_FILE = GLOBAL_EGENT_ROOT / "model.toml"
 DEFAULT_MODEL_KEYS_FILE = EGENT_ROOT / "model.toml"
 GLOBAL_MCP_FILE = GLOBAL_EGENT_ROOT / "mcp.json"
-DEFAULT_MCP_FILE = AGENTS_ROOT / "mcp.json"
+DEFAULT_MCP_FILE = EGENT_ROOT / "mcp.json"
 
 DEFAULT_MCP: dict[str, dict[str, object]] = {
     "mcpServers": {
