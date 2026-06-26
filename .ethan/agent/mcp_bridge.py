@@ -9,11 +9,14 @@ import pathlib
 import sys
 import typing
 
+import anyio
+
 import mcp.types
 import mcp.client.stdio
 import mcp.client.session
+import mcp.shared.exceptions
 
-import agent.tools._output_util
+from agent.tools._output_util import truncate_output
 
 
 MCP_TOOL_PREFIX = "mcp__"
@@ -98,10 +101,16 @@ class McpBridge:
 
         try:
             result = await session.call_tool(binding.tool_name, arguments=arguments)
-        except Exception as error:
+        except (
+            mcp.shared.exceptions.McpError,
+            RuntimeError,
+            anyio.ClosedResourceError,
+            anyio.BrokenResourceError,
+            OSError,
+        ) as error:
             return f"错误：MCP 调用失败（{openai_name}）：{error}"
 
-        return agent.tools._output_util.truncate_output(format_call_tool_result(result))
+        return truncate_output(format_call_tool_result(result))
 
     async def __connect_server(
         self,
