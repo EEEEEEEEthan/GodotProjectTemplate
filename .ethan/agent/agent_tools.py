@@ -7,6 +7,7 @@ import json
 import typing
 
 import agent.tools.file_edit_tool as file_edit_tool
+import agent.tools.fuck_tool as fuck_tool
 import agent.tools.grep_search_tool as grep_search_tool
 import agent.tools.launch_game_tool as launch_game_tool
 import agent.tools.memory_tool as memory_tool
@@ -18,6 +19,7 @@ import agent.tools.walk_files_tool as walk_files_tool
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     **skill_tool.TOOL_SCHEMAS,
     **file_edit_tool.TOOL_SCHEMAS,
+    **fuck_tool.TOOL_SCHEMAS,
     **grep_search_tool.TOOL_SCHEMAS,
     **walk_files_tool.TOOL_SCHEMAS,
     **system_info_tool.TOOL_SCHEMAS,

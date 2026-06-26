@@ -20,6 +20,7 @@ import agent.data_loader
 import agent.mcp_bridge
 import agent.skill_index
 import agent.tools.file_edit_tool
+import agent.tools.fuck_tool
 import agent.tools.grep_search_tool
 import agent.tools.memory_tool
 import agent.tools.read_file_tool
@@ -180,6 +181,9 @@ class AgentClient:
             "walk_files_tool_walk_files": walk_files_tool.walk_files,
             "system_info_tool_system_info": (
                 agent.tools.system_info_tool.SystemInfoTool.system_info
+            ),
+            "fuck_tool_fuck": (
+                agent.tools.fuck_tool.FuckTool.fuck
             ),
             "memory_tool_add_item": memory_tool.add_item,
             "memory_tool_remove_item": memory_tool.remove_item,

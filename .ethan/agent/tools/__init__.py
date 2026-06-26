@@ -10,6 +10,7 @@ __read_file_tool = importlib.import_module(".read_file_tool", __name__)
 __shell_tool = importlib.import_module(".shell_tool", __name__)
 __skill_tool = importlib.import_module(".skill_tool", __name__)
 __system_info_tool = importlib.import_module(".system_info_tool", __name__)
+__fuck_tool = importlib.import_module(".fuck_tool", __name__)
 __walk_files_tool = importlib.import_module(".walk_files_tool", __name__)
 FileEditTool = __file_edit_tool.FileEditTool
 LaunchGameTool = __launch_game_tool.LaunchGameTool
@@ -19,6 +20,7 @@ ReadFileTool = __read_file_tool.ReadFileTool
 ShellTool = __shell_tool.ShellTool
 SkillTool = __skill_tool.SkillTool
 SystemInfoTool = __system_info_tool.SystemInfoTool
+FuckTool = __fuck_tool.FuckTool
 WalkFilesTool = __walk_files_tool.WalkFilesTool
 BgTool = __shell_tool.BgTool
 
@@ -31,5 +33,6 @@ __all__ = [
     "ShellTool",
     "SkillTool",
     "SystemInfoTool",
+    "FuckTool",
     "WalkFilesTool",
 ]

@@ -33,6 +33,7 @@ tools = [
   "grep_search_tool_grep_search",
   "walk_files_tool_walk_files",
   "system_info_tool_system_info",
+  "fuck_tool_fuck",
   "memory_tool_add_item",
   "memory_tool_remove_item",
   "memory_tool_update_item",
