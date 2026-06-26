@@ -34,6 +34,13 @@ def parse_args() -> argparse.Namespace:
     """解析命令行参数。"""
     parser = argparse.ArgumentParser(description="Ethan 交互式 REPL")
     parser.add_argument(
+        "agent",
+        nargs="?",
+        default="jason",
+        metavar="AGENT",
+        help="要加载的 agent 名称（默认：jason）",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="显示工具调用的完整参数与返回结果",
@@ -59,7 +66,7 @@ def format_tool_header(
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    client = agent.agent_client.AgentClient.load_agent("jason")
+    client = agent.agent_client.AgentClient.load_agent(args.agent)
     try:
         await client.prepare()
         write_line_colored(f"@{client.name}, {client.model}, {client.base_url}")
