@@ -9,7 +9,9 @@ import shutil
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from agent.agent_config import AgentConfig
-from agent.tools.grep_search_tool import GrepSearchTool
+import agent.builtin_tools.grep_search_tool as grep_search_tool_module
+
+GrepSearchTool = grep_search_tool_module.GrepSearchTool
 
 
 class MockAgent:

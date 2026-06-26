@@ -5,16 +5,16 @@ from __future__ import annotations
 import typing
 
 import agent.tool_binding
-import agent.tools.file_edit_tool
-import agent.tools.fuck_tool
-import agent.tools.grep_search_tool
-import agent.tools.launch_game_tool
-import agent.tools.memory_tool
-import agent.tools.read_file_tool
-import agent.tools.shell_tool
-import agent.tools.skill_tool
-import agent.tools.system_info_tool
-import agent.tools.walk_files_tool
+import agent.builtin_tools.file_edit_tool
+import agent.builtin_tools.fuck_tool
+import agent.builtin_tools.grep_search_tool
+import agent.builtin_tools.launch_game_tool
+import agent.builtin_tools.memory_tool
+import agent.builtin_tools.read_file_tool
+import agent.builtin_tools.shell_tool
+import agent.builtin_tools.skill_tool
+import agent.builtin_tools.system_info_tool
+import agent.builtin_tools.walk_files_tool
 
 if typing.TYPE_CHECKING:
     import agent.agent_client
@@ -24,17 +24,17 @@ def build_default_tools(
     agent_client: agent.agent_client.AgentClient,
 ) -> list[agent.tool_binding.ToolHandler]:
     """构建默认全量工具集。"""
-    skill_tool = agent.tools.skill_tool.SkillTool(agent_client)
-    memory_tool = agent.tools.memory_tool.MemoryTool(agent_client)
-    fuck_tool = agent.tools.fuck_tool.FuckTool(agent_client)
-    walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(agent_client)
-    grep_search_tool = agent.tools.grep_search_tool.GrepSearchTool(agent_client)
-    file_edit_tool = agent.tools.file_edit_tool.FileEditTool(agent_client)
-    shell_tool = agent.tools.shell_tool.ShellTool(agent_client)
-    bg_tool = agent.tools.shell_tool.BgTool(agent_client)
-    read_file_tool = agent.tools.read_file_tool.ReadFileTool(agent_client)
-    system_info_tool = agent.tools.system_info_tool.SystemInfoTool(agent_client)
-    launch_game_tool = agent.tools.launch_game_tool.LaunchGameTool(agent_client)
+    skill_tool = agent.builtin_tools.skill_tool.SkillTool(agent_client)
+    memory_tool = agent.builtin_tools.memory_tool.MemoryTool(agent_client)
+    fuck_tool = agent.builtin_tools.fuck_tool.FuckTool(agent_client)
+    walk_files_tool = agent.builtin_tools.walk_files_tool.WalkFilesTool(agent_client)
+    grep_search_tool = agent.builtin_tools.grep_search_tool.GrepSearchTool(agent_client)
+    file_edit_tool = agent.builtin_tools.file_edit_tool.FileEditTool(agent_client)
+    shell_tool = agent.builtin_tools.shell_tool.ShellTool(agent_client)
+    bg_tool = agent.builtin_tools.shell_tool.BgTool(agent_client)
+    read_file_tool = agent.builtin_tools.read_file_tool.ReadFileTool(agent_client)
+    system_info_tool = agent.builtin_tools.system_info_tool.SystemInfoTool(agent_client)
+    launch_game_tool = agent.builtin_tools.launch_game_tool.LaunchGameTool(agent_client)
     return [
         skill_tool.learn_skill,
         skill_tool.run_skill_script,

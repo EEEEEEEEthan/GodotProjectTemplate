@@ -16,7 +16,7 @@ import mcp.client.stdio
 import mcp.client.session
 import mcp.shared.exceptions
 
-from agent.tools._output_util import truncate_output
+import agent.builtin_tools._output_util as output_util
 
 
 MCP_TOOL_PREFIX = "mcp__"
@@ -110,7 +110,7 @@ class McpBridge:
         ) as error:
             return f"错误：MCP 调用失败（{openai_name}）：{error}"
 
-        return truncate_output(format_call_tool_result(result))
+        return output_util.truncate_output(format_call_tool_result(result))
 
     async def __connect_server(
         self,
