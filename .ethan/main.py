@@ -4,6 +4,9 @@ import argparse
 import asyncio
 import sys
 
+import httpx
+import openai
+
 import agent.agent_client
 import agent.agent_events
 import agent.agent_tools
@@ -79,21 +82,29 @@ async def main() -> None:
                 break
             if not line.strip():
                 continue
-            async for event in client.send("user", line):
-                if isinstance(event, agent.agent_events.TextDelta):
-                    sys.stdout.write(event.text)
-                    sys.stdout.flush()
-                elif isinstance(event, agent.agent_events.ToolInvoked):
-                    try:
-                        if sys.stdout.isatty():
-                            sys.stdout.write("\n")
-                    except OSError:
-                        pass
-                    write_line_colored(
-                        format_tool_header(event, debug=args.debug)
-                    )
-                    if args.debug and event.result:
-                        write_line_colored(event.result)
+            try:
+                async for event in client.send("user", line):
+                    if isinstance(event, agent.agent_events.TextDelta):
+                        sys.stdout.write(event.text)
+                        sys.stdout.flush()
+                    elif isinstance(event, agent.agent_events.ToolInvoked):
+                        try:
+                            if sys.stdout.isatty():
+                                sys.stdout.write("\n")
+                        except OSError:
+                            pass
+                        write_line_colored(
+                            format_tool_header(event, debug=args.debug)
+                        )
+                        if args.debug and event.result:
+                            write_line_colored(event.result)
+            except agent.agent_client.STREAM_RETRYABLE_ERRORS as error:
+                write_line_colored(
+                    f"API 连接中断（已重试仍失败）: {error}",
+                    dim=False,
+                )
+            except openai.APIError as error:
+                write_line_colored(f"API 错误: {error}", dim=False)
             sys.stdout.write("\n")
     finally:
         await client.aclose()

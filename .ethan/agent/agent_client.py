@@ -10,6 +10,7 @@ import datetime
 import pathlib
 import typing
 
+import httpx
 import openai
 
 import agent.agent_config
@@ -28,6 +29,20 @@ import agent.tools.shell_tool
 import agent.tools.skill_tool
 import agent.tools.system_info_tool
 import agent.tools.walk_files_tool
+
+MAX_INFLIGHT_CONTEXT_CHARS = 120_000
+KEEP_RECENT_TOOL_MESSAGES = 8
+MAX_STREAM_RETRIES = 3
+_STREAM_RETRY_BACKOFF_SECONDS = 1.5
+_TOOL_RESULT_OMITTED = "\n[较早的工具结果已省略以控制上下文大小]"
+_STREAM_RETRYABLE_ERRORS = (
+    httpx.RemoteProtocolError,
+    httpx.ReadTimeout,
+    httpx.ConnectError,
+    httpx.WriteError,
+    openai.APIConnectionError,
+)
+STREAM_RETRYABLE_ERRORS = _STREAM_RETRYABLE_ERRORS
 
 
 @dataclasses.dataclass
@@ -357,25 +372,41 @@ class AgentClient:
         client = self.__get_or_create_client()
 
         while True:
+            AgentClient.__trim_inflight_context(messages, MAX_INFLIGHT_CONTEXT_CHARS)
             turn_text: list[str] = []
             tool_calls_by_index: dict[int, dict[str, typing.Any]] = {}
+            buffer_checkpoint = len(text_buffer)
 
-            stream = await client.chat.completions.create(
-                model=self.__model.model,
-                messages=messages,
-                tools=self.__tooling.advertised_tools or None,
-                stream=True,
-            )
+            for attempt in range(MAX_STREAM_RETRIES):
+                turn_text.clear()
+                tool_calls_by_index.clear()
+                del text_buffer[buffer_checkpoint:]
 
-            async for chunk in stream:
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    turn_text.append(delta.content)
-                    text_buffer.append(delta.content)
-                    yield agent.agent_events.TextDelta(delta.content)
-                if delta.tool_calls:
-                    for tool_call in delta.tool_calls:
-                        AgentClient.__merge_tool_call_delta(tool_calls_by_index, tool_call)
+                try:
+                    stream = await client.chat.completions.create(
+                        model=self.__model.model,
+                        messages=messages,
+                        tools=self.__tooling.advertised_tools or None,
+                        stream=True,
+                    )
+
+                    async for chunk in stream:
+                        delta = chunk.choices[0].delta
+                        if delta.content:
+                            turn_text.append(delta.content)
+                            text_buffer.append(delta.content)
+                            yield agent.agent_events.TextDelta(delta.content)
+                        if delta.tool_calls:
+                            for tool_call in delta.tool_calls:
+                                AgentClient.__merge_tool_call_delta(
+                                    tool_calls_by_index,
+                                    tool_call,
+                                )
+                    break
+                except _STREAM_RETRYABLE_ERRORS:
+                    if attempt + 1 >= MAX_STREAM_RETRIES:
+                        raise
+                    await asyncio.sleep(_STREAM_RETRY_BACKOFF_SECONDS * (attempt + 1))
 
             full_text = "".join(turn_text)
             tool_calls = [
@@ -423,6 +454,63 @@ class AgentClient:
                     "content": result,
                 }
             )
+
+    @staticmethod
+    def __estimate_messages_chars(messages: list[dict[str, typing.Any]]) -> int:
+        total = 0
+        for message in messages:
+            content = message.get("content")
+            if isinstance(content, str):
+                total += len(content)
+            tool_calls = message.get("tool_calls")
+            if isinstance(tool_calls, list):
+                for tool_call in tool_calls:
+                    function = tool_call.get("function", {})
+                    if isinstance(function, dict):
+                        name = function.get("name")
+                        arguments = function.get("arguments")
+                        if isinstance(name, str):
+                            total += len(name)
+                        if isinstance(arguments, str):
+                            total += len(arguments)
+        return total
+
+    @staticmethod
+    def __trim_inflight_context(
+        messages: list[dict[str, typing.Any]],
+        max_chars: int,
+    ) -> bool:
+        """截断较早的 tool 结果以降低当轮 API 请求体大小。"""
+        if AgentClient.__estimate_messages_chars(messages) <= max_chars:
+            return False
+
+        tool_indices = [
+            index
+            for index, message in enumerate(messages)
+            if message.get("role") == "tool"
+        ]
+        protected = set(tool_indices[-KEEP_RECENT_TOOL_MESSAGES:])
+        trimmed = False
+        for index in tool_indices:
+            if index in protected:
+                continue
+            content = messages[index].get("content")
+            if isinstance(content, str) and content != _TOOL_RESULT_OMITTED:
+                messages[index]["content"] = _TOOL_RESULT_OMITTED
+                trimmed = True
+                if AgentClient.__estimate_messages_chars(messages) <= max_chars:
+                    return trimmed
+
+        for index in tool_indices:
+            if index not in protected:
+                continue
+            content = messages[index].get("content")
+            if isinstance(content, str) and len(content) > len(_TOOL_RESULT_OMITTED):
+                messages[index]["content"] = _TOOL_RESULT_OMITTED
+                trimmed = True
+                if AgentClient.__estimate_messages_chars(messages) <= max_chars:
+                    return trimmed
+        return trimmed
 
     @staticmethod
     def __merge_tool_call_delta(
