@@ -16,6 +16,8 @@ import time
 import typing
 import uuid
 
+import agent.data_loader
+
 from . import _output_util as output_util
 
 # ---------------------------------------------------------------------------
@@ -47,8 +49,10 @@ def _read_log_tail(log_path: str, max_lines: int = 50) -> str:
 class ShellTool:
     """执行本地 shell 命令并返回输出。"""
 
-    @staticmethod
-    def exec(command: str, cwd: str | None = None) -> str:
+    def __init__(self, agent: typing.Any) -> None:
+        self._agent = agent
+
+    def exec(self, command: str, cwd: str | None = None) -> str:
         """在本地系统执行任意 shell 命令（cmd /c）。权限极高，无沙箱限制。输出超过 10000 字符会被截断。超时 5 分钟。
 
         @param command: 要执行的 shell 命令，例如 `dir`、`echo hello`、`python script.py`
@@ -103,11 +107,10 @@ class ShellTool:
 class BgTool:
     """后台进程管理工具。"""
 
-    # ------------------------------------------------------------------
-    # shell_tool_bg_exec
-    # ------------------------------------------------------------------
-    @staticmethod
-    def bg_exec(command: str, cwd: str | None = None) -> str:
+    def __init__(self, agent: typing.Any) -> None:
+        self._agent = agent
+
+    def bg_exec(self, command: str, cwd: str | None = None) -> str:
         """在后台执行 shell 命令并立即返回。通过返回的 process_id 可用 shell_tool_bg_status 查询执行状态。
 
         @tool_name shell_tool_bg_exec
@@ -127,7 +130,7 @@ class BgTool:
         process_id = uuid.uuid4().hex[:8]
 
         # 创建日志目录
-        log_dir = os.path.join(os.getcwd(), ".egent", ".temp", "bg_logs")
+        log_dir = os.fspath(agent.data_loader.EGENT_TEMP_DIR / "bg_logs")
         os.makedirs(log_dir, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         log_path = os.path.join(log_dir, f"bg_{process_id}_{timestamp}.log")
@@ -187,8 +190,7 @@ class BgTool:
     # ------------------------------------------------------------------
     # shell_tool_bg_status
     # ------------------------------------------------------------------
-    @staticmethod
-    def bg_status(process_id: str) -> str:
+    def bg_status(self, process_id: str) -> str:
         """查询后台进程的执行状态。返回是否完成、退出码、已运行时间与最新日志输出。
 
         @tool_name shell_tool_bg_status
@@ -247,8 +249,7 @@ class BgTool:
     # ------------------------------------------------------------------
     # shell_tool_wait
     # ------------------------------------------------------------------
-    @staticmethod
-    def wait(seconds: float) -> str:
+    def wait(self, seconds: float) -> str:
         """等待指定的秒数（最长 120 秒）。用于需要延时的场景，如等待游戏启动、等待文件生成。
 
         @tool_name shell_tool_wait

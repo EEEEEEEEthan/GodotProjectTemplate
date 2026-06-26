@@ -1,4 +1,6 @@
-/.temp/
+.temp/
+**/.temp/
+.egent/
 model.toml
 /agents/*/model.toml/
 /agents/*/.memory.txt

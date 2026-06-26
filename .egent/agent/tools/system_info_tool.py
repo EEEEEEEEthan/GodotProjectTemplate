@@ -8,36 +8,37 @@ import os
 import platform
 import socket
 import sys
+import typing
 
 
 class SystemInfoTool:
     """获取当前时间、时区、操作系统与运行环境属性。"""
 
-    @staticmethod
-    def system_info() -> str:
+    def __init__(self, agent: typing.Any) -> None:
+        self._agent = agent
+
+    def system_info(self) -> str:
         """获取当前时间、时区、操作系统与运行环境属性。"""
         sections = [
-            SystemInfoTool.__format_time(),
-            SystemInfoTool.__format_os(),
-            SystemInfoTool.__format_env(),
-            SystemInfoTool.__format_locale(),
+            self.__format_time(),
+            self.__format_os(),
+            self.__format_env(),
+            self.__format_locale(),
         ]
         return "\n\n".join(section for section in sections if section)
 
-    @staticmethod
-    def __format_utc_offset(offset: datetime.timedelta) -> str:
+    def __format_utc_offset(self, offset: datetime.timedelta) -> str:
         total_minutes = int(offset.total_seconds() // 60)
         sign = "+" if total_minutes >= 0 else "-"
         total_minutes = abs(total_minutes)
         hours, minutes = divmod(total_minutes, 60)
         return f"UTC{sign}{hours:02d}:{minutes:02d}"
 
-    @staticmethod
-    def __format_time() -> str:
+    def __format_time(self) -> str:
         now_local = datetime.datetime.now().astimezone()
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         tz_name = now_local.tzname() or "未知"
-        offset_text = SystemInfoTool.__format_utc_offset(
+        offset_text = self.__format_utc_offset(
             now_local.utcoffset() or datetime.timedelta()
         )
         lines = [
@@ -51,8 +52,7 @@ class SystemInfoTool:
         ]
         return "\n".join(lines)
 
-    @staticmethod
-    def __format_os() -> str:
+    def __format_os(self) -> str:
         lines = [
             "[操作系统]",
             f"系统: {platform.system()}",
@@ -66,8 +66,7 @@ class SystemInfoTool:
         lines.append(f"Python: {platform.python_version()} ({sys.executable})")
         return "\n".join(lines)
 
-    @staticmethod
-    def __format_env() -> str:
+    def __format_env(self) -> str:
         lines = [
             "[运行环境]",
             f"工作目录: {os.getcwd()}",
@@ -79,8 +78,7 @@ class SystemInfoTool:
             lines.append(f"Shell: {shell}")
         return "\n".join(lines)
 
-    @staticmethod
-    def __format_locale() -> str:
+    def __format_locale(self) -> str:
         lines = ["[区域与编码]"]
         try:
             code, encoding = locale.getlocale()

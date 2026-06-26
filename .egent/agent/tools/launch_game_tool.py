@@ -8,7 +8,10 @@ import re
 import subprocess
 import sys
 import time
+import typing
 from datetime import datetime
+
+import agent.data_loader
 
 _MCP_READY_LOG_PATTERN = re.compile(
     r"<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=(\d+)>>>"
@@ -20,13 +23,14 @@ _MCP_PROCESS_TERMINATE_TIMEOUT_SECONDS = 3.0
 
 _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
-_LAUNCH_LOG_DIRECTORY = pathlib.Path(".egent") / ".temp"
 
 
 class LaunchGameTool:
     """使用 .engine/.engine.exe 启动 Godot 游戏。"""
 
-    @staticmethod
+    def __init__(self, agent: typing.Any) -> None:
+        self._agent = agent
+
     def launch_game(
         *,
         headless: bool = False,
@@ -41,12 +45,12 @@ class LaunchGameTool:
         @param skip_import: 是否跳过 --headless --import 资源导入，缺省 false
         @param extra_arguments: 追加传给引擎的命令行参数
         """
-        project_root = pathlib.Path.cwd()
+        project_root = agent.data_loader.PROJECT_ROOT
         engine_executable = (project_root / _ENGINE_RELATIVE).resolve()
         prepare_script = (project_root / _PREPARE_BAT).resolve()
 
         if not skip_prepare:
-            prepare_error = LaunchGameTool.__run_prepare(project_root, prepare_script)
+            prepare_error = self.__run_prepare(project_root, prepare_script)
             if prepare_error is not None:
                 return prepare_error
 
@@ -57,7 +61,7 @@ class LaunchGameTool:
             )
 
         if not skip_import:
-            import_error = LaunchGameTool.__run_import(project_root, engine_executable)
+            import_error = self.__run_import(project_root, engine_executable)
             if import_error is not None:
                 return import_error
 
@@ -65,11 +69,11 @@ class LaunchGameTool:
         if headless:
             launch_arguments = ["--headless", *launch_arguments]
 
-        log_path = LaunchGameTool.__create_launch_log_path(project_root)
+        log_path = self.__create_launch_log_path(project_root)
         relative_log_path = log_path.relative_to(project_root).as_posix()
         launch_arguments = ["--log-file", relative_log_path, *launch_arguments]
 
-        process = LaunchGameTool.__start_detached_process(
+        process = self.__start_detached_process(
             project_root,
             engine_executable,
             launch_arguments,
@@ -77,7 +81,7 @@ class LaunchGameTool:
         if isinstance(process, str):
             return process
 
-        port_result = LaunchGameTool.__wait_for_mcp_port(log_path, process)
+        port_result = self.__wait_for_mcp_port(log_path, process)
         if isinstance(port_result, str):
             return port_result
 
@@ -89,45 +93,42 @@ class LaunchGameTool:
             "可使用 MCP game_command 连接。"
         )
 
-    @staticmethod
     def __run_prepare(
         project_root: pathlib.Path,
         prepare_script: pathlib.Path,
     ) -> str | None:
         if not prepare_script.is_file():
             return f"错误：未找到 {prepare_script.name}。"
-        completed = LaunchGameTool.__run_synchronous(
+        completed = self.__run_synchronous(
             ["cmd.exe", "/c", str(prepare_script)],
             project_root=project_root,
         )
         if isinstance(completed, str):
             return completed
         if completed.returncode != 0:
-            return LaunchGameTool.__format_process_failure(
+            return self.__format_process_failure(
                 "引擎准备失败",
                 completed,
             )
         return None
 
-    @staticmethod
     def __run_import(
         project_root: pathlib.Path,
         engine_executable: pathlib.Path,
     ) -> str | None:
-        completed = LaunchGameTool.__run_synchronous(
+        completed = self.__run_synchronous(
             [str(engine_executable), "--headless", "--import"],
             project_root=project_root,
         )
         if isinstance(completed, str):
             return completed
         if completed.returncode != 0:
-            return LaunchGameTool.__format_process_failure(
+            return self.__format_process_failure(
                 "资源导入失败",
                 completed,
             )
         return None
 
-    @staticmethod
     def __start_detached_process(
         project_root: pathlib.Path,
         engine_executable: pathlib.Path,
@@ -149,8 +150,7 @@ class LaunchGameTool:
         except OSError as error:
             return f"错误：无法启动游戏进程：{error}"
 
-    @staticmethod
-    def __terminate_process(process: subprocess.Popen[bytes]) -> None:
+    def __terminate_process(self, process: subprocess.Popen[bytes]) -> None:
         if process.poll() is not None:
             return
         try:
@@ -163,8 +163,7 @@ class LaunchGameTool:
         except OSError:
             pass
 
-    @staticmethod
-    def __read_log_tail(log_path: pathlib.Path, *, max_lines: int = 20) -> str:
+    def __read_log_tail(self, log_path: pathlib.Path, *, max_lines: int = 20) -> str:
         if not log_path.is_file():
             return ""
         try:
@@ -176,7 +175,6 @@ class LaunchGameTool:
         tail = "\n".join(lines[-max_lines:])
         return f"--- 日志末尾 ---\n{tail}"
 
-    @staticmethod
     def __wait_for_mcp_port(
         log_path: pathlib.Path,
         process: subprocess.Popen[bytes],
@@ -189,30 +187,28 @@ class LaunchGameTool:
                 except OSError as error:
                     return f"错误：无法读取启动日志（{log_path.as_posix()}）：{error}"
                 if _MCP_BIND_FAILED_MARKER in content:
-                    LaunchGameTool.__terminate_process(process)
+                    self.__terminate_process(process)
                     return (
                         f"错误：游戏 MCP 无法绑定端口（{log_path.as_posix()}）。\n"
-                        f"{LaunchGameTool.__read_log_tail(log_path)}"
+                        f"{self.__read_log_tail(log_path)}"
                     )
                 match = _MCP_READY_LOG_PATTERN.search(content)
                 if match:
                     return int(match.group(1))
             time.sleep(_MCP_READY_POLL_INTERVAL_SECONDS)
-        LaunchGameTool.__terminate_process(process)
+        self.__terminate_process(process)
         return (
             f"错误：{int(_MCP_READY_POLL_TIMEOUT_SECONDS)} 秒内未在日志中找到 MCP 握手标记，"
             f"已终止游戏进程（{log_path.as_posix()}）。\n"
-            f"{LaunchGameTool.__read_log_tail(log_path)}"
+            f"{self.__read_log_tail(log_path)}"
         )
 
-    @staticmethod
-    def __create_launch_log_path(project_root: pathlib.Path) -> pathlib.Path:
-        log_directory = project_root / _LAUNCH_LOG_DIRECTORY
+    def __create_launch_log_path(self, project_root: pathlib.Path) -> pathlib.Path:
+        log_directory = agent.data_loader.EGENT_TEMP_DIR
         log_directory.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return log_directory / f"game_{timestamp}.log"
 
-    @staticmethod
     def __run_synchronous(
         command: list[str],
         *,
@@ -231,7 +227,6 @@ class LaunchGameTool:
         except OSError as error:
             return f"错误：无法执行命令：{error}"
 
-    @staticmethod
     def __format_process_failure(
         title: str,
         completed: subprocess.CompletedProcess[str],

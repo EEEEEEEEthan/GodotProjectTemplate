@@ -21,16 +21,6 @@ import agent.data_loader
 import agent.mcp_bridge
 import agent.skill_index
 import agent.tool_binding
-import agent.tools.file_edit_tool
-import agent.tools.fuck_tool
-import agent.tools.grep_search_tool
-import agent.tools.launch_game_tool
-import agent.tools.memory_tool
-import agent.tools.read_file_tool
-import agent.tools.shell_tool
-import agent.tools.skill_tool
-import agent.tools.system_info_tool
-import agent.tools.walk_files_tool
 
 MAX_INFLIGHT_CONTEXT_CHARS = 120_000
 KEEP_RECENT_TOOL_MESSAGES = 8
@@ -113,6 +103,8 @@ class AgentClient:
         name: str,
         model: agent.agent_model.AgentModel,
         config: agent.agent_config.AgentConfig,
+        *,
+        tools: list[agent.tool_binding.ToolHandler] | None = None,
     ) -> None:
         if not name or not name.strip():
             raise ValueError("name 不能为空")
@@ -124,7 +116,9 @@ class AgentClient:
         self.config = config
         self.skill_index = agent.skill_index.SkillIndex(config.skills)
         self.__conversation = self.__open_conversation()
-        self.__tools = AgentClient.__build_default_tools(self)
+        self.__tools: list[agent.tool_binding.ToolHandler] = (
+            list(tools) if tools is not None else []
+        )
         self.__tooling = self.__build_tooling(config)
 
         self.__conversation.history.append(
@@ -133,7 +127,7 @@ class AgentClient:
         self.__conversation.base_history_count = len(self.__conversation.history)
 
     def __open_conversation(self) -> _ConversationState:
-        log_directory = pathlib.Path.cwd() / ".egent" / ".temp"
+        log_directory = agent.data_loader.EGENT_TEMP_DIR
         log_directory.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         resources = contextlib.ExitStack()
@@ -151,41 +145,6 @@ class AgentClient:
             history=[],
             base_history_count=0,
         )
-
-    @staticmethod
-    def __build_default_tools(
-        agent_client: AgentClient,
-    ) -> list[agent.tool_binding.ToolHandler]:
-        skill_tool = agent.tools.skill_tool.SkillTool(agent_client)
-        memory_tool = agent.tools.memory_tool.MemoryTool(agent_client)
-        fuck_tool = agent.tools.fuck_tool.FuckTool(agent_client)
-        walk_files_tool = agent.tools.walk_files_tool.WalkFilesTool(agent_client)
-        grep_search_tool = agent.tools.grep_search_tool.GrepSearchTool(agent_client)
-        return [
-            skill_tool.learn_skill,
-            skill_tool.run_skill_script,
-            agent.tools.file_edit_tool.FileEditTool.create_file,
-            agent.tools.file_edit_tool.FileEditTool.apply_patch,
-            grep_search_tool.grep_search,
-            agent.tools.shell_tool.ShellTool.exec,
-            agent.tools.shell_tool.BgTool.bg_exec,
-            agent.tools.shell_tool.BgTool.bg_status,
-            agent.tools.shell_tool.BgTool.wait,
-            walk_files_tool.walk_files,
-            agent.tools.system_info_tool.SystemInfoTool.system_info,
-            fuck_tool.fuck,
-            memory_tool.add_item,
-            memory_tool.remove_item,
-            memory_tool.update_item,
-            memory_tool.list_items,
-            memory_tool.find_str,
-            agent.tools.read_file_tool.ReadFileTool.read_file_outline_cs,
-            agent.tools.read_file_tool.ReadFileTool.read_file_outline_md,
-            agent.tools.read_file_tool.ReadFileTool.read_file_outline_py,
-            agent.tools.read_file_tool.ReadFileTool.read_lines,
-            agent.tools.read_file_tool.ReadFileTool.read_whole_file,
-            agent.tools.launch_game_tool.LaunchGameTool.launch_game,
-        ]
 
     def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
         tool_whitelist = list(config.tool_whitelist)

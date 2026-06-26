@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+import typing
 
 from . import _cs_outline as cs_outline
 from . import _output_util as output_util
@@ -126,13 +127,15 @@ def _py_outline_text(lines: list[str]) -> str:
 class ReadFileTool:
     """读取工作区内文本文件。"""
 
-    @staticmethod
-    def read_file_outline_cs(file_path: str) -> str:
+    def __init__(self, agent: typing.Any) -> None:
+        self._agent = agent
+
+    def read_file_outline_cs(self, file_path: str) -> str:
         """读取 C# 源文件大纲（namespace / 类型 / 成员）。阅读 .cs 文件时先读大纲。
 
         @param file_path: C# 源文件路径（相对工作目录）
         """
-        absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
+        absolute_path, resolve_error = self.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
 
@@ -147,13 +150,12 @@ class ReadFileTool:
 
         return warning + cs_outline.outline_cs_text(lines)
 
-    @staticmethod
-    def read_file_outline_md(file_path: str) -> str:
+    def read_file_outline_md(self, file_path: str) -> str:
         """读取 Markdown 文件标题大纲。阅读 .md 文件时先读大纲。
 
         @param file_path: Markdown 文件路径（相对工作目录）
         """
-        absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
+        absolute_path, resolve_error = self.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
 
@@ -177,13 +179,12 @@ class ReadFileTool:
             output_lines.append("\t" * (level - 1) + f"{title} <{line_no}>")
         return warning + "\n".join(output_lines)
 
-    @staticmethod
-    def read_file_outline_py(file_path: str) -> str:
+    def read_file_outline_py(self, file_path: str) -> str:
         """读取 Python 源文件大纲（类 / 函数 / 顶层赋值）。阅读 .py 文件时先读大纲。
 
         @param file_path: Python 文件路径（相对工作目录）
         """
-        absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
+        absolute_path, resolve_error = self.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
 
@@ -199,15 +200,14 @@ class ReadFileTool:
 
         return warning + _py_outline_text(lines)
 
-    @staticmethod
-    def read_lines(file_path: str, start_line: int, end_line: int) -> str:
+    def read_lines(self, file_path: str, start_line: int, end_line: int) -> str:
         """按行号范围读取文件片段（1-based，含首尾）。通常在 grep_search 或大纲取得行号后使用。
 
         @param file_path: 文件路径（相对工作目录）
         @param start_line: 起始行号（1-based，含）
         @param end_line: 结束行号（1-based，含）
         """
-        absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
+        absolute_path, resolve_error = self.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
         if start_line < 1:
@@ -228,13 +228,12 @@ class ReadFileTool:
         content = "".join(lines[line_no - 1] for line_no in range(start_line, clamped_end + 1))
         return output_util.truncate_output(content)
 
-    @staticmethod
-    def read_whole_file(file_path: str) -> str:
+    def read_whole_file(self, file_path: str) -> str:
         """读取文件全文。用于非 .cs/.md 文件，或大纲策略无法定位细节时的 fallback。
 
         @param file_path: 文件路径（相对工作目录）
         """
-        absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
+        absolute_path, resolve_error = self.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
         try:
@@ -243,8 +242,7 @@ class ReadFileTool:
             return f"错误：无法读取文件：{error}"
         return output_util.truncate_output(content)
 
-    @staticmethod
-    def __resolve_file(file_path: str) -> tuple[pathlib.Path | None, str | None]:
+    def __resolve_file(self, file_path: str) -> tuple[pathlib.Path | None, str | None]:
         relative_path, path_error = path_util.resolve_relative_path(
             file_path,
             label="文件路径",

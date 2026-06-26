@@ -10,6 +10,8 @@ import uuid
 
 import pathlib
 
+import agent.data_loader
+
 
 class SkillTool:
     """读取 skill 文档并执行 skill 包内脚本。"""
@@ -242,14 +244,15 @@ class SkillTool:
     @staticmethod
     def __persist_oversized_output(result: str) -> str:
         guid = str(uuid.uuid4())
-        relative_output = f".egent/.temp/{guid}.txt"
-        output_dir = pathlib.Path.cwd() / ".egent" / ".temp"
+        output_dir = agent.data_loader.EGENT_TEMP_DIR
+        relative_directory = output_dir.relative_to(agent.data_loader.PROJECT_ROOT).as_posix()
+        relative_output = f"{relative_directory}/{guid}.txt"
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / f"{guid}.txt").write_text(result, encoding="utf-8")
         return (
             f"输出结果太长,已保存到{relative_output}。\n\n"
             "grep_search_tool_grep_search 定向查询该文件：\n"
-            f'pattern="关键词", directory=".egent/.temp", filter="{guid}.txt"\n\n'
+            f'pattern="关键词", directory="{relative_directory}", filter="{guid}.txt"\n\n'
             "read_file_tool_read_lines 按行号读片段：\n"
             f'file_path="{relative_output}", start_line=120, end_line=140\n'
         )

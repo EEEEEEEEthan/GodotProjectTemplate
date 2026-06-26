@@ -33,7 +33,9 @@ def test_grep_search_schema() -> None:
 
 
 def test_bg_tool_custom_name() -> None:
-    binding = agent.tool_binding.build_binding(agent.tools.shell_tool.BgTool.bg_exec)
+    binding = agent.tool_binding.build_binding(
+        agent.tools.shell_tool.BgTool(MockAgent()).bg_exec,
+    )
     assert binding.name == "shell_tool_bg_exec"
 
 
@@ -41,12 +43,14 @@ def test_bind_all_builtin_names() -> None:
     from agent.agent_client import AgentClient
     from agent.agent_model import AgentModel
 
+    import tool_handlers
+
     client = AgentClient(
         "test",
         AgentModel(api_key="", model="test", base_url="https://example.com/v1"),
         AgentConfig(),
     )
-    names = sorted(client.tools, key=agent.tool_binding.resolve_tool_name)
+    client.tools = tool_handlers.build_default_tools(client)
     resolved = sorted(
         agent.tool_binding.resolve_tool_name(handler)
         for handler in client.tools

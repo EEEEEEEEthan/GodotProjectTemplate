@@ -11,7 +11,10 @@ import agent.agent_config
 import agent.mcp_bridge
 import agent.tool_binding
 
-EGENT_ROOT = pathlib.Path.cwd() / ".egent"
+_PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
+EGENT_ROOT = _PACKAGE_DIR.parent
+PROJECT_ROOT = EGENT_ROOT.parent
+EGENT_TEMP_DIR = EGENT_ROOT / ".temp"
 AGENTS_ROOT = EGENT_ROOT / "agents"
 GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
 GLOBAL_MODEL_FILE = GLOBAL_EGENT_ROOT / "model.toml"

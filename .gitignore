@@ -2,6 +2,8 @@
 /.engine/
 /.export/
 /.temp/
+.egent/.temp/
+.egent/.egent/
 /.local.settings
 /.egent/agents/.fuck.txt
 /.idea/

@@ -7,6 +7,8 @@ import pathlib
 import re
 import typing
 
+import agent.data_loader
+
 RELIABILITY_NOTICE = (
     "记忆由过往对话沉淀，未必准确；读取、引用或更新前请结合当前代码与事实自行核实。"
 )
@@ -27,7 +29,7 @@ def storage_path(agent_name: str) -> pathlib.Path:
     safe_name, error = sanitize_agent_name(agent_name)
     if error is not None:
         raise ValueError(error)
-    return (pathlib.Path.cwd() / ".egent" / "agents" / safe_name / ".memory.txt").resolve()
+    return (agent.data_loader.EGENT_ROOT / "agents" / safe_name / ".memory.txt").resolve()
 
 
 def current_timestamp() -> str:

@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import pathlib
+import typing
 
 
 class FileEditTool:
     """Agent 文件创建与文本替换工具。"""
 
-    @staticmethod
+    def __init__(self, agent: typing.Any) -> None:
+        self._agent = agent
+
     def create_file(
+        self,
         file_path: str,
         content: str | None = None,
     ) -> str:
@@ -42,8 +46,8 @@ class FileEditTool:
 
         return "成功"
 
-    @staticmethod
     def apply_patch(
+        self,
         file_path: str,
         old_text: str,
         new_text: str | None = None,
@@ -54,16 +58,16 @@ class FileEditTool:
         @param old_text: 要被替换的原文片段，须在文件中出现且仅出现一次
         @param new_text: 替换后的内容，缺省为空字符串
         """
-        validation_error = FileEditTool.__validate_patch_input(file_path, old_text)
+        validation_error = self.__validate_patch_input(file_path, old_text)
         if validation_error is not None:
             return validation_error
 
-        full_path, resolve_error = FileEditTool.__resolve_patch_target(file_path)
+        full_path, resolve_error = self.__resolve_patch_target(file_path)
         if resolve_error is not None:
             return resolve_error
 
         replacement = new_text if new_text is not None else ""
-        updated, patch_error = FileEditTool.__patch_file_content(
+        updated, patch_error = self.__patch_file_content(
             full_path,
             old_text,
             replacement,
@@ -77,16 +81,15 @@ class FileEditTool:
             return f"错误：无法写入文件：{exception}"
         return "成功"
 
-    @staticmethod
-    def __validate_patch_input(file_path: str, old_text: str) -> str | None:
+    def __validate_patch_input(self, file_path: str, old_text: str) -> str | None:
         if not file_path or not file_path.strip():
             return "错误：file_path 不能为空。"
         if not old_text:
             return "错误：old_text 不能为空字符串。"
         return None
 
-    @staticmethod
     def __resolve_patch_target(
+        self,
         file_path: str,
     ) -> tuple[pathlib.Path | None, str | None]:
         try:
@@ -97,8 +100,8 @@ class FileEditTool:
             return None, f"错误：文件不存在：{full_path}"
         return full_path, None
 
-    @staticmethod
     def __patch_file_content(
+        self,
         full_path: pathlib.Path,
         old_text: str,
         replacement: str,
@@ -109,9 +112,9 @@ class FileEditTool:
             return None, f"错误：无法读取文件：{exception}"
 
         file_originally_had_crlf = "\r\n" in content
-        work_content = FileEditTool.__to_lf_for_patch_matching(content)
-        work_old = FileEditTool.__to_lf_for_patch_matching(old_text)
-        work_replacement = FileEditTool.__to_lf_for_patch_matching(replacement)
+        work_content = self.__to_lf_for_patch_matching(content)
+        work_old = self.__to_lf_for_patch_matching(old_text)
+        work_replacement = self.__to_lf_for_patch_matching(replacement)
 
         occurrences = work_content.count(work_old)
         if occurrences == 0:
