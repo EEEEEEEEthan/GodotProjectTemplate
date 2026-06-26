@@ -82,6 +82,8 @@ class MemoryTool:
 
         @param filter: 可选：标题筛选正则，忽略大小写
         """
+        if not memory_store.memory_file_exists(self.__agent_name):
+            return "你失忆了..."
         items = memory_store.load_items(self.__agent_name)
         filter_text = filter.strip() if filter else ""
         matches = memory_store.sort_items_by_updated_at(items)

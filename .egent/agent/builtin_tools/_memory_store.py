@@ -58,6 +58,14 @@ def sort_items_by_updated_at(items: dict[str, MemoryItem]) -> list[tuple[str, Me
     return sorted(items.items(), key=lambda pair: pair[1]["updated_at"] or "")
 
 
+def memory_file_exists(agent_name: str) -> bool:
+    """记忆文件是否已创建。"""
+    try:
+        return storage_path(agent_name).is_file()
+    except ValueError:
+        return False
+
+
 def load_items(agent_name: str) -> dict[str, MemoryItem]:
     """从磁盘加载 agent 的全部记忆条目。"""
     path = storage_path(agent_name)

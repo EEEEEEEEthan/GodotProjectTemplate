@@ -79,10 +79,11 @@ def format_tool_arguments_brief(
 
 def parse_tool_arguments(arguments_text: str) -> dict[str, typing.Any]:
     """解析 LLM 返回的工具参数 JSON。"""
-    if not arguments_text:
+    stripped = arguments_text.strip()
+    if not stripped or stripped == "{":
         return {}
     try:
-        parsed = json.loads(arguments_text)
+        parsed = json.loads(stripped)
     except json.JSONDecodeError as exception:
         return {"__parse_error__": str(exception)}
     return parsed if isinstance(parsed, dict) else {}
