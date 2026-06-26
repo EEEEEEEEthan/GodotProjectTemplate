@@ -212,6 +212,9 @@ class AgentClient:
             "read_file_tool_read_file_outline_md": (
                 agent.tools.read_file_tool.ReadFileTool.read_file_outline_md
             ),
+            "read_file_tool_read_file_outline_py": (
+                agent.tools.read_file_tool.ReadFileTool.read_file_outline_py
+            ),
             "read_file_tool_read_lines": (
                 agent.tools.read_file_tool.ReadFileTool.read_lines
             ),

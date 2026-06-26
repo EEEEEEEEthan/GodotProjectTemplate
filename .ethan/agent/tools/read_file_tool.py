@@ -36,6 +36,16 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
         },
         required=["file_path"],
     ),
+    "read_file_tool_read_file_outline_py": schema_util.function_schema(
+        "read_file_tool_read_file_outline_py",
+        "读取 Python 源文件大纲（类 / 函数 / 顶层赋值）。阅读 .py 文件时先读大纲",
+        {
+            "file_path": schema_util.file_path_property(
+                "Python 文件路径（相对工作目录）"
+            ),
+        },
+        required=["file_path"],
+    ),
     "read_file_tool_read_lines": schema_util.function_schema(
         "read_file_tool_read_lines",
         "按行号范围读取文件片段（1-based，含首尾）。通常在 grep_search 或大纲取得行号后使用",
@@ -61,6 +71,117 @@ TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
 }
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
+
+# ---------- Python outline ----------
+_PY_DECORATOR_RE = re.compile(r"^\s*@(\w+(?:\.\w+)*)")
+_PY_CLASS_RE = re.compile(r"^\s*class\s+(\w+)\s*(?:\((.+?)\))?\s*:")
+_PY_FUNC_RE = re.compile(
+    r"^\s*(?:(async)\s+)?def\s+(\w+)\s*\(([^)]*)\)\s*(?:->\s*(.+?))?\s*:"
+)
+_PY_IMPORT_RE = re.compile(r"^\s*(?:import|from)\s+(\S+)")
+_PY_MODULE_VAR_RE = re.compile(r"^(\w+)\s*=")
+
+
+def _py_outline_text(lines: list[str]) -> str:
+    """解析 Python 源文件文本并生成大纲。"""
+    output_lines: list[str] = []
+    output_lines.append("行尾的尖括号表示行号")
+    # stack: (indent, kind, name, line_no)
+    scope_stack: list[tuple[int, str, str, int]] = []
+    indent_unit = 4  # assume 4-space indent
+
+    def _peek_scope_indent() -> int:
+        return scope_stack[-1][0] if scope_stack else 0
+
+    def _pop_to_indent(col: int) -> None:
+        while scope_stack and scope_stack[-1][0] >= col:
+            scope_stack.pop()
+
+    pending_decorators: list[str] = []
+
+    for line_no, raw_line in enumerate(lines, start=1):
+        stripped_raw = raw_line.rstrip("\n\r")
+        # skip blank lines and full-line comments
+        if not stripped_raw.strip() or stripped_raw.strip().startswith("#"):
+            continue
+
+        stripped = stripped_raw.expandtabs(4)
+        leading_space = len(stripped) - len(stripped.lstrip())
+        col = leading_space
+
+        content = stripped.strip()
+        if not content or content.startswith("#"):
+            continue
+
+        # Close scopes that are deeper than current indent
+        if col <= _peek_scope_indent() and scope_stack:
+            _pop_to_indent(col)
+
+        # Decorator: stash it for the next class/func
+        dec_match = _PY_DECORATOR_RE.match(content)
+        if dec_match:
+            pending_decorators.append(f"@{dec_match.group(1)}")
+            continue
+
+        # Class definition
+        cls_match = _PY_CLASS_RE.match(content)
+        if cls_match:
+            _pop_to_indent(col)
+            name = cls_match.group(1)
+            bases = cls_match.group(2)
+            if bases:
+                label = f"class {name}({bases})"
+            else:
+                label = f"class {name}"
+            indent_prefix = "\t" * (col // indent_unit)
+            # emit any pending decorators
+            for dec in pending_decorators:
+                output_lines.append(indent_prefix + f"{dec} <{line_no}>")
+            pending_decorators.clear()
+            output_lines.append(indent_prefix + f"{label} <{line_no}>")
+            scope_stack.append((col, "class", name, line_no))
+            continue
+
+        # Function / method definition
+        func_match = _PY_FUNC_RE.match(content)
+        if func_match:
+            _pop_to_indent(col)
+            is_async = func_match.group(1)
+            name = func_match.group(2)
+            params = func_match.group(3)
+            ret = func_match.group(4)
+            prefix = "async " if is_async else ""
+            label = f"{prefix}def {name}({params})"
+            if ret:
+                label += f" -> {ret}"
+            indent_prefix = "\t" * (col // indent_unit)
+            # emit any pending decorators
+            for dec in pending_decorators:
+                output_lines.append(indent_prefix + f"{dec} <{line_no}>")
+            pending_decorators.clear()
+            output_lines.append(indent_prefix + f"{label} <{line_no}>")
+            scope_stack.append((col, "function", name, line_no))
+            continue
+
+        # If we see a non-decorator, non-class, non-func line, flush pending decorators
+        # (they were orphan decorators not attached to anything)
+        pending_decorators.clear()
+
+        # Module-level import (only at indent 0)
+        if col == 0:
+            imp_match = _PY_IMPORT_RE.match(content)
+            if imp_match:
+                output_lines.append(f"    import {imp_match.group(1)} <{line_no}>")
+                continue
+
+        # Module-level variable assignment (only at indent 0)
+        if col == 0:
+            var_match = _PY_MODULE_VAR_RE.match(content)
+            if var_match:
+                output_lines.append(f"    {var_match.group(1)} = ... <{line_no}>")
+                continue
+
+    return "\n".join(output_lines)
 
 
 class ReadFileTool:
@@ -110,6 +231,25 @@ class ReadFileTool:
             title = match.group(2).strip()
             output_lines.append("\t" * (level - 1) + f"{title} <{line_no}>")
         return warning + "\n".join(output_lines)
+
+    @staticmethod
+    def read_file_outline_py(file_path: str) -> str:
+        """解析 Python 源文件大纲（类 / 函数 / 顶层赋值）。"""
+        absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
+        if resolve_error is not None:
+            return resolve_error
+
+        warning = ""
+        if absolute_path.suffix.lower() not in (".py", ".pyi", ".pyx"):
+            warning = f"警告：文件扩展名不是 .py：{file_path}\n"
+
+        try:
+            with absolute_path.open(encoding="utf-8") as handle:
+                lines = handle.readlines()
+        except OSError as error:
+            return f"错误：无法读取文件：{error}"
+
+        return warning + _py_outline_text(lines)
 
     @staticmethod
     def read_lines(file_path: str, start_line: int, end_line: int) -> str:

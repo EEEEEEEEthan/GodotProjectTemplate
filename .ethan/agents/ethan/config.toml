@@ -48,6 +48,7 @@ tools = [
   "memory_tool_find_str",
   "read_file_tool_read_file_outline_cs",
   "read_file_tool_read_file_outline_md",
+  "read_file_tool_read_file_outline_py",
   "read_file_tool_read_lines",
   "read_file_tool_read_whole_file",
   "launch_game_tool_launch_game",
