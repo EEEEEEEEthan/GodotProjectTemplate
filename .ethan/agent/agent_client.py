@@ -168,6 +168,15 @@ class AgentClient:
             "shell_tool_exec": (
                 agent.tools.shell_tool.ShellTool.exec
             ),
+            "shell_tool_bg_exec": (
+                agent.tools.shell_tool.BgTool.bg_exec
+            ),
+            "shell_tool_bg_status": (
+                agent.tools.shell_tool.BgTool.bg_status
+            ),
+            "shell_tool_wait": (
+                agent.tools.shell_tool.BgTool.wait
+            ),
             "walk_files_tool_walk_files": walk_files_tool.walk_files,
             "system_info_tool_system_info": (
                 agent.tools.system_info_tool.SystemInfoTool.system_info

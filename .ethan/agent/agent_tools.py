@@ -15,7 +15,6 @@ import agent.tools.shell_tool as shell_tool
 import agent.tools.skill_tool as skill_tool
 import agent.tools.system_info_tool as system_info_tool
 import agent.tools.walk_files_tool as walk_files_tool
-
 TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
     **skill_tool.TOOL_SCHEMAS,
     **file_edit_tool.TOOL_SCHEMAS,

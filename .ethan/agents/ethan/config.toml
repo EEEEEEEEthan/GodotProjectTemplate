@@ -44,5 +44,8 @@ tools = [
   "read_file_tool_read_whole_file",
   "launch_game_tool_launch_game",
   "shell_tool_exec",
+  "shell_tool_bg_exec",
+  "shell_tool_bg_status",
+  "shell_tool_wait",
   "mcp:godot-game",
 ]
