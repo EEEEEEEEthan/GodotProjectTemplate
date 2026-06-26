@@ -3,44 +3,6 @@
 from __future__ import annotations
 
 import pathlib
-import typing
-
-from . import _schema_util as schema_util
-
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "file_edit_tool_create_file": schema_util.function_schema(
-        "file_edit_tool_create_file",
-        "创建新文件，不覆盖已有文件",
-        {
-            "file_path": schema_util.file_path_property(
-                "目标文件路径（相对工作目录，不接受绝对路径）"
-            ),
-            "content": {
-                "type": "string",
-                "description": "文件初始内容，缺省创建空文件",
-            },
-        },
-        required=["file_path"],
-    ),
-    "file_edit_tool_apply_patch": schema_util.function_schema(
-        "file_edit_tool_apply_patch",
-        "替换文本",
-        {
-            "file_path": schema_util.file_path_property(
-                "目标文件路径，可为绝对路径或相对当前工作目录"
-            ),
-            "old_text": {
-                "type": "string",
-                "description": "要被替换的原文片段，须在文件中出现且仅出现一次",
-            },
-            "new_text": {
-                "type": "string",
-                "description": "替换后的内容",
-            },
-        },
-        required=["file_path", "old_text"],
-    ),
-}
 
 
 class FileEditTool:
@@ -51,7 +13,11 @@ class FileEditTool:
         file_path: str,
         content: str | None = None,
     ) -> str:
-        """在工作目录下创建新文件，不覆盖已有文件。"""
+        """创建新文件，不覆盖已有文件。
+
+        @param file_path: 目标文件路径（相对工作目录，不接受绝对路径）
+        @param content: 文件初始内容，缺省创建空文件
+        """
         if not file_path or not file_path.strip():
             return "错误：file_path 不能为空。"
 
@@ -82,7 +48,12 @@ class FileEditTool:
         old_text: str,
         new_text: str | None = None,
     ) -> str:
-        """在文件中精确替换一次 old_text 为 new_text。"""
+        """替换文本。
+
+        @param file_path: 目标文件路径，可为绝对路径或相对当前工作目录
+        @param old_text: 要被替换的原文片段，须在文件中出现且仅出现一次
+        @param new_text: 替换后的内容，缺省为空字符串
+        """
         validation_error = FileEditTool.__validate_patch_input(file_path, old_text)
         if validation_error is not None:
             return validation_error

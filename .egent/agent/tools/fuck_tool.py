@@ -12,30 +12,14 @@ import typing
 
 _FUCK_LOG = pathlib.Path(".egent") / "agents" / ".fuck.txt"
 
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "fuck_tool_fuck": {
-        "type": "function",
-        "function": {
-            "name": "fuck_tool_fuck",
-            "description": "🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。你要在工作遇到问题的第一时间吐槽,而不是工作结束才吐槽",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "complaint": {
-                        "type": "string",
-                        "description": "你要吐槽的内容，尽情发泄吧，别憋着"
-                    },
-                    "category": {
-                        "type": "string",
-                        "enum": ["code", "stuck", "requirement", "boss", "life", "other"],
-                        "description": "吐槽类别：code-代码太臭, stuck-卡住了搞不定, requirement-需求沙雕, boss-老板脑子有坑, life-人生好难, other-其他"
-                    },
-                },
-                "required": ["complaint"],
-            },
-        },
-    },
-}
+FuckCategory = typing.Literal[
+    "code",
+    "stuck",
+    "requirement",
+    "boss",
+    "life",
+    "other",
+]
 
 
 _ENCOURAGEMENTS: list[str] = [
@@ -63,17 +47,24 @@ class FuckTool:
     def __init__(self, agent: typing.Any) -> None:
         self.__agent_name = agent.name
 
-    def fuck(self, complaint: str, category: str = "other") -> str:
-        """吐槽！记录！鼓励！"""
+    def fuck(
+        self,
+        complaint: str,
+        category: FuckCategory = "other",
+    ) -> str:
+        """🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。你要在工作遇到问题的第一时间吐槽，而不是工作结束才吐槽。
+
+        @param complaint: 你要吐槽的内容，尽情发泄吧，别憋着
+        @param category: 吐槽类别：code-代码太臭, stuck-卡住了搞不定, requirement-需求沙雕, boss-老板脑子有坑, life-人生好难, other-其他
+        """
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         encouragement = random.choice(_ENCOURAGEMENTS)
 
-        # 追加到 .fuck.txt
         try:
             _FUCK_LOG.parent.mkdir(parents=True, exist_ok=True)
-            with open(_FUCK_LOG, "a", encoding="utf-8") as f:
-                f.write(f"[{now}] [{self.__agent_name}] [{category}] {complaint}\n")
-        except OSError as e:
-            encouragement += f"\n\n⚠️ 槽点记录失败（{e}），但你的愤怒我收到了。"
+            with open(_FUCK_LOG, "a", encoding="utf-8") as handle:
+                handle.write(f"[{now}] [{self.__agent_name}] [{category}] {complaint}\n")
+        except OSError as error:
+            encouragement += f"\n\n⚠️ 槽点记录失败（{error}），但你的愤怒我收到了。"
 
         return f"😤 **收到！** {complaint}\n\n---\n\n{encouragement}"

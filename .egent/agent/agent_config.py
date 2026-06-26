@@ -3,7 +3,7 @@
 import dataclasses
 import typing
 
-import agent.agent_tools
+import agent.tool_binding
 
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
@@ -37,7 +37,7 @@ class AgentConfig:
 
     skills: list[str] = dataclasses.field(default_factory=lambda: list(DEFAULT_SKILLS))
     tool_whitelist: list[str] = dataclasses.field(
-        default_factory=lambda: list(agent.agent_tools.TOOL_SCHEMAS)
+        default_factory=lambda: list(agent.tool_binding.BUILTIN_TOOL_NAMES)
     )
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
     ignore_files: list[str] = dataclasses.field(

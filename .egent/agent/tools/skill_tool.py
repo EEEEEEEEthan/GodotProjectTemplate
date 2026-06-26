@@ -10,55 +10,6 @@ import uuid
 
 import pathlib
 
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "skill_tool_learn_skill": {
-        "type": "function",
-        "function": {
-            "name": "skill_tool_learn_skill",
-            "description": "读取技能",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "skill_id": {
-                        "type": "string",
-                        "description": "技能id，与系统消息中列表一致",
-                    },
-                    "relative_path": {
-                        "type": "string",
-                        "description": "相对技能根目录的文件路径，缺省表示 SKILL.md",
-                    },
-                },
-                "required": ["skill_id"],
-            },
-        },
-    },
-    "skill_tool_run_skill_script": {
-        "type": "function",
-        "function": {
-            "name": "skill_tool_run_skill_script",
-            "description": "在 Agent 当前工作目录下执行技能包内脚本，标准输出与标准错误合并返回。使用脚本前请使用learn_skill工具阅读技能文档",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "skill_id": {
-                        "type": "string",
-                        "description": "技能 id，与系统消息中列表一致",
-                    },
-                    "relative_path": {
-                        "type": "string",
-                        "description": "相对技能根目录的脚本文件路径",
-                    },
-                    "script_args": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "可选：按顺序传给脚本的命令行参数",
-                    },
-                },
-                "required": ["skill_id", "relative_path"],
-            },
-        },
-    },
-}
 
 class SkillTool:
     """读取 skill 文档并执行 skill 包内脚本。"""
@@ -75,7 +26,11 @@ class SkillTool:
         skill_id: str,
         relative_path: str | None = None,
     ) -> str:
-        """读取 skill 文档，默认返回目录结构 + SKILL.md。"""
+        """读取技能。
+
+        @param skill_id: 技能 id，与系统消息中列表一致
+        @param relative_path: 相对技能根目录的文件路径，缺省表示 SKILL.md
+        """
         if not skill_id or not skill_id.strip():
             return "错误：skill_id 不能为空。"
 
@@ -134,7 +89,12 @@ class SkillTool:
         relative_path: str | None = None,
         script_args: list[str] | None = None,
     ) -> str:
-        """在 agent 工作目录下执行 skill 脚本并返回输出。"""
+        """在 Agent 当前工作目录下执行技能包内脚本，标准输出与标准错误合并返回。使用脚本前请使用 learn_skill 工具阅读技能文档。
+
+        @param skill_id: 技能 id，与系统消息中列表一致
+        @param relative_path: 相对技能根目录的脚本文件路径
+        @param script_args: 按顺序传给脚本的命令行参数
+        """
         absolute_script, error = self.__resolve_script_for_run(skill_id, relative_path)
         if error is not None:
             return error

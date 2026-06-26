@@ -5,80 +5,6 @@ from __future__ import annotations
 import typing
 
 from . import _memory_store as memory_store
-from . import _schema_util as schema_util
-
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "memory_tool_add_item": {
-        "type": "function",
-        "function": {
-            "name": "memory_tool_add_item",
-            "description": "💾 **重要！** 添加长期记忆条目。当你学到项目目标、架构决策、用户偏好等关键信息时，**必须立即记录**，避免遗忘或重复询问。标题为唯一键（大小写不敏感）",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "key": {"type": "string", "description": "记忆标题"},
-                    "value": {"type": "string", "description": "记忆正文"},
-                },
-                "required": ["key", "value"],
-            },
-        },
-    },
-    "memory_tool_remove_item": {
-        "type": "function",
-        "function": {
-            "name": "memory_tool_remove_item",
-            "description": "删除长期记忆条目",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "key": {"type": "string", "description": "记忆标题"},
-                },
-                "required": ["key"],
-            },
-        },
-    },
-    "memory_tool_update_item": {
-        "type": "function",
-        "function": {
-            "name": "memory_tool_update_item",
-            "description": "更新长期记忆条目",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "key": {"type": "string", "description": "记忆标题"},
-                    "value": {"type": "string", "description": "更新后的记忆正文"},
-                },
-                "required": ["key", "value"],
-            },
-        },
-    },
-    "memory_tool_list_items": {
-        "type": "function",
-        "function": {
-            "name": "memory_tool_list_items",
-            "description": "📋 **每次对话开始前先调用！** 列出长期记忆条目。快速恢复上下文，避免重复询问已知信息。可按标题正则筛选。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "filter": {
-                        "type": "string",
-                        "description": "可选：标题筛选正则，忽略大小写",
-                    },
-                },
-            },
-        },
-    },
-    "memory_tool_find_str": schema_util.function_schema(
-        "memory_tool_find_str",
-        "🔍 在记忆中搜索。找不到答案时再问用户，节省时间。在记忆标题与正文中正则搜索（忽略大小写）",
-        {
-            "pattern": schema_util.pattern_property(
-                "搜索用正则表达式"
-            ),
-        },
-        required=["pattern"],
-    ),
-}
 
 
 class MemoryTool:
@@ -88,7 +14,11 @@ class MemoryTool:
         self.__agent_name = agent.name
 
     def add_item(self, key: str, value: str) -> str:
-        """添加记忆条目。"""
+        """💾 **重要！** 添加长期记忆条目。当你学到项目目标、架构决策、用户偏好等关键信息时，**必须立即记录**，避免遗忘或重复询问。标题为唯一键（大小写不敏感）。
+
+        @param key: 记忆标题
+        @param value: 记忆正文
+        """
         normalized_key, key_error = memory_store.validate_key(key)
         if key_error is not None:
             return key_error
@@ -106,7 +36,10 @@ class MemoryTool:
         return f"已添加记忆「{normalized_key}」。"
 
     def remove_item(self, key: str) -> str:
-        """删除记忆条目。"""
+        """删除长期记忆条目。
+
+        @param key: 记忆标题
+        """
         normalized_key, key_error = memory_store.validate_key(key)
         if key_error is not None:
             return key_error
@@ -122,7 +55,11 @@ class MemoryTool:
         return f"已删除记忆「{existing}」。"
 
     def update_item(self, key: str, value: str) -> str:
-        """更新记忆条目。"""
+        """更新长期记忆条目。
+
+        @param key: 记忆标题
+        @param value: 更新后的记忆正文
+        """
         normalized_key, key_error = memory_store.validate_key(key)
         if key_error is not None:
             return key_error
@@ -141,7 +78,10 @@ class MemoryTool:
         return f"已更新记忆「{existing}」。"
 
     def list_items(self, filter: str | None = None) -> str:  # pylint: disable=redefined-builtin
-        """列出记忆条目，可按标题正则筛选。"""
+        """📋 **每次对话开始前先调用！** 列出长期记忆条目。快速恢复上下文，避免重复询问已知信息。可按标题正则筛选。
+
+        @param filter: 可选：标题筛选正则，忽略大小写
+        """
         items = memory_store.load_items(self.__agent_name)
         filter_text = filter.strip() if filter else ""
         matches = memory_store.sort_items_by_updated_at(items)
@@ -165,7 +105,10 @@ class MemoryTool:
         return "\n".join(lines)
 
     def find_str(self, pattern: str) -> str:
-        """在记忆标题与正文中搜索。"""
+        """🔍 在记忆中搜索。找不到答案时再问用户，节省时间。在记忆标题与正文中正则搜索（忽略大小写）。
+
+        @param pattern: 搜索用正则表达式
+        """
         filter_text = pattern.strip()
         if not filter_text:
             return "错误：pattern 不能为空。"

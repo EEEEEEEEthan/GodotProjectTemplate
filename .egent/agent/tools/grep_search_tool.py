@@ -8,36 +8,7 @@ import re
 import typing
 
 from . import _path_util as path_util
-from . import _schema_util as schema_util
 
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "grep_search_tool_grep_search": schema_util.function_schema(
-        "grep_search_tool_grep_search",
-        "在工作区内用正则全目录搜索文件内容。用于查找符号引用、字符串、模式匹配等；取得行号后可配合 read_lines 阅读上下文",
-        {
-            "pattern": schema_util.pattern_property(
-                "正则表达式（搜索每行内容）"
-            ),
-            "directory": {
-                "type": "string",
-                "description": "搜索根目录（相对工作目录），缺省 .",
-            },
-            "filter": {
-                "type": "string",
-                "description": "文件名通配符（fnmatch），缺省 *",
-            },
-            "ignore_case": {
-                "type": "boolean",
-                "description": "忽略大小写",
-            },
-            "max_matches": {
-                "type": "integer",
-                "description": "最多输出匹配行数，缺省 500",
-            },
-        },
-        required=["pattern"],
-    ),
-}
 
 class GrepSearchTool:
     """在工作区内用正则搜索文件内容。"""
@@ -53,7 +24,14 @@ class GrepSearchTool:
         ignore_case: bool | None = None,
         max_matches: int | None = None,
     ) -> str:
-        """在目录树内用正则搜索文件内容。"""
+        """在工作区内用正则全目录搜索文件内容。用于查找符号引用、字符串、模式匹配等；取得行号后可配合 read_lines 阅读上下文。
+
+        @param pattern: 正则表达式（搜索每行内容）
+        @param directory: 搜索根目录（相对工作目录），缺省 `.`
+        @param filter: 文件名通配符（fnmatch），缺省 `*`
+        @param ignore_case: 是否忽略大小写
+        @param max_matches: 最多输出匹配行数，缺省 500
+        """
         if not pattern or not pattern.strip():
             return "错误：pattern 不能为空。"
 

@@ -8,18 +8,6 @@ import os
 import platform
 import socket
 import sys
-import typing
-
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "system_info_tool_system_info": {
-        "type": "function",
-        "function": {
-            "name": "system_info_tool_system_info",
-            "description": "获取当前时间、时区、操作系统与运行环境属性",
-            "parameters": {"type": "object", "properties": {}},
-        },
-    },
-}
 
 
 class SystemInfoTool:
@@ -27,7 +15,7 @@ class SystemInfoTool:
 
     @staticmethod
     def system_info() -> str:
-        """输出全部环境信息。"""
+        """获取当前时间、时区、操作系统与运行环境属性。"""
         sections = [
             SystemInfoTool.__format_time(),
             SystemInfoTool.__format_os(),

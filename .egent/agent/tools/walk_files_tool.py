@@ -8,29 +8,6 @@ import os
 import typing
 
 from . import _path_util as path_util
-from . import _schema_util as schema_util
-
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "walk_files_tool_walk_files": schema_util.function_schema(
-        "walk_files_tool_walk_files",
-        "遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件",
-        {
-            "directory": {
-                "type": "string",
-                "description": "要遍历的目录（相对工作目录）",
-            },
-            "filter": {
-                "type": "string",
-                "description": "文件与文件夹名通配符，缺省 *",
-            },
-            "depth": {
-                "type": "integer",
-                "description": "最大层级深度，0 表示不限制，缺省 1",
-            },
-        },
-        required=["directory"],
-    ),
-}
 
 
 class WalkFilesTool:
@@ -45,7 +22,12 @@ class WalkFilesTool:
         filter: str | None = None,  # pylint: disable=redefined-builtin
         depth: int | None = None,
     ) -> str:
-        """遍历目标目录下的文件与文件夹。"""
+        """遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件。
+
+        @param directory: 要遍历的目录（相对工作目录）
+        @param filter: 文件与文件夹名通配符，缺省 `*`
+        @param depth: 最大层级深度，0 表示不限制，缺省 1
+        """
         root, directory_error = path_util.resolve_directory(
             directory,
             label="目录",

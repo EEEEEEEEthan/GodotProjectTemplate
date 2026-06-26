@@ -8,8 +8,8 @@ import pathlib
 import tomllib
 
 import agent.agent_config
-import agent.agent_tools
 import agent.mcp_bridge
+import agent.tool_binding
 
 EGENT_ROOT = pathlib.Path.cwd() / ".egent"
 AGENTS_ROOT = EGENT_ROOT / "agents"
@@ -38,7 +38,7 @@ DEFAULT_MODEL: dict[str, str] = {
 DEFAULT_CONFIG: dict[str, str | list[str]] = {
     "systemPrompt": agent.agent_config.DEFAULT_SYSTEM_PROMPT,
     "skills": list(agent.agent_config.DEFAULT_SKILLS),
-    "tools": list(agent.agent_tools.TOOL_SCHEMAS),
+    "tools": list(agent.tool_binding.BUILTIN_TOOL_NAMES),
     "ignoreFiles": list(agent.agent_config.DEFAULT_IGNORE_FILES),
 }
 

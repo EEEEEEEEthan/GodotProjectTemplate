@@ -8,7 +8,6 @@ import re
 import subprocess
 import sys
 import time
-import typing
 from datetime import datetime
 
 _MCP_READY_LOG_PATTERN = re.compile(
@@ -23,40 +22,6 @@ _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
 _LAUNCH_LOG_DIRECTORY = pathlib.Path(".egent") / ".temp"
 
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "launch_game_tool_launch_game": {
-        "type": "function",
-        "function": {
-            "name": "launch_game_tool_launch_game",
-            "description": (
-                "启动 Godot 游戏。会输出端口号，可以用mcp连接游戏。"
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "headless": {
-                        "type": "boolean",
-                        "description": "是否以无头模式启动，缺省 false（窗口模式）",
-                    },
-                    "skip_prepare": {
-                        "type": "boolean",
-                        "description": "是否跳过 .engine-prepare.bat，缺省 false",
-                    },
-                    "skip_import": {
-                        "type": "boolean",
-                        "description": "是否跳过 --headless --import 资源导入，缺省 false",
-                    },
-                    "extra_arguments": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "追加传给引擎的命令行参数",
-                    },
-                },
-            },
-        },
-    },
-}
-
 
 class LaunchGameTool:
     """使用 .engine/.engine.exe 启动 Godot 游戏。"""
@@ -69,7 +34,13 @@ class LaunchGameTool:
         skip_import: bool = False,
         extra_arguments: list[str] | None = None,
     ) -> str:
-        """使用 .engine/.engine.exe 启动 Godot 游戏（后台进程）。"""
+        """启动 Godot 游戏。会输出端口号，可以用 MCP 连接游戏。
+
+        @param headless: 是否以无头模式启动，缺省 false（窗口模式）
+        @param skip_prepare: 是否跳过 .engine-prepare.bat，缺省 false
+        @param skip_import: 是否跳过 --headless --import 资源导入，缺省 false
+        @param extra_arguments: 追加传给引擎的命令行参数
+        """
         project_root = pathlib.Path.cwd()
         engine_executable = (project_root / _ENGINE_RELATIVE).resolve()
         prepare_script = (project_root / _PREPARE_BAT).resolve()

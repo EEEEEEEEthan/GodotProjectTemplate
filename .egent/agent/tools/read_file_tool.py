@@ -4,71 +4,10 @@ from __future__ import annotations
 
 import pathlib
 import re
-import typing
 
 from . import _cs_outline as cs_outline
 from . import _output_util as output_util
 from . import _path_util as path_util
-from . import _schema_util as schema_util
-
-_RELATIVE_FILE_PATH = schema_util.file_path_property(
-    "文件路径（相对工作目录）"
-)
-
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "read_file_tool_read_file_outline_cs": schema_util.function_schema(
-        "read_file_tool_read_file_outline_cs",
-        "读取 C# 源文件大纲（namespace / 类型 / 成员）。阅读 .cs 文件时先读大纲",
-        {
-            "file_path": schema_util.file_path_property(
-                "C# 源文件路径（相对工作目录）"
-            ),
-        },
-        required=["file_path"],
-    ),
-    "read_file_tool_read_file_outline_md": schema_util.function_schema(
-        "read_file_tool_read_file_outline_md",
-        "读取 Markdown 文件标题大纲。阅读 .md 文件时先读大纲",
-        {
-            "file_path": schema_util.file_path_property(
-                "Markdown 文件路径（相对工作目录）"
-            ),
-        },
-        required=["file_path"],
-    ),
-    "read_file_tool_read_file_outline_py": schema_util.function_schema(
-        "read_file_tool_read_file_outline_py",
-        "读取 Python 源文件大纲（类 / 函数 / 顶层赋值）。阅读 .py 文件时先读大纲",
-        {
-            "file_path": schema_util.file_path_property(
-                "Python 文件路径（相对工作目录）"
-            ),
-        },
-        required=["file_path"],
-    ),
-    "read_file_tool_read_lines": schema_util.function_schema(
-        "read_file_tool_read_lines",
-        "按行号范围读取文件片段（1-based，含首尾）。通常在 grep_search 或大纲取得行号后使用",
-        {
-            "file_path": _RELATIVE_FILE_PATH,
-            "start_line": {
-                "type": "integer",
-                "description": "起始行号（1-based，含）",
-            },
-            "end_line": {
-                "type": "integer",
-                "description": "结束行号（1-based，含）",
-            },
-        },
-        required=["file_path", "start_line", "end_line"],
-    ),
-    "read_file_tool_read_whole_file": schema_util.function_schema(
-        "read_file_tool_read_whole_file",
-        "读取文件全文。用于非 .cs/.md 文件，或大纲策略无法定位细节时的 fallback",
-        {"file_path": _RELATIVE_FILE_PATH},
-        required=["file_path"],
-    ),
-}
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 
@@ -189,7 +128,10 @@ class ReadFileTool:
 
     @staticmethod
     def read_file_outline_cs(file_path: str) -> str:
-        """解析 C# 源文件大纲。"""
+        """读取 C# 源文件大纲（namespace / 类型 / 成员）。阅读 .cs 文件时先读大纲。
+
+        @param file_path: C# 源文件路径（相对工作目录）
+        """
         absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
@@ -207,7 +149,10 @@ class ReadFileTool:
 
     @staticmethod
     def read_file_outline_md(file_path: str) -> str:
-        """解析 Markdown 标题大纲。"""
+        """读取 Markdown 文件标题大纲。阅读 .md 文件时先读大纲。
+
+        @param file_path: Markdown 文件路径（相对工作目录）
+        """
         absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
@@ -234,7 +179,10 @@ class ReadFileTool:
 
     @staticmethod
     def read_file_outline_py(file_path: str) -> str:
-        """解析 Python 源文件大纲（类 / 函数 / 顶层赋值）。"""
+        """读取 Python 源文件大纲（类 / 函数 / 顶层赋值）。阅读 .py 文件时先读大纲。
+
+        @param file_path: Python 文件路径（相对工作目录）
+        """
         absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
@@ -253,7 +201,12 @@ class ReadFileTool:
 
     @staticmethod
     def read_lines(file_path: str, start_line: int, end_line: int) -> str:
-        """按行号范围读取文件片段（1-based，含首尾）。"""
+        """按行号范围读取文件片段（1-based，含首尾）。通常在 grep_search 或大纲取得行号后使用。
+
+        @param file_path: 文件路径（相对工作目录）
+        @param start_line: 起始行号（1-based，含）
+        @param end_line: 结束行号（1-based，含）
+        """
         absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error
@@ -277,7 +230,10 @@ class ReadFileTool:
 
     @staticmethod
     def read_whole_file(file_path: str) -> str:
-        """读取文件全文。"""
+        """读取文件全文。用于非 .cs/.md 文件，或大纲策略无法定位细节时的 fallback。
+
+        @param file_path: 文件路径（相对工作目录）
+        """
         absolute_path, resolve_error = ReadFileTool.__resolve_file(file_path)
         if resolve_error is not None:
             return resolve_error

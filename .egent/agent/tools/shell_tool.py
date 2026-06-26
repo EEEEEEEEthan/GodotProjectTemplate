@@ -16,71 +16,7 @@ import time
 import typing
 import uuid
 
-from . import _schema_util as schema_util
 from . import _output_util as output_util
-
-# ---------------------------------------------------------------------------
-# Schema 定义
-# ---------------------------------------------------------------------------
-
-TOOL_SCHEMAS: dict[str, dict[str, typing.Any]] = {
-    "shell_tool_exec": schema_util.function_schema(
-        "shell_tool_exec",
-        "在本地系统执行任意 shell 命令（cmd /c）。"
-        "权限极高，无沙箱限制。可执行文件操作、启动进程、查询系统状态等。"
-        "输出超过 10000 字符会被截断。超时 5 分钟。",
-        {
-            "command": {
-                "type": "string",
-                "description": "要执行的 shell 命令，例如 'dir'、'echo hello'、'python script.py'",
-            },
-            "cwd": {
-                "type": "string",
-                "description": "工作目录，缺省为项目根目录",
-            },
-        },
-        required=["command"],
-    ),
-    "shell_tool_bg_exec": schema_util.function_schema(
-        "shell_tool_bg_exec",
-        "在后台执行 shell 命令并立即返回。"
-        "通过返回的 process_id 可用 shell_tool_bg_status 查询执行状态。"
-        "标准输出与标准错误合并写入日志文件。",
-        {
-            "command": {
-                "type": "string",
-                "description": "要执行的 shell 命令，例如 'dir'、'python train.py'",
-            },
-            "cwd": {
-                "type": "string",
-                "description": "工作目录，缺省为项目根目录",
-            },
-        },
-        required=["command"],
-    ),
-    "shell_tool_bg_status": schema_util.function_schema(
-        "shell_tool_bg_status",
-        "查询后台进程的执行状态。返回是否完成、退出码、已运行时间与最新日志输出。",
-        {
-            "process_id": {
-                "type": "string",
-                "description": "shell_tool_bg_exec 返回的进程 ID",
-            },
-        },
-        required=["process_id"],
-    ),
-    "shell_tool_wait": schema_util.function_schema(
-        "shell_tool_wait",
-        "等待指定的秒数（最长 120 秒）。用于需要延时的场景，如等待游戏启动、等待文件生成。",
-        {
-            "seconds": {
-                "type": "number",
-                "description": "等待的秒数（0.1 ~ 120）",
-            },
-        },
-        required=["seconds"],
-    ),
-}
 
 # ---------------------------------------------------------------------------
 # 全局后台进程注册表
@@ -113,7 +49,11 @@ class ShellTool:
 
     @staticmethod
     def exec(command: str, cwd: str | None = None) -> str:
-        """执行 shell 命令，返回 stdout+stderr 合并输出。"""
+        """在本地系统执行任意 shell 命令（cmd /c）。权限极高，无沙箱限制。输出超过 10000 字符会被截断。超时 5 分钟。
+
+        @param command: 要执行的 shell 命令，例如 `dir`、`echo hello`、`python script.py`
+        @param cwd: 工作目录，缺省为项目根目录
+        """
         if not command or not command.strip():
             return "错误：command 不能为空。"
 
@@ -168,7 +108,12 @@ class BgTool:
     # ------------------------------------------------------------------
     @staticmethod
     def bg_exec(command: str, cwd: str | None = None) -> str:
-        """在后台启动进程，返回 ID 与日志路径。"""
+        """在后台执行 shell 命令并立即返回。通过返回的 process_id 可用 shell_tool_bg_status 查询执行状态。
+
+        @tool_name shell_tool_bg_exec
+        @param command: 要执行的 shell 命令，例如 `dir`、`python train.py`
+        @param cwd: 工作目录，缺省为项目根目录
+        """
         if not command or not command.strip():
             return "错误：command 不能为空。"
 
@@ -244,7 +189,11 @@ class BgTool:
     # ------------------------------------------------------------------
     @staticmethod
     def bg_status(process_id: str) -> str:
-        """查询后台进程状态，自动轮询并更新完成状态。"""
+        """查询后台进程的执行状态。返回是否完成、退出码、已运行时间与最新日志输出。
+
+        @tool_name shell_tool_bg_status
+        @param process_id: shell_tool_bg_exec 返回的进程 ID
+        """
         if process_id not in _processes:
             return f"错误：未找到进程 ID：{process_id}"
 
@@ -300,7 +249,11 @@ class BgTool:
     # ------------------------------------------------------------------
     @staticmethod
     def wait(seconds: float) -> str:
-        """阻塞等待指定秒数。"""
+        """等待指定的秒数（最长 120 秒）。用于需要延时的场景，如等待游戏启动、等待文件生成。
+
+        @tool_name shell_tool_wait
+        @param seconds: 等待的秒数（0.1 ~ 120）
+        """
         if seconds <= 0:
             return "已等待 0 秒。"
         if seconds > 120:
