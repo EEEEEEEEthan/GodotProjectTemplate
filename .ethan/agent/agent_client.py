@@ -173,57 +173,27 @@ class AgentClient:
         static_handlers = {
             "skill_tool_learn_skill": skill_tool.learn_skill,
             "skill_tool_run_skill_script": skill_tool.run_skill_script,
-            "file_edit_tool_create_file": (
-                agent.tools.file_edit_tool.FileEditTool.create_file
-            ),
-            "file_edit_tool_apply_patch": (
-                agent.tools.file_edit_tool.FileEditTool.apply_patch
-            ),
-            "grep_search_tool_grep_search": (
-                agent.tools.grep_search_tool.GrepSearchTool.grep_search
-            ),
-            "shell_tool_exec": (
-                agent.tools.shell_tool.ShellTool.exec
-            ),
-            "shell_tool_bg_exec": (
-                agent.tools.shell_tool.BgTool.bg_exec
-            ),
-            "shell_tool_bg_status": (
-                agent.tools.shell_tool.BgTool.bg_status
-            ),
-            "shell_tool_wait": (
-                agent.tools.shell_tool.BgTool.wait
-            ),
+            "file_edit_tool_create_file": agent.tools.file_edit_tool.FileEditTool.create_file,
+            "file_edit_tool_apply_patch": agent.tools.file_edit_tool.FileEditTool.apply_patch,
+            "grep_search_tool_grep_search": agent.tools.grep_search_tool.GrepSearchTool.grep_search,
+            "shell_tool_exec": agent.tools.shell_tool.ShellTool.exec,
+            "shell_tool_bg_exec": agent.tools.shell_tool.BgTool.bg_exec,
+            "shell_tool_bg_status": agent.tools.shell_tool.BgTool.bg_status,
+            "shell_tool_wait": agent.tools.shell_tool.BgTool.wait,
             "walk_files_tool_walk_files": walk_files_tool.walk_files,
-            "system_info_tool_system_info": (
-                agent.tools.system_info_tool.SystemInfoTool.system_info
-            ),
-            "fuck_tool_fuck": (
-                fuck_tool.fuck
-            ),
+            "system_info_tool_system_info": agent.tools.system_info_tool.SystemInfoTool.system_info,
+            "fuck_tool_fuck": fuck_tool.fuck,
             "memory_tool_add_item": memory_tool.add_item,
             "memory_tool_remove_item": memory_tool.remove_item,
             "memory_tool_update_item": memory_tool.update_item,
             "memory_tool_list_items": memory_tool.list_items,
             "memory_tool_find_str": memory_tool.find_str,
-            "read_file_tool_read_file_outline_cs": (
-                agent.tools.read_file_tool.ReadFileTool.read_file_outline_cs
-            ),
-            "read_file_tool_read_file_outline_md": (
-                agent.tools.read_file_tool.ReadFileTool.read_file_outline_md
-            ),
-            "read_file_tool_read_file_outline_py": (
-                agent.tools.read_file_tool.ReadFileTool.read_file_outline_py
-            ),
-            "read_file_tool_read_lines": (
-                agent.tools.read_file_tool.ReadFileTool.read_lines
-            ),
-            "read_file_tool_read_whole_file": (
-                agent.tools.read_file_tool.ReadFileTool.read_whole_file
-            ),
-            "launch_game_tool_launch_game": (
-                agent.tools.launch_game_tool.LaunchGameTool.launch_game
-            ),
+            "read_file_tool_read_file_outline_cs": agent.tools.read_file_tool.ReadFileTool.read_file_outline_cs,
+            "read_file_tool_read_file_outline_md": agent.tools.read_file_tool.ReadFileTool.read_file_outline_md,
+            "read_file_tool_read_file_outline_py": agent.tools.read_file_tool.ReadFileTool.read_file_outline_py,
+            "read_file_tool_read_lines": agent.tools.read_file_tool.ReadFileTool.read_lines,
+            "read_file_tool_read_whole_file": agent.tools.read_file_tool.ReadFileTool.read_whole_file,
+            "launch_game_tool_launch_game": agent.tools.launch_game_tool.LaunchGameTool.launch_game,
         }
         return _AgentTooling(
             whitelist=tool_whitelist,
