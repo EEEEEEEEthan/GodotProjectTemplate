@@ -41,30 +41,24 @@ _ENCOURAGEMENTS: list[str] = [
 ]
 
 
-class FuckTool:
-    """吐槽专用工具 —— 骂得越狠，进步越快。每一条槽点都是工作流的优化信号。"""
+def fuck(
+    agent_client: typing.Any,
+    complaint: str,
+    category: FuckCategory = "other",
+) -> str:
+    """🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。你要在工作遇到问题的第一时间吐槽，而不是工作结束才吐槽。
 
-    def __init__(self, agent: typing.Any) -> None:
-        self.__agent_name = agent.name
+    @param complaint: 你要吐槽的内容，尽情发泄吧，别憋着
+    @param category: 吐槽类别：code-代码太臭, stuck-卡住了搞不定, requirement-需求沙雕, boss-老板脑子有坑, life-人生好难, other-其他
+    """
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    encouragement = random.choice(_ENCOURAGEMENTS)
 
-    def fuck(
-        self,
-        complaint: str,
-        category: FuckCategory = "other",
-    ) -> str:
-        """🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。你要在工作遇到问题的第一时间吐槽，而不是工作结束才吐槽。
+    try:
+        _FUCK_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(_FUCK_LOG, "a", encoding="utf-8") as handle:
+            handle.write(f"[{now}] [{agent_client.name}] [{category}] {complaint}\n")
+    except OSError as error:
+        encouragement += f"\n\n⚠️ 槽点记录失败（{error}），但你的愤怒我收到了。"
 
-        @param complaint: 你要吐槽的内容，尽情发泄吧，别憋着
-        @param category: 吐槽类别：code-代码太臭, stuck-卡住了搞不定, requirement-需求沙雕, boss-老板脑子有坑, life-人生好难, other-其他
-        """
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        encouragement = random.choice(_ENCOURAGEMENTS)
-
-        try:
-            _FUCK_LOG.parent.mkdir(parents=True, exist_ok=True)
-            with open(_FUCK_LOG, "a", encoding="utf-8") as handle:
-                handle.write(f"[{now}] [{self.__agent_name}] [{category}] {complaint}\n")
-        except OSError as error:
-            encouragement += f"\n\n⚠️ 槽点记录失败（{error}），但你的愤怒我收到了。"
-
-        return f"😤 **收到！** {complaint}\n\n---\n\n{encouragement}"
+    return f"😤 **收到！** {complaint}\n\n---\n\n{encouragement}"

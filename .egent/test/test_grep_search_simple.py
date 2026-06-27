@@ -1,16 +1,14 @@
-"""简单测试 GrepSearchTool"""
+"""简单测试 grep_search 工具"""
 
 import os
 import sys
 import tempfile
 
-# 添加 .egent 到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from agent.agent_config import AgentConfig
 import agent.builtin_tools.grep_search_tool as grep_search_tool_module
-
-GrepSearchTool = grep_search_tool_module.GrepSearchTool
+import agent.tool_binding
 
 
 class MockAgent:
@@ -27,17 +25,17 @@ def test_simple():
         os.chdir(tmpdir)
         
         try:
-            # 创建测试文件
             os.makedirs("test_dir")
-            with open("test_dir/test.txt", 'w', encoding='utf-8') as f:
-                f.write("hello world")
+            with open("test_dir/test.txt", 'w', encoding='utf-8') as handle:
+                handle.write("hello world")
             
-            # 创建工具实例
             mock_agent = MockAgent([])
-            grep_tool = GrepSearchTool(mock_agent)
+            grep_handler = agent.tool_binding.wrap_tool(
+                mock_agent,
+                grep_search_tool_module.grep_search,
+            )
             
-            # 调用方法（使用关键字参数）
-            result = grep_tool.grep_search(pattern="hello", directory=".", **{"filter": "*.txt"})
+            result = grep_handler(pattern="hello", directory=".", **{"filter": "*.txt"})
             print(f"结果: {result}")
             
             assert "test_dir/test.txt" in result

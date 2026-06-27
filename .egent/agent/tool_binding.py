@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import collections.abc
 import dataclasses
+import functools
 import inspect
 import re
 import types
 import typing
 
 ToolHandler = typing.Callable[..., str | collections.abc.Awaitable[str]]
+
+_INJECTED_PARAM_NAMES = frozenset({"self", "cls", "agent_client"})
+_WRAPPED_TOOL_ATTR = "__wrapped_tool__"
 
 _PARAM_LINE = re.compile(r"^@param\s+(\w+)\s*:\s*(.+)$")
 _TOOL_NAME_LINE = re.compile(r"^@tool_name\s+(\S+)\s*$")
@@ -46,6 +50,49 @@ def tool(
         return handler
 
     return decorator
+
+
+def wrap_tool(
+    agent_client: typing.Any,
+    handler: typing.Callable[..., typing.Any],
+) -> ToolHandler:
+    """将 agent_client 注入工具函数，生成 LLM 可调用的 handler。"""
+    target = _unwrap_callable(handler)
+    signature = inspect.signature(target)
+    exposed_parameters = [
+        parameter
+        for name, parameter in signature.parameters.items()
+        if name not in _INJECTED_PARAM_NAMES
+    ]
+    exposed_signature = signature.replace(parameters=exposed_parameters)
+
+    if inspect.iscoroutinefunction(target):
+
+        async def wrapped(**arguments: typing.Any) -> typing.Any:
+            return await handler(agent_client, **arguments)
+
+    else:
+
+        def wrapped(**arguments: typing.Any) -> typing.Any:
+            return handler(agent_client, **arguments)
+
+    functools.update_wrapper(wrapped, target)
+    wrapped.__signature__ = exposed_signature  # type: ignore[attr-defined]
+    setattr(wrapped, _WRAPPED_TOOL_ATTR, target)
+
+    for attribute_name in ("__tool_name__", "__tool_description__", "__tool_binding_cache__"):
+        if hasattr(handler, attribute_name):
+            setattr(wrapped, attribute_name, getattr(handler, attribute_name))
+
+    return wrapped
+
+
+def wrap_tools(
+    agent_client: typing.Any,
+    *handlers: typing.Callable[..., typing.Any],
+) -> list[ToolHandler]:
+    """批量注入 agent_client。"""
+    return [wrap_tool(agent_client, handler) for handler in handlers]
 
 
 def bind_tools(*handlers: ToolHandler) -> dict[str, ToolBinding]:
@@ -137,6 +184,9 @@ def resolve_tool_name(handler: ToolHandler) -> str:
     owner_class = _resolve_owner_class_name(handler)
     if owner_class:
         return f"{_class_to_snake(owner_class)}_{method_name}"
+    module_basename = _resolve_tool_module_basename(handler)
+    if module_basename:
+        return f"{module_basename}_{method_name}"
     return method_name
 
 
@@ -163,7 +213,7 @@ def build_openai_schema(handler: ToolHandler, tool_name: str) -> dict[str, typin
             inspect.Parameter.VAR_KEYWORD,
         ):
             continue
-        if parameter_name in {"self", "cls"}:
+        if parameter_name in _INJECTED_PARAM_NAMES:
             continue
         property_schema = _hint_to_json_schema(type_hints.get(parameter_name, str))
         param_description = parsed.param_descriptions.get(parameter_name)
@@ -235,12 +285,23 @@ def parse_tool_docstring(documentation: str | None) -> ParsedToolDoc:
 
 
 def _unwrap_callable(handler: ToolHandler) -> typing.Callable[..., typing.Any]:
+    wrapped_target = getattr(handler, _WRAPPED_TOOL_ATTR, None)
+    if wrapped_target is not None:
+        return wrapped_target
     target = handler
     if inspect.ismethod(target):
         target = target.__func__
     while isinstance(target, (classmethod, staticmethod)):
         target = target.__func__
     return target
+
+
+def _resolve_tool_module_basename(handler: ToolHandler) -> str:
+    target = _unwrap_callable(handler)
+    module_name = getattr(target, "__module__", "")
+    if not module_name:
+        return ""
+    return module_name.rsplit(".", 1)[-1]
 
 
 def _resolve_owner_class_name(handler: ToolHandler) -> str:

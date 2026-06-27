@@ -4,13 +4,11 @@ import os
 import sys
 import tempfile
 
-# 添加 .egent 到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from agent.agent_config import AgentConfig
 import agent.builtin_tools.grep_search_tool as grep_search_tool_module
-
-GrepSearchTool = grep_search_tool_module.GrepSearchTool
+import agent.tool_binding
 
 
 class MockAgent:
@@ -27,23 +25,23 @@ def test_no_config():
         os.chdir(tmpdir)
         
         try:
-            # 创建测试文件
             os.makedirs(".git")
             os.makedirs("normal_dir")
             
-            with open(".git/test.txt", 'w', encoding='utf-8') as f:
-                f.write("git content")
-            with open("normal_dir/test.txt", 'w', encoding='utf-8') as f:
-                f.write("normal content")
+            with open(".git/test.txt", 'w', encoding='utf-8') as handle:
+                handle.write("git content")
+            with open("normal_dir/test.txt", 'w', encoding='utf-8') as handle:
+                handle.write("normal content")
             
-            # 使用空配置（模拟配置文件缺失）
             mock_agent = MockAgent([])
-            grep_tool = GrepSearchTool(mock_agent)
+            grep_handler = agent.tool_binding.wrap_tool(
+                mock_agent,
+                grep_search_tool_module.grep_search,
+            )
             
-            result = grep_tool.grep_search(pattern="content", directory=".", **{"filter": "*.txt"})
+            result = grep_handler(pattern="content", directory=".", **{"filter": "*.txt"})
             print(f"结果:\n{result}")
             
-            # 应该包含所有目录
             assert ".git/test.txt" in result, "应该包含 .git/test.txt（配置为空时不跳过）"
             assert "normal_dir/test.txt" in result, "应该包含 normal_dir/test.txt"
             
