@@ -48,7 +48,6 @@ class AgentDefinition:
         import agent.agent_config
         import agent.agent_model
         import agent.data_loader
-        import loop.tool_handlers
         import loop.wrapped_agent
 
         agent.data_loader.resolve_agent_directory(self.name)
@@ -73,7 +72,6 @@ class AgentDefinition:
             self.name,
             agent_model,
             runtime_config,
-            tools_factory=loop.tool_handlers.get_all_tools,
         )
         return loop.wrapped_agent.WrappedAgent(client, debug=debug)
 

@@ -68,19 +68,12 @@ class AgentClient:
         name: str,
         model: agent.agent_model.AgentModel,
         config: agent.agent_config.AgentConfig,
-        *,
-        tools_factory: (
-            collections.abc.Callable[
-                [AgentClient],
-                list[agent.tool_binding.ToolHandler],
-            ]
-            | None
-        ) = None,
     ) -> AgentClient:
-        """构造并完成 MCP 工具发现的 AgentClient。"""
+        """构造全工具集并完成 MCP 工具发现的 AgentClient。"""
+        import loop.tool_handlers
+
         client = cls(name, model, config)
-        if tools_factory is not None:
-            client.tools = tools_factory(client)
+        client.tools = loop.tool_handlers.get_all_tools(client)
         await client.__ensure_mcp_ready()
         return client
 
