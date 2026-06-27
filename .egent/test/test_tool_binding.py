@@ -39,7 +39,7 @@ def test_bg_tool_custom_name() -> None:
     assert binding.name == "shell_tool_bg_exec"
 
 
-def test_bind_all_builtin_names() -> None:
+def test_bind_all_builtin_tools() -> None:
     from agent.agent_client import AgentClient
     from agent.agent_model import AgentModel
 
@@ -51,16 +51,19 @@ def test_bind_all_builtin_names() -> None:
         AgentConfig(),
     )
     client.tools = workflow.tool_handlers.get_all_tools(client)
-    resolved = sorted(
+    resolved = [
         agent.tool_binding.resolve_tool_name(handler)
         for handler in client.tools
-    )
-    assert len(resolved) == len(agent.tool_binding.BUILTIN_TOOL_NAMES)
-    assert resolved == sorted(agent.tool_binding.BUILTIN_TOOL_NAMES)
+    ]
+    bindings = agent.tool_binding.bind_tools(*client.tools)
+    assert len(resolved) == len(client.tools)
+    assert len(resolved) == len(bindings)
+    assert len(resolved) == len(set(resolved))
+    assert sorted(bindings.keys()) == sorted(resolved)
 
 
 if __name__ == "__main__":
     test_grep_search_schema()
     test_bg_tool_custom_name()
-    test_bind_all_builtin_names()
+    test_bind_all_builtin_tools()
     print("✅ tool_binding 测试通过")
