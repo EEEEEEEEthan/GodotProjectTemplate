@@ -51,11 +51,6 @@ class WrappedAgent:
         self.__client = client
         self.__debug = debug
 
-    @classmethod
-    async def from_name(cls, name: str, *, debug: bool = False) -> WrappedAgent:
-        """按 agent 名称构造已就绪实例。"""
-        return await loop.agent_config.get_definition(name).instantiate(debug=debug)
-
     @property
     def name(self) -> str:
         return self.__client.name
@@ -115,8 +110,3 @@ class WrappedAgent:
 
     async def aclose(self) -> None:
         await self.__client.aclose()
-
-
-async def get_agent(name: str, *, debug: bool = False) -> WrappedAgent:
-    """按名称创建已就绪的 WrappedAgent。"""
-    return await WrappedAgent.from_name(name, debug=debug)

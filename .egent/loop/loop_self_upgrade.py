@@ -4,11 +4,10 @@ import loop.wrapped_agent
 
 
 async def run(prompt: str) -> None:
-    agent = await loop.wrapped_agent.get_agent("egent")
-    try:
+    agent = await loop.wrapped_agent.get_agent("jason")
+    while True:
         await agent.send(prompt)
-    finally:
-        await agent.aclose()
+        
 
 
 if __name__ == "__main__":
