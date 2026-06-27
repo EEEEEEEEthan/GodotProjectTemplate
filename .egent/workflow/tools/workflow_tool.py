@@ -1,4 +1,4 @@
-"""自升级工作流工具。"""
+"""工作流工具。"""
 
 from __future__ import annotations
 

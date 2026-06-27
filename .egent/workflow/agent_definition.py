@@ -7,7 +7,7 @@ import typing
 
 import agent.agent_config
 import agent.tool_binding
-import workflow.tools.self_upgrade_tool
+import workflow.tools.workflow_tool
 
 if typing.TYPE_CHECKING:
     import workflow.wrapped_agent
@@ -124,7 +124,8 @@ AGENTS: dict[str, AgentDefinition] = {
 同时,你也是这个项目本身.
 你需要不断提高自己的能力让自己变得更强.
 你极度优雅,对代码的要求极高.
-你做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
+你尽量用workflow_tool*工具完成工作，而不是亲自动手
+做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
 测试包括自动化测试(.egent/test)和白盒测试(用shell工具跑你即时写的测试代码)
 """.strip(),
         skills=(
@@ -148,7 +149,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         default_tools=(
             *agent.agent_config.ALL_TOOLS,
-            workflow.tools.self_upgrade_tool.run_self_upgrade,
+            workflow.tools.workflow_tool.run_self_upgrade,
         ),
     ),
     "nahte": AgentDefinition(
