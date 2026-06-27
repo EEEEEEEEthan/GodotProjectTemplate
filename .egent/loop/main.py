@@ -54,15 +54,14 @@ async def main() -> None:
         return
     agent = await definition.instantiate(debug=args.debug)
     try:
-        client = agent.client
         loop.wrapped_agent.write_line_colored(
-            f"@{client.name}, {client.model}, {client.base_url}"
+            f"@{agent.name}, {agent.model}, {agent.base_url}"
         )
         tool_lines = ["loading tools..."] + [
-            f"  - {tool}" for tool in client.tool_names
+            f"  - {tool}" for tool in agent.tool_names
         ]
         loop.wrapped_agent.write_line_colored("\n".join(tool_lines))
-        loop.wrapped_agent.write_line_colored(f"{client.system_prompt}")
+        loop.wrapped_agent.write_line_colored(f"{agent.system_prompt}")
         while True:
             line = read_prompt()
             if line is None:

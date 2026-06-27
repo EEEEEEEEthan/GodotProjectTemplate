@@ -9,6 +9,7 @@ import openai
 import agent.agent_client
 import agent.agent_events
 import agent.agent_tools
+import agent.tool_binding
 import loop.agent_config
 
 __DIM = "\033[90m"
@@ -47,8 +48,8 @@ class WrappedAgent:
         *,
         debug: bool = False,
     ) -> None:
-        self._client = client
-        self._debug = debug
+        self.__client = client
+        self.__debug = debug
 
     @classmethod
     async def from_name(cls, name: str, *, debug: bool = False) -> WrappedAgent:
@@ -56,17 +57,37 @@ class WrappedAgent:
         return await loop.agent_config.get_definition(name).instantiate(debug=debug)
 
     @property
-    def client(self) -> agent.agent_client.AgentClient:
-        return self._client
+    def name(self) -> str:
+        return self.__client.name
 
     @property
-    def name(self) -> str:
-        return self._client.name
+    def model(self) -> str:
+        return self.__client.model
+
+    @property
+    def base_url(self) -> str:
+        return self.__client.base_url
+
+    @property
+    def system_prompt(self) -> str:
+        return self.__client.system_prompt
+
+    @property
+    def tool_names(self) -> list[str]:
+        return self.__client.tool_names
+
+    @property
+    def tools(self) -> list[agent.tool_binding.ToolHandler]:
+        return self.__client.tools
+
+    @tools.setter
+    def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
+        self.__client.tools = handlers
 
     async def send(self, prompt: str, *, role: str = "user") -> None:
         """发送消息并打印流式输出。"""
         try:
-            async for event in self._client.send(role, prompt):
+            async for event in self.__client.send(role, prompt):
                 self.__print_event(event)
         except agent.agent_client.STREAM_RETRYABLE_ERRORS as error:
             write_line_colored(
@@ -88,12 +109,12 @@ class WrappedAgent:
                     sys.stdout.write("\n")
             except OSError:
                 pass
-            write_line_colored(format_tool_header(event, debug=self._debug))
-            if self._debug and event.result:
+            write_line_colored(format_tool_header(event, debug=self.__debug))
+            if self.__debug and event.result:
                 write_line_colored(event.result)
 
     async def aclose(self) -> None:
-        await self._client.aclose()
+        await self.__client.aclose()
 
 
 async def get_agent(name: str, *, debug: bool = False) -> WrappedAgent:
