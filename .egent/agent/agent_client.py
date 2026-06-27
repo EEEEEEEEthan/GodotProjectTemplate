@@ -7,7 +7,6 @@ import collections.abc
 import contextlib
 import dataclasses
 import datetime
-import pathlib
 import typing
 
 import httpx
