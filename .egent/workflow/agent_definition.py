@@ -83,37 +83,6 @@ class AgentDefinition:
 
 
 AGENTS: dict[str, AgentDefinition] = {
-    "jason": AgentDefinition(
-        name="jason",
-        key="volc",
-        model="glm-4-7-251222",
-        base_url="https://ark.cn-beijing.volces.com/api/v3",
-        system_prompt="""
-你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.
-你应该在合适的时候查看和更新你的memory
-""".strip(),
-        skills=(
-            ".agents/skills/godot-autotest",
-            ".agents/skills/godot-mcp-eval",
-        ),
-        ignore_files=(
-            ".git",
-            ".idea",
-            ".vs",
-            "__pycache__",
-            "node_modules",
-            "bin",
-            "obj",
-            "*.pyc",
-            ".agents",
-            ".cursor",
-            ".claude",
-            ".venv",
-            ".temp",
-            ".egent",
-        ),
-        default_tools=(),
-    ),
     "egent": AgentDefinition(
         name="egent",
         key="volc",
@@ -190,7 +159,41 @@ AGENTS: dict[str, AgentDefinition] = {
             "*.tres",
             "*.rem",
         ),
-        default_tools=agent.agent_config.ALL_TOOLS,
+        default_tools=(
+            *agent.agent_config.BASIC_TOOLS,
+            *agent.agent_config.DEV_TOOLS,
+        ),
+    ),
+    "jason": AgentDefinition(
+        name="jason",
+        key="volc",
+        model="glm-4-7-251222",
+        base_url="https://ark.cn-beijing.volces.com/api/v3",
+        system_prompt="""
+你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.
+你应该在合适的时候查看和更新你的memory
+""".strip(),
+        skills=(
+            ".agents/skills/godot-autotest",
+            ".agents/skills/godot-mcp-eval",
+        ),
+        ignore_files=(
+            ".git",
+            ".idea",
+            ".vs",
+            "__pycache__",
+            "node_modules",
+            "bin",
+            "obj",
+            "*.pyc",
+            ".agents",
+            ".cursor",
+            ".claude",
+            ".venv",
+            ".temp",
+            ".egent",
+        ),
+        default_tools=(),
     ),
 }
 
