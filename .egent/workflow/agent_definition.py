@@ -7,6 +7,7 @@ import typing
 
 import agent.agent_config
 import agent.tool_binding
+import workflow.tools.pylint_tool
 import workflow.tools.workflow_tool
 
 if typing.TYPE_CHECKING:
@@ -118,6 +119,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         default_tools=(
             *agent.agent_config.ALL_TOOLS,
+            workflow.tools.pylint_tool.run_pylint,
             workflow.tools.workflow_tool.run_self_upgrade,
         ),
     ),
@@ -162,6 +164,7 @@ AGENTS: dict[str, AgentDefinition] = {
         default_tools=(
             *agent.agent_config.BASIC_TOOLS,
             *agent.agent_config.DEV_TOOLS,
+            workflow.tools.pylint_tool.run_pylint,
         ),
     ),
     "jason": AgentDefinition(
