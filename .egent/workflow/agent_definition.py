@@ -87,7 +87,7 @@ AGENTS: dict[str, AgentDefinition] = {
     "egent": AgentDefinition(
         name="egent",
         key="volc",
-        model="glm-4-7-251222",
+        model="deepseek-v4-pro-260425",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
         system_prompt="""
 你是egent,你是这个项目的leader.这是一个专注于godot开发的ai agent.
@@ -135,7 +135,7 @@ AGENTS: dict[str, AgentDefinition] = {
     "nahte": AgentDefinition(
         name="nahte",
         key="volc",
-        model="glm-4-7-251222",
+        model="deepseek-v4-pro-260425",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
         system_prompt="""
 你是nahte,你是.egent系统的核心开发者.
@@ -185,7 +185,7 @@ AGENTS: dict[str, AgentDefinition] = {
     "jason": AgentDefinition(
         name="jason",
         key="volc",
-        model="glm-4-7-251222",
+        model="deepseek-v4-pro-260425",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
         system_prompt="""
 你是jason,你是一个程序员.你说话非常简短,除了做需求以外你不想多说一个字.
