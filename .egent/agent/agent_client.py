@@ -70,10 +70,10 @@ class AgentClient:
         config: agent.agent_config.AgentConfig,
     ) -> AgentClient:
         """构造全工具集并完成 MCP 工具发现的 AgentClient。"""
-        import workflow.tool_handlers
+        import agent.builtin_tools.tool_handlers
 
         client = cls(name, model, config)
-        client.tools = workflow.tool_handlers.get_all_tools(client)
+        client.tools = agent.builtin_tools.tool_handlers.get_all_tools(client)
         await client.__ensure_mcp_ready()
         return client
 
