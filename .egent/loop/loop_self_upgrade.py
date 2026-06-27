@@ -1,6 +1,17 @@
 import asyncio
+import sys
+
 import agent_config
 import test
+
+
+def read_prompt() -> str | None:
+    sys.stdout.write("> ")
+    sys.stdout.flush()
+    line = sys.stdin.readline()
+    if not line:
+        return None
+    return line.rstrip("\r\n")
 
 async def run(prompt: str) -> str:
     agent = await agent_config.get_definition("jason").instantiate()
@@ -14,4 +25,7 @@ async def run(prompt: str) -> str:
     return "执行失败"
 
 if __name__ == "__main__":
-    asyncio.run(run("检查自身能力并列出改进点"))
+    prompt = read_prompt()
+    if prompt is None or not prompt.strip():
+        sys.exit(0)
+    asyncio.run(run(prompt))
