@@ -42,6 +42,37 @@ def create_file(
     return "成功"
 
 
+def delete_file(
+    agent_client: typing.Any,
+    file_path: str,
+) -> str:
+    """删除文件。
+
+    @param file_path: 目标文件路径（相对工作目录，不接受绝对路径）
+    """
+    del agent_client
+    if not file_path or not file_path.strip():
+        return "错误：file_path 不能为空。"
+
+    relative_path = pathlib.Path(file_path.strip())
+    if relative_path.is_absolute():
+        return f"错误：file_path 必须是相对工作目录的路径，不接受绝对路径：{file_path}"
+
+    full_path = (pathlib.Path.cwd() / relative_path).resolve()
+    if not full_path.exists():
+        return f"错误：文件不存在：{relative_path}"
+
+    if full_path.is_dir():
+        return f"错误：不支持删除目录：{relative_path}"
+
+    try:
+        full_path.unlink()
+    except OSError as exception:
+        return f"错误：无法删除文件：{exception}"
+
+    return "成功"
+
+
 def apply_patch(
     agent_client: typing.Any,
     file_path: str,

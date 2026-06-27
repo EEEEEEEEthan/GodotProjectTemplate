@@ -60,6 +60,7 @@ DEV_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
     skill_tool.run_skill_script,
     file_edit_tool.create_file,
     file_edit_tool.apply_patch,
+    file_edit_tool.delete_file,
     memory_tool.add_item,
     memory_tool.remove_item,
     memory_tool.update_item,
