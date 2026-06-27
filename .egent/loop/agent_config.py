@@ -38,12 +38,12 @@ class AgentDefinition:
     skills: tuple[str, ...]
     ignore_files: tuple[str, ...] = _DEFAULT_IGNORE_FILES
 
-    def instantiate(
+    async def instantiate(
         self,
         *,
         debug: bool = False,
     ) -> loop.wrapped_agent.WrappedAgent:
-        """构造 WrappedAgent 并绑定 loop 层工具集。"""
+        """构造已就绪的 WrappedAgent（含 MCP 工具发现）。"""
         import agent.agent_client
         import agent.agent_config
         import agent.agent_model
@@ -71,6 +71,7 @@ class AgentDefinition:
         )
         client = agent.agent_client.AgentClient(self.name, agent_model, runtime_config)
         client.tools = loop.tool_handlers.get_all_tools(client)
+        await client.list_tool_names()
         return loop.wrapped_agent.WrappedAgent(client, debug=debug)
 
 

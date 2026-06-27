@@ -63,9 +63,9 @@ class AgentClient:
     """封装 LLM 会话、工具调用与对话历史。"""
 
     @staticmethod
-    def load_agent(path: str) -> loop.wrapped_agent.WrappedAgent:
+    async def load_agent(path: str) -> loop.wrapped_agent.WrappedAgent:
         """从 loop/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
-        return loop.agent_config.get_definition(path).instantiate()
+        return await loop.agent_config.get_definition(path).instantiate()
 
     def __init__(
         self,
@@ -89,6 +89,7 @@ class AgentClient:
             list(tools) if tools is not None else []
         )
         self.__tooling = self.__build_tooling(config)
+        self.__mcp_ready_lock = asyncio.Lock()
 
         self.__conversation.history.append(
             {"role": "system", "content": self.__tooling.system_prompt}
@@ -151,9 +152,12 @@ class AgentClient:
         tooling = self.__tooling
         if tooling.mcp_bridge is None or tooling.mcp_ready:
             return
-        await tooling.mcp_bridge.start()
-        tooling.mcp_schemas = tooling.mcp_bridge.all_schemas()
-        tooling.mcp_ready = True
+        async with self.__mcp_ready_lock:
+            if tooling.mcp_bridge is None or tooling.mcp_ready:
+                return
+            await tooling.mcp_bridge.start()
+            tooling.mcp_schemas = tooling.mcp_bridge.all_schemas()
+            tooling.mcp_ready = True
 
     def __resolve_active_bindings(
         self,
@@ -199,9 +203,10 @@ class AgentClient:
             mcp_invoke=invoke_mcp_tool if mcp_bridge is not None and include_mcp else None,
         )
 
-    async def prepare(self) -> None:
-        """启动 MCP 并刷新可用工具列表。"""
+    async def list_tool_names(self) -> list[str]:
+        """返回可用工具名（内置 + MCP），首次调用时启动 MCP。"""
         await self.__ensure_mcp_ready()
+        return self.__collect_tool_names()
 
     async def summarize(self) -> None:
         """将当前对话历史压缩为摘要并替换旧消息。"""
@@ -531,15 +536,18 @@ class AgentClient:
         """合并 skill 提示后的完整系统提示词。"""
         return self.__tooling.system_prompt
 
-    @property
-    def tool_whitelist(self) -> list[str]:
-        """当前 agent 可调用工具名（内置 + MCP）。"""
+    def __collect_tool_names(self) -> list[str]:
         tooling = self.__tooling
         names = sorted(tooling.all_bindings)
         for openai_name in sorted(tooling.mcp_schemas):
             if openai_name not in tooling.all_bindings:
                 names.append(openai_name)
         return names
+
+    @property
+    def tool_names(self) -> list[str]:
+        """可用工具名（内置 + MCP）。"""
+        return self.__collect_tool_names()
 
     @property
     def model(self) -> str:
@@ -573,6 +581,13 @@ class AgentClient:
                 timeout=300,
             )
         return conversation.openai_client
+
+    async def __aenter__(self) -> AgentClient:
+        await self.__ensure_mcp_ready()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await self.aclose()
 
     def __enter__(self) -> AgentClient:
         return self

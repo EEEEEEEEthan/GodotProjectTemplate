@@ -51,9 +51,9 @@ class WrappedAgent:
         self._debug = debug
 
     @classmethod
-    def from_name(cls, name: str, *, debug: bool = False) -> WrappedAgent:
-        """按 agent 名称构造。"""
-        return loop.agent_config.get_definition(name).instantiate(debug=debug)
+    async def from_name(cls, name: str, *, debug: bool = False) -> WrappedAgent:
+        """按 agent 名称构造已就绪实例。"""
+        return await loop.agent_config.get_definition(name).instantiate(debug=debug)
 
     @property
     def client(self) -> agent.agent_client.AgentClient:
@@ -62,9 +62,6 @@ class WrappedAgent:
     @property
     def name(self) -> str:
         return self._client.name
-
-    async def prepare(self) -> None:
-        await self._client.prepare()
 
     async def send(self, prompt: str, *, role: str = "user") -> None:
         """发送消息并打印流式输出。"""
@@ -98,14 +95,7 @@ class WrappedAgent:
     async def aclose(self) -> None:
         await self._client.aclose()
 
-    async def __aenter__(self) -> WrappedAgent:
-        await self.prepare()
-        return self
 
-    async def __aexit__(self, *args: object) -> None:
-        await self.aclose()
-
-
-def get_agent(name: str, *, debug: bool = False) -> WrappedAgent:
-    """按名称创建 WrappedAgent。"""
-    return WrappedAgent.from_name(name, debug=debug)
+async def get_agent(name: str, *, debug: bool = False) -> WrappedAgent:
+    """按名称创建已就绪的 WrappedAgent。"""
+    return await WrappedAgent.from_name(name, debug=debug)

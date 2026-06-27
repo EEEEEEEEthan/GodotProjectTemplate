@@ -52,15 +52,14 @@ async def main() -> None:
             dim=False,
         )
         return
-    agent = definition.instantiate(debug=args.debug)
+    agent = await definition.instantiate(debug=args.debug)
     try:
-        await agent.prepare()
         client = agent.client
         loop.wrapped_agent.write_line_colored(
             f"@{client.name}, {client.model}, {client.base_url}"
         )
         tool_lines = ["loading tools..."] + [
-            f"  - {tool}" for tool in client.tool_whitelist
+            f"  - {tool}" for tool in client.tool_names
         ]
         loop.wrapped_agent.write_line_colored("\n".join(tool_lines))
         loop.wrapped_agent.write_line_colored(f"{client.system_prompt}")
