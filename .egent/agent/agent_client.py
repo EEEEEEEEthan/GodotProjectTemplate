@@ -308,6 +308,17 @@ class AgentClient:
             if add_to_history:
                 if isinstance(event, agent.agent_events.TextDelta):
                     conversation.log.write(event.text)
+                elif isinstance(event, agent.agent_events.ToolInvoking):
+                    conversation.log.write("\n")
+                    tool_header = (
+                        f"[{event.name}]"
+                        if not event.arguments
+                        else (
+                            f"[{event.name}] "
+                            f"{agent.agent_tools.format_tool_arguments(event.arguments)}"
+                        )
+                    )
+                    conversation.log.write(f"{tool_header}\n")
                 elif isinstance(event, agent.agent_events.ToolInvoked):
                     conversation.log.write("\n")
                     tool_header = (
@@ -414,19 +425,20 @@ class AgentClient:
             collections.abc.Awaitable[str],
         ],
         active_bindings: dict[str, agent.tool_binding.ToolBinding],
-    ) -> collections.abc.AsyncIterator[agent.agent_events.ToolInvoked]:
+    ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         for tool_call in tool_calls:
             openai_name = tool_call["function"]["name"]
             arguments = agent.agent_tools.parse_tool_arguments(
                 tool_call["function"]["arguments"],
             )
-            result = await invoke(openai_name, arguments)
             tool_name = (
                 openai_name
                 if openai_name in active_bindings
                 or openai_name in self.__tooling.mcp_schemas
                 else openai_name
             )
+            yield agent.agent_events.ToolInvoking(tool_name, arguments)
+            result = await invoke(openai_name, arguments)
             yield agent.agent_events.ToolInvoked(
                 tool_name,
                 arguments,

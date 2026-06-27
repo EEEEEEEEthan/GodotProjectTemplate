@@ -10,6 +10,7 @@ AgentConfig = agent.agent_config.AgentConfig
 AgentEvent = agent.agent_events.AgentEvent
 AgentModel = agent.agent_model.AgentModel
 TextDelta = agent.agent_events.TextDelta
+ToolInvoking = agent.agent_events.ToolInvoking
 ToolInvoked = agent.agent_events.ToolInvoked
 TurnCompleted = agent.agent_events.TurnCompleted
 
@@ -19,6 +20,7 @@ __all__ = [
     "AgentEvent",
     "AgentModel",
     "TextDelta",
+    "ToolInvoking",
     "ToolInvoked",
     "TurnCompleted",
 ]

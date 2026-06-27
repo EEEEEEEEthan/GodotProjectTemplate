@@ -24,7 +24,7 @@ def write_line_colored(value: str, *, dim: bool = True) -> None:
 
 
 def format_tool_header(
-    event: agent.agent_events.ToolInvoked,
+    event: agent.agent_events.ToolInvoking | agent.agent_events.ToolInvoked,
     *,
     debug: bool,
 ) -> str:
@@ -107,6 +107,13 @@ class WrappedAgent:
         if isinstance(event, agent.agent_events.TextDelta):
             sys.stdout.write(event.text)
             sys.stdout.flush()
+        elif isinstance(event, agent.agent_events.ToolInvoking):
+            try:
+                if sys.stdout.isatty():
+                    sys.stdout.write("\n")
+            except OSError:
+                pass
+            write_line_colored(format_tool_header(event, debug=self.__debug))
         elif isinstance(event, agent.agent_events.ToolInvoked):
             try:
                 if sys.stdout.isatty():

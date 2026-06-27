@@ -19,6 +19,14 @@ class TextDelta(AgentEvent):
 
 
 @dataclasses.dataclass(frozen=True)
+class ToolInvoking(AgentEvent):
+    """工具调用即将开始（尚未执行）。"""
+
+    name: str
+    arguments: dict[str, typing.Any]
+
+
+@dataclasses.dataclass(frozen=True)
 class ToolInvoked(AgentEvent):
     """一次工具调用及其返回结果。"""
 
