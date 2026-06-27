@@ -33,7 +33,9 @@ async def run(prompt: str) -> str:
         for _ in range(3):
             tests_passed, tests_info = await asyncio.to_thread(run_all_tests.run_all)
             if tests_passed:
-                return "执行完毕"
+                agent.tools = []
+                lst = await agent.send("写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)")
+                return "\n".join(lst)
             await agent.send(f"测试未通过，请修复：\n{tests_info}")
     finally:
         await agent.aclose()
