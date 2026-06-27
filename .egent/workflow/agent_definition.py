@@ -150,7 +150,7 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 """.strip(),
-        skills=(),
+        skills=(".egent/workflow/skills/test",),
         ignore_files=(
             ".git",
             ".idea",
@@ -200,7 +200,7 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 """.strip(),
-        skills=(),
+        skills=(".egent/workflow/skills/test",),
         ignore_files=(
             ".git",
             ".idea",
