@@ -14,7 +14,7 @@ import httpx
 import openai
 
 import agent.agent_config
-import loop.agent_config
+import workflow.agent_config
 import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
@@ -70,17 +70,17 @@ class AgentClient:
         config: agent.agent_config.AgentConfig,
     ) -> AgentClient:
         """构造全工具集并完成 MCP 工具发现的 AgentClient。"""
-        import loop.tool_handlers
+        import workflow.tool_handlers
 
         client = cls(name, model, config)
-        client.tools = loop.tool_handlers.get_all_tools(client)
+        client.tools = workflow.tool_handlers.get_all_tools(client)
         await client.__ensure_mcp_ready()
         return client
 
     @staticmethod
-    async def load_agent(path: str) -> loop.wrapped_agent.WrappedAgent:
-        """从 loop/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
-        return await loop.agent_config.get_definition(path).instantiate()
+    async def load_agent(path: str) -> workflow.wrapped_agent.WrappedAgent:
+        """从 workflow/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
+        return await workflow.agent_config.get_definition(path).instantiate()
 
     def __init__(
         self,

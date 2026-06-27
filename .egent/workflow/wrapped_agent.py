@@ -10,7 +10,7 @@ import agent.agent_client
 import agent.agent_events
 import agent.agent_tools
 import agent.tool_binding
-import loop.agent_config
+import workflow.agent_config
 
 __DIM = "\033[90m"
 __RESET = "\033[0m"

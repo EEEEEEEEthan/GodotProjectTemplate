@@ -9,8 +9,8 @@ _EGENT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 if str(_EGENT_ROOT) not in sys.path:
     sys.path.insert(0, str(_EGENT_ROOT))
 
-import loop.agent_config
-import loop.wrapped_agent
+import workflow.agent_config
+import workflow.wrapped_agent
 
 
 def read_prompt() -> str | None:
@@ -44,24 +44,24 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    definition = loop.agent_config.AGENTS.get(args.agent)
+    definition = workflow.agent_config.AGENTS.get(args.agent)
     if definition is None:
-        known = ", ".join(sorted(loop.agent_config.AGENTS))
-        loop.wrapped_agent.write_line_colored(
+        known = ", ".join(sorted(workflow.agent_config.AGENTS))
+        workflow.wrapped_agent.write_line_colored(
             f"未知 Agent：{args.agent}（可用：{known}）",
             dim=False,
         )
         return
     agent = await definition.instantiate(debug=args.debug)
     try:
-        loop.wrapped_agent.write_line_colored(
+        workflow.wrapped_agent.write_line_colored(
             f"@{agent.name}, {agent.model}, {agent.base_url}"
         )
         tool_lines = ["loading tools..."] + [
             f"  - {tool}" for tool in agent.tool_names
         ]
-        loop.wrapped_agent.write_line_colored("\n".join(tool_lines))
-        loop.wrapped_agent.write_line_colored(f"{agent.system_prompt}")
+        workflow.wrapped_agent.write_line_colored("\n".join(tool_lines))
+        workflow.wrapped_agent.write_line_colored(f"{agent.system_prompt}")
         while True:
             line = read_prompt()
             if line is None:

@@ -6,7 +6,7 @@ import dataclasses
 import typing
 
 if typing.TYPE_CHECKING:
-    import loop.wrapped_agent
+    import workflow.wrapped_agent
 
 _DEFAULT_IGNORE_FILES: tuple[str, ...] = (
     ".git",
@@ -42,13 +42,13 @@ class AgentDefinition:
         self,
         *,
         debug: bool = False,
-    ) -> loop.wrapped_agent.WrappedAgent:
+    ) -> workflow.wrapped_agent.WrappedAgent:
         """构造已就绪的 WrappedAgent（含 MCP 工具发现）。"""
         import agent.agent_client
         import agent.agent_config
         import agent.agent_model
         import agent.data_loader
-        import loop.wrapped_agent
+        import workflow.wrapped_agent
 
         agent.data_loader.resolve_agent_directory(self.name)
         api_keys = agent.data_loader.load_api_keys()
@@ -73,7 +73,7 @@ class AgentDefinition:
             agent_model,
             runtime_config,
         )
-        return loop.wrapped_agent.WrappedAgent(client, debug=debug)
+        return workflow.wrapped_agent.WrappedAgent(client, debug=debug)
 
 
 AGENTS: dict[str, AgentDefinition] = {

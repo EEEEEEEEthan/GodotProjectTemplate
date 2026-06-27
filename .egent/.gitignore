@@ -1,5 +1,5 @@
 .temp/
 **/.temp/
 .egent/
-loop/model.toml
+workflow/model.toml
 .data/
