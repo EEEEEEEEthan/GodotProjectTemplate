@@ -9,7 +9,7 @@ _EGENT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 if str(_EGENT_ROOT) not in sys.path:
     sys.path.insert(0, str(_EGENT_ROOT))
 
-import workflow.agent_config
+import workflow.agent_definition
 import workflow.wrapped_agent
 
 
@@ -44,9 +44,9 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    definition = workflow.agent_config.AGENTS.get(args.agent)
+    definition = workflow.agent_definition.AGENTS.get(args.agent)
     if definition is None:
-        known = ", ".join(sorted(workflow.agent_config.AGENTS))
+        known = ", ".join(sorted(workflow.agent_definition.AGENTS))
         workflow.wrapped_agent.write_line_colored(
             f"未知 Agent：{args.agent}（可用：{known}）",
             dim=False,

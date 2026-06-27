@@ -10,7 +10,6 @@ import agent.agent_client
 import agent.agent_events
 import agent.agent_tools
 import agent.tool_binding
-import workflow.agent_config
 
 __DIM = "\033[90m"
 __RESET = "\033[0m"
@@ -79,11 +78,21 @@ class WrappedAgent:
     def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
         self.__client.tools = handlers
 
-    async def send(self, prompt: str, *, role: str = "user") -> list[str]:
+    async def send(
+        self,
+        prompt: str,
+        *,
+        role: str = "user",
+        override_tools: list[agent.tool_binding.ToolHandler] | None = None,
+    ) -> list[str]:
         """发送消息并打印流式输出，返回每轮 TurnCompleted 的完整文本。"""
         completions: list[str] = []
         try:
-            async for event in self.__client.send(role, prompt):
+            async for event in self.__client.send(
+                role,
+                prompt,
+                override_tools=override_tools,
+            ):
                 self.__print_event(event)
                 if isinstance(event, agent.agent_events.TurnCompleted):
                     completions.append(event.text)

@@ -6,7 +6,7 @@ import os
 # 添加.egent到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from workflow.agent_config import get_definition, AGENTS
+from workflow.agent_definition import get_definition, AGENTS
 
 
 def test_nahte_exists():

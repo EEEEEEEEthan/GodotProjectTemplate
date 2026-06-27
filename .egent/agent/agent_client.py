@@ -14,7 +14,7 @@ import httpx
 import openai
 
 import agent.agent_config
-import workflow.agent_config
+import workflow.agent_definition
 import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
@@ -69,16 +69,15 @@ class AgentClient:
         model: agent.agent_model.AgentModel,
         config: agent.agent_config.AgentConfig,
     ) -> AgentClient:
-        """构造全工具集并完成 MCP 工具发现的 AgentClient。"""
+        """构造 AgentClient 并完成 MCP 工具发现。"""
         client = cls(name, model, config)
-        client.tools = config.default_tools(client)
         await client.__ensure_mcp_ready()
         return client
 
     @staticmethod
     async def load_agent(path: str) -> workflow.wrapped_agent.WrappedAgent:
-        """从 workflow/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
-        return await workflow.agent_config.get_definition(path).instantiate()
+        """从 workflow/agent_definition.py 加载 agent，API Key 从 model.toml 解析。"""
+        return await workflow.agent_definition.get_definition(path).instantiate()
 
     def __init__(
         self,
@@ -98,8 +97,8 @@ class AgentClient:
         self.config = config
         self.skill_index = agent.skill_index.SkillIndex(config.skills)
         self.__conversation = self.__open_conversation()
-        self.__tools: list[agent.tool_binding.ToolHandler] = (
-            list(tools) if tools is not None else []
+        self.__tools_override: list[agent.tool_binding.ToolHandler] | None = (
+            list(tools) if tools is not None else None
         )
         self.__tooling = self.__build_tooling(config)
         self.__mcp_ready_lock = asyncio.Lock()
@@ -135,7 +134,11 @@ class AgentClient:
         all_bindings: dict[str, agent.tool_binding.ToolBinding],
     ) -> str:
         parts: list[str] = []
-        if "skill_tool_learn_skill" in all_bindings:
+        has_learn_skill = "skill_tool_learn_skill" in all_bindings or any(
+            agent.tool_binding.resolve_tool_name(handler) == "skill_tool_learn_skill"
+            for handler in self.config.default_tools
+        )
+        if has_learn_skill:
             parts.append(self.skill_index.prompt)
         parts.append(base_prompt)
         return "\n\n".join(
@@ -145,7 +148,11 @@ class AgentClient:
         )
 
     def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
-        all_bindings = agent.tool_binding.bind_tools(*self.__tools)
+        all_bindings = (
+            agent.tool_binding.bind_tools(*self.__tools_override)
+            if self.__tools_override is not None
+            else {}
+        )
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
@@ -172,13 +179,29 @@ class AgentClient:
             tooling.mcp_schemas = tooling.mcp_bridge.all_schemas()
             tooling.mcp_ready = True
 
+    def __resolve_send_handlers(
+        self,
+        override_tools: list[agent.tool_binding.ToolHandler] | None,
+    ) -> list[agent.tool_binding.ToolHandler]:
+        if override_tools is not None:
+            return list(override_tools)
+        if self.__tools_override is not None:
+            return list(self.__tools_override)
+        return agent.tool_binding.wrap_tools(self, *self.config.default_tools)
+
+    def __uses_default_tools(
+        self,
+        override_tools: list[agent.tool_binding.ToolHandler] | None,
+    ) -> bool:
+        return override_tools is None and self.__tools_override is None
+
     def __resolve_active_bindings(
         self,
-        tools: list[agent.tool_binding.ToolHandler] | None,
+        override_tools: list[agent.tool_binding.ToolHandler] | None,
     ) -> dict[str, agent.tool_binding.ToolBinding]:
-        if tools is not None:
-            return agent.tool_binding.bind_tools(*tools)
-        return dict(self.__tooling.all_bindings)
+        return agent.tool_binding.bind_tools(
+            *self.__resolve_send_handlers(override_tools),
+        )
 
     def __build_advertised_tools(
         self,
@@ -276,14 +299,14 @@ class AgentClient:
                     conversation.log.write(f"[{role}]\n{content}\n\n")
 
         active_bindings = self.__resolve_active_bindings(override_tools)
-        per_send_override = override_tools is not None
+        include_mcp = self.__uses_default_tools(override_tools)
         advertised_tools = self.__build_advertised_tools(
             active_bindings,
-            include_mcp=not per_send_override,
+            include_mcp=include_mcp,
         )
         invoke = self.__build_invoke(
             active_bindings,
-            include_mcp=not per_send_override,
+            include_mcp=include_mcp,
         )
 
         text_buffer: list[str] = []
@@ -522,13 +545,13 @@ class AgentClient:
 
     @property
     def tools(self) -> list[agent.tool_binding.ToolHandler]:
-        """当前 agent 注册的全部工具方法。"""
-        return list(self.__tools)
+        """当前 agent 注册的全部工具方法（已注入 client）。"""
+        return self.__resolve_send_handlers(None)
 
     @tools.setter
     def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
-        self.__tools = list(handlers)
-        self.__tooling.all_bindings = agent.tool_binding.bind_tools(*self.__tools)
+        self.__tools_override = list(handlers)
+        self.__tooling.all_bindings = agent.tool_binding.bind_tools(*self.__tools_override)
         self.__tooling.system_prompt = self.__compose_system_prompt(
             self.config.system_prompt,
             self.__tooling.all_bindings,
@@ -546,9 +569,10 @@ class AgentClient:
 
     def __collect_tool_names(self) -> list[str]:
         tooling = self.__tooling
-        names = sorted(tooling.all_bindings)
+        bindings = self.__resolve_active_bindings(None)
+        names = sorted(bindings)
         for openai_name in sorted(tooling.mcp_schemas):
-            if openai_name not in tooling.all_bindings:
+            if openai_name not in bindings:
                 names.append(openai_name)
         return names
 

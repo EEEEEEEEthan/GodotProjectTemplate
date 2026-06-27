@@ -8,7 +8,6 @@ import pathlib
 import tomllib
 
 import agent.mcp_bridge
-import workflow.agent_config
 
 _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 EGENT_ROOT = _PACKAGE_DIR.parent
@@ -48,11 +47,13 @@ def load_api_keys() -> dict[str, str]:
 
 
 def __ensure_model_keys_file() -> None:
-    """若项目 model.toml 不存在则按 agent_config 自动生成。"""
+    """若项目 model.toml 不存在则按 agent_definition 自动生成。"""
     if DEFAULT_MODEL_KEYS_FILE.is_file():
         return
+    import workflow.agent_definition
+
     required_keys = {
-        definition.key for definition in workflow.agent_config.AGENTS.values()
+        definition.key for definition in workflow.agent_definition.AGENTS.values()
     }
     __write_toml_object(
         DEFAULT_MODEL_KEYS_FILE,

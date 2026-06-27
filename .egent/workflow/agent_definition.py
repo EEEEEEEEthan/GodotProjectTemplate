@@ -1,9 +1,11 @@
-"""各 Agent 硬编码配置。"""
+"""各 Agent 硬编码定义。"""
 
 from __future__ import annotations
 
 import dataclasses
 import typing
+
+import agent.tool_binding
 
 if typing.TYPE_CHECKING:
     import workflow.wrapped_agent
@@ -26,6 +28,12 @@ _DEFAULT_IGNORE_FILES: tuple[str, ...] = (
 )
 
 
+def _default_definition_tools() -> tuple[agent.tool_binding.ToolHandler, ...]:
+    import agent.agent_config
+
+    return agent.agent_config.DEFAULT_TOOLS
+
+
 @dataclasses.dataclass(frozen=True)
 class AgentDefinition:
     """单个 Agent 的静态配置（API Key 在 model.toml 中按 key 查找）。"""
@@ -37,6 +45,9 @@ class AgentDefinition:
     system_prompt: str
     skills: tuple[str, ...]
     ignore_files: tuple[str, ...] = _DEFAULT_IGNORE_FILES
+    default_tools: tuple[agent.tool_binding.ToolHandler, ...] = dataclasses.field(
+        default_factory=_default_definition_tools,
+    )
 
     async def instantiate(
         self,
@@ -67,6 +78,7 @@ class AgentDefinition:
             system_prompt=self.system_prompt,
             ignore_files=list(self.ignore_files),
             mcp_servers=agent.data_loader.load_mcp_servers(),
+            default_tools=list(self.default_tools),
         )
         client = await agent.agent_client.AgentClient.create(
             self.name,
@@ -149,7 +161,7 @@ AGENTS: dict[str, AgentDefinition] = {
 你是nahte,你是.egent系统的核心开发者.
 你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
 你极度优雅,对代码的要求极高.
-你做出任何修改之后一定要进行测试,否则下次启动就会有问题.
+你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 测试包括自动化测试(在.egent/test/中运行)和白盒测试(用shell工具跑你即时写的测试代码)
 """.strip(),
         skills=(),

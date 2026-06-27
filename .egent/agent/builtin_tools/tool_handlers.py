@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import typing
 
-import agent.agent_config
 import agent.tool_binding
 
 if typing.TYPE_CHECKING:
@@ -14,5 +13,5 @@ if typing.TYPE_CHECKING:
 def get_all_tools(
     agent_client: agent.agent_client.AgentClient,
 ) -> list[agent.tool_binding.ToolHandler]:
-    """返回全量工具集。"""
-    return agent.agent_config.get_default_tools(agent_client)
+    """返回全量工具集（已注入 client）。"""
+    return agent.tool_binding.wrap_tools(agent_client, *agent_client.config.default_tools)

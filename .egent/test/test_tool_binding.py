@@ -57,7 +57,6 @@ def test_bind_all_builtin_tools() -> None:
         AgentModel(api_key="", model="test", base_url="https://example.com/v1"),
         config,
     )
-    client.tools = config.default_tools(client)
     resolved = [
         agent.tool_binding.resolve_tool_name(handler)
         for handler in client.tools
