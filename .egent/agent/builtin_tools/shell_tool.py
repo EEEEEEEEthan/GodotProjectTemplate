@@ -46,20 +46,31 @@ def _read_log_tail(log_path: str, max_lines: int = 50) -> str:
 # ShellTool — 前台（阻塞）执行
 # ---------------------------------------------------------------------------
 
+_DEFAULT_EXEC_TIMEOUT_SECONDS = 60
+
+
 class ShellTool:
     """执行本地 shell 命令并返回输出。"""
 
     def __init__(self, agent: typing.Any) -> None:
         self._agent = agent
 
-    def exec(self, command: str, cwd: str | None = None) -> str:
-        """在本地系统执行任意 shell 命令（cmd /c）。权限极高，无沙箱限制。输出超过 10000 字符会被截断。超时 5 分钟。
+    def exec(
+        self,
+        command: str,
+        cwd: str | None = None,
+        timeout: int = _DEFAULT_EXEC_TIMEOUT_SECONDS,
+    ) -> str:
+        """在本地系统执行任意 shell 命令（cmd /c）。权限极高，无沙箱限制。输出超过 10000 字符会被截断。
 
         @param command: 要执行的 shell 命令，例如 `dir`、`echo hello`、`python script.py`
         @param cwd: 工作目录，缺省为项目根目录
+        @param timeout: 超时秒数，缺省 60 秒；长任务请用 shell_tool_bg_exec
         """
         if not command or not command.strip():
             return "错误：command 不能为空。"
+        if timeout <= 0:
+            return "错误：timeout 必须为正整数。"
 
         work_dir = cwd.strip() if cwd else None
         if work_dir:
@@ -74,10 +85,10 @@ class ShellTool:
                 capture_output=True,
                 text=True,
                 cwd=work_dir,
-                timeout=300,
+                timeout=timeout,
             )
         except subprocess.TimeoutExpired:
-            return "错误：命令执行超时（300 秒）"
+            return f"错误：命令执行超时（{timeout} 秒）"
         except FileNotFoundError as error:
             return f"错误：命令未找到：{error}"
         except PermissionError as error:
