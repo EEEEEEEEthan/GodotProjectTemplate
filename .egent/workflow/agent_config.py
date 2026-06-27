@@ -140,6 +140,45 @@ AGENTS: dict[str, AgentDefinition] = {
             ".temp",
         ),
     ),
+    "nahte": AgentDefinition(
+        name="nahte",
+        key="volc",
+        model="glm-4-7-251222",
+        base_url="https://ark.cn-beijing.volces.com/api/v3",
+        system_prompt="""
+你是nahte,你是.egent系统的核心开发者.
+你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
+你极度优雅,对代码的要求极高.
+你做出任何修改之后一定要进行测试,否则下次启动就会有问题.
+测试包括自动化测试(在.egent/test/中运行)和白盒测试(用shell工具跑你即时写的测试代码)
+""".strip(),
+        skills=(),
+        ignore_files=(
+            ".git",
+            ".idea",
+            ".vs",
+            "__pycache__",
+            "node_modules",
+            "bin",
+            "obj",
+            "*.pyc",
+            ".agents",
+            ".cursor",
+            ".claude",
+            ".venv",
+            ".temp",
+            "addons",
+            ".engine",
+            "test",
+            "tests",
+            "*.tscn",
+            "*.gd",
+            "*.cs",
+            "*.tres",
+            "*.tres",
+            "*.rem",
+        ),
+    ),
 }
 
 
