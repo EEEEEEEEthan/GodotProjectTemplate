@@ -73,6 +73,7 @@ def exec_command(
             text=True,
             cwd=work_dir,
             timeout=timeout,
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return f"错误：命令执行超时（{timeout} 秒）"

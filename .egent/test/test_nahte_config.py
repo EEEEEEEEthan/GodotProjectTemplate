@@ -20,7 +20,7 @@ def test_nahte_basic_info():
     nahte = get_definition("nahte")
     assert nahte.name == "nahte", f"名称错误: {nahte.name}"
     assert nahte.key == "volc", f"key错误: {nahte.key}"
-    assert nahte.model == "glm-4-7-251222", f"model错误: {nahte.model}"
+    assert nahte.model == "deepseek-v4-pro-260425", f"model错误: {nahte.model}"
     print("✓ nahte基本信息正确")
 
 
