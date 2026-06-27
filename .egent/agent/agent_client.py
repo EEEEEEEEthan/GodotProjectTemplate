@@ -70,10 +70,8 @@ class AgentClient:
         config: agent.agent_config.AgentConfig,
     ) -> AgentClient:
         """构造全工具集并完成 MCP 工具发现的 AgentClient。"""
-        import agent.builtin_tools.tool_handlers
-
         client = cls(name, model, config)
-        client.tools = agent.builtin_tools.tool_handlers.get_all_tools(client)
+        client.tools = config.default_tools(client)
         await client.__ensure_mcp_ready()
         return client
 
@@ -247,13 +245,13 @@ class AgentClient:
         prompt: str,
         *,
         add_to_history: bool = True,
-        tools: list[agent.tool_binding.ToolHandler] | None = None,
+        override_tools: list[agent.tool_binding.ToolHandler] | None = None,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送单条消息并流式返回事件。"""
         async for event in self.send_messages(
             [{"role": role, "content": prompt}],
             add_to_history=add_to_history,
-            tools=tools,
+            override_tools=override_tools,
         ):
             yield event
 
@@ -262,7 +260,7 @@ class AgentClient:
         contents: list[dict[str, typing.Any]],
         *,
         add_to_history: bool = True,
-        tools: list[agent.tool_binding.ToolHandler] | None = None,
+        override_tools: list[agent.tool_binding.ToolHandler] | None = None,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送多条消息，可选写入历史与日志。"""
         await self.__ensure_mcp_ready()
@@ -277,8 +275,8 @@ class AgentClient:
                 if content:
                     conversation.log.write(f"[{role}]\n{content}\n\n")
 
-        active_bindings = self.__resolve_active_bindings(tools)
-        per_send_override = tools is not None
+        active_bindings = self.__resolve_active_bindings(override_tools)
+        per_send_override = override_tools is not None
         advertised_tools = self.__build_advertised_tools(
             active_bindings,
             include_mcp=not per_send_override,

@@ -1,7 +1,24 @@
-"""Agent 默认配置：系统提示词与内置 skill 路径。"""
+"""Agent 默认配置：系统提示词、内置 skill 路径与默认工具集。"""
+
+from __future__ import annotations
 
 import dataclasses
 import typing
+
+import agent.tool_binding
+import agent.builtin_tools.file_edit_tool as file_edit_tool
+import agent.builtin_tools.fuck_tool as fuck_tool
+import agent.builtin_tools.grep_search_tool as grep_search_tool
+import agent.builtin_tools.launch_game_tool as launch_game_tool
+import agent.builtin_tools.memory_tool as memory_tool
+import agent.builtin_tools.read_file_tool as read_file_tool
+import agent.builtin_tools.shell_tool as shell_tool
+import agent.builtin_tools.skill_tool as skill_tool
+import agent.builtin_tools.system_info_tool as system_info_tool
+import agent.builtin_tools.walk_files_tool as walk_files_tool
+
+if typing.TYPE_CHECKING:
+    import agent.agent_client
 
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
@@ -29,9 +46,41 @@ DEFAULT_IGNORE_FILES: tuple[str, ...] = (
 )
 
 
+def get_default_tools(
+    agent_client: agent.agent_client.AgentClient | typing.Any,
+) -> list[agent.tool_binding.ToolHandler]:
+    """返回默认全量工具集。"""
+    return agent.tool_binding.wrap_tools(
+        agent_client,
+        skill_tool.learn_skill,
+        skill_tool.run_skill_script,
+        file_edit_tool.create_file,
+        file_edit_tool.apply_patch,
+        grep_search_tool.grep_search,
+        shell_tool.exec,
+        shell_tool.bg_exec,
+        shell_tool.bg_status,
+        shell_tool.wait,
+        walk_files_tool.walk_files,
+        system_info_tool.system_info,
+        fuck_tool.fuck,
+        memory_tool.add_item,
+        memory_tool.remove_item,
+        memory_tool.update_item,
+        memory_tool.list_items,
+        memory_tool.find_str,
+        read_file_tool.read_file_outline_cs,
+        read_file_tool.read_file_outline_md,
+        read_file_tool.read_file_outline_py,
+        read_file_tool.read_lines,
+        read_file_tool.read_whole_file,
+        launch_game_tool.launch_game,
+    )
+
+
 @dataclasses.dataclass
 class AgentConfig:
-    """Agent 运行时配置：skills、系统提示词与 MCP。"""
+    """Agent 运行时配置：skills、系统提示词、工具集与 MCP。"""
 
     skills: list[str] = dataclasses.field(default_factory=lambda: list(DEFAULT_SKILLS))
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
@@ -39,3 +88,6 @@ class AgentConfig:
         default_factory=lambda: list(DEFAULT_IGNORE_FILES)
     )
     mcp_servers: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
+    default_tools: typing.Callable[
+        [typing.Any], list[agent.tool_binding.ToolHandler]
+    ] = get_default_tools
