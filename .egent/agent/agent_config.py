@@ -67,7 +67,7 @@ DEV_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
 )
 
 ADMIN_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
-    shell_tool.exec,
+    shell_tool.exec_command,
     shell_tool.bg_exec,
     shell_tool.bg_status,
     shell_tool.wait,

@@ -39,7 +39,7 @@ def _read_log_tail(log_path: str, max_lines: int = 50) -> str:
         return f"(读取日志失败：{error})"
 
 
-def exec(
+def exec_command(
     agent_client: typing.Any,
     command: str,
     cwd: str | None = None,
