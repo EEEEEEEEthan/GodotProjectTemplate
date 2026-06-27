@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import dataclasses
+import typing
+
+if typing.TYPE_CHECKING:
+    import agent.agent_client
 
 _DEFAULT_IGNORE_FILES: tuple[str, ...] = (
     ".git",
@@ -26,6 +30,7 @@ _DEFAULT_IGNORE_FILES: tuple[str, ...] = (
 class AgentDefinition:
     """单个 Agent 的静态配置（API Key 在 model.toml 中按 key 查找）。"""
 
+    name: str
     key: str
     model: str
     base_url: str
@@ -33,9 +38,40 @@ class AgentDefinition:
     skills: tuple[str, ...]
     ignore_files: tuple[str, ...] = _DEFAULT_IGNORE_FILES
 
+    def instantiate(self) -> agent.agent_client.AgentClient:
+        """构造 AgentClient 并绑定 loop 层工具集。"""
+        import agent.agent_client
+        import agent.agent_config
+        import agent.agent_model
+        import agent.data_loader
+        import loop.tool_handlers
+
+        agent.data_loader.resolve_agent_directory(self.name)
+        api_keys = agent.data_loader.load_api_keys()
+        api_key = api_keys.get(self.key)
+        if not api_key:
+            raise ValueError(
+                f"model.toml 中未找到 API Key：{self.key!r}（Agent：{self.name}）"
+            )
+        agent_model = agent.agent_model.AgentModel(
+            api_key=api_key,
+            model=self.model,
+            base_url=self.base_url,
+        )
+        runtime_config = agent.agent_config.AgentConfig(
+            skills=list(self.skills),
+            system_prompt=self.system_prompt,
+            ignore_files=list(self.ignore_files),
+            mcp_servers=agent.data_loader.load_mcp_servers(),
+        )
+        client = agent.agent_client.AgentClient(self.name, agent_model, runtime_config)
+        client.tools = loop.tool_handlers.get_all_tools(client)
+        return client
+
 
 AGENTS: dict[str, AgentDefinition] = {
     "jason": AgentDefinition(
+        name="jason",
         key="volc",
         model="glm-4-7-251222",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
@@ -65,6 +101,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
     ),
     "egent": AgentDefinition(
+        name="egent",
         key="volc",
         model="glm-4-7-251222",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
@@ -108,4 +145,8 @@ def get_definition(name: str) -> AgentDefinition:
     if definition is None:
         known = ", ".join(sorted(AGENTS))
         raise KeyError(f"未知 Agent：{agent_name}（可用：{known}）")
+    if definition.name != agent_name:
+        raise ValueError(
+            f"Agent 定义名称不一致：{agent_name!r} vs {definition.name!r}"
+        )
     return definition

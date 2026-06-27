@@ -65,26 +65,7 @@ class AgentClient:
     @staticmethod
     def load_agent(path: str) -> AgentClient:
         """从 loop/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
-        definition = loop.agent_config.get_definition(path)
-        agent.data_loader.resolve_agent_directory(path)
-        api_keys = agent.data_loader.load_api_keys()
-        api_key = api_keys.get(definition.key)
-        if not api_key:
-            raise ValueError(
-                f"model.toml 中未找到 API Key：{definition.key!r}（Agent：{path}）"
-            )
-        agent_model = agent.agent_model.AgentModel(
-            api_key=api_key,
-            model=definition.model,
-            base_url=definition.base_url,
-        )
-        runtime_config = agent.agent_config.AgentConfig(
-            skills=list(definition.skills),
-            system_prompt=definition.system_prompt,
-            ignore_files=list(definition.ignore_files),
-            mcp_servers=agent.data_loader.load_mcp_servers(),
-        )
-        return AgentClient(path, agent_model, runtime_config)
+        return loop.agent_config.get_definition(path).instantiate()
 
     def __init__(
         self,

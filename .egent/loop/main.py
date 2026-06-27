@@ -16,21 +16,14 @@ import agent.agent_client
 import agent.agent_events
 import agent.agent_tools
 import loop.agent_config
-import loop.tool_handlers
 
 __DIM = "\033[90m"
 __RESET = "\033[0m"
 
 
-def _build_agent_client(name: str) -> agent.agent_client.AgentClient:
-    """从 agent_config 构造单个 AgentClient 并绑定工具。"""
-    client = agent.agent_client.AgentClient.load_agent(name)
-    client.tools = loop.tool_handlers.get_all_tools(client)
-    return client
-
-
 AGENT_CLIENTS: dict[str, agent.agent_client.AgentClient] = {
-    name: _build_agent_client(name) for name in loop.agent_config.AGENTS
+    name: definition.instantiate()
+    for name, definition in loop.agent_config.AGENTS.items()
 }
 
 
