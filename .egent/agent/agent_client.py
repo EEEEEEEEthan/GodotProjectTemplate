@@ -84,8 +84,6 @@ class AgentClient:
         name: str,
         model: agent.agent_model.AgentModel,
         config: agent.agent_config.AgentConfig,
-        *,
-        tools: list[agent.tool_binding.ToolHandler] | None = None,
     ) -> None:
         if not name or not name.strip():
             raise ValueError("name 不能为空")
@@ -97,9 +95,6 @@ class AgentClient:
         self.config = config
         self.skill_index = agent.skill_index.SkillIndex(config.skills)
         self.__conversation = self.__open_conversation()
-        self.__tools_override: list[agent.tool_binding.ToolHandler] | None = (
-            list(tools) if tools is not None else None
-        )
         self.__tooling = self.__build_tooling(config)
         self.__mcp_ready_lock = asyncio.Lock()
 
@@ -148,11 +143,7 @@ class AgentClient:
         )
 
     def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
-        all_bindings = (
-            agent.tool_binding.bind_tools(*self.__tools_override)
-            if self.__tools_override is not None
-            else {}
-        )
+        all_bindings: dict[str, agent.tool_binding.ToolBinding] = {}
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
@@ -181,23 +172,21 @@ class AgentClient:
 
     def __resolve_send_handlers(
         self,
-        override_tools: list[agent.tool_binding.ToolHandler] | None,
-    ) -> list[agent.tool_binding.ToolHandler]:
+        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
+    ) -> tuple[agent.tool_binding.ToolHandler, ...]:
         if override_tools is not None:
-            return list(override_tools)
-        if self.__tools_override is not None:
-            return list(self.__tools_override)
+            return override_tools
         return agent.tool_binding.wrap_tools(self, *self.config.default_tools)
 
     def __uses_default_tools(
         self,
-        override_tools: list[agent.tool_binding.ToolHandler] | None,
+        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
     ) -> bool:
-        return override_tools is None and self.__tools_override is None
+        return override_tools is None
 
     def __resolve_active_bindings(
         self,
-        override_tools: list[agent.tool_binding.ToolHandler] | None,
+        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
     ) -> dict[str, agent.tool_binding.ToolBinding]:
         return agent.tool_binding.bind_tools(
             *self.__resolve_send_handlers(override_tools),
@@ -268,7 +257,7 @@ class AgentClient:
         prompt: str,
         *,
         add_to_history: bool = True,
-        override_tools: list[agent.tool_binding.ToolHandler] | None = None,
+        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None = None,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送单条消息并流式返回事件。"""
         async for event in self.send_messages(
@@ -283,7 +272,7 @@ class AgentClient:
         contents: list[dict[str, typing.Any]],
         *,
         add_to_history: bool = True,
-        override_tools: list[agent.tool_binding.ToolHandler] | None = None,
+        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None = None,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送多条消息，可选写入历史与日志。"""
         await self.__ensure_mcp_ready()
@@ -544,23 +533,9 @@ class AgentClient:
         return assistant_message
 
     @property
-    def tools(self) -> list[agent.tool_binding.ToolHandler]:
-        """当前 agent 注册的全部工具方法（已注入 client）。"""
+    def tools(self) -> tuple[agent.tool_binding.ToolHandler, ...]:
+        """当前 agent 默认工具方法（已注入 client）。"""
         return self.__resolve_send_handlers(None)
-
-    @tools.setter
-    def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
-        self.__tools_override = list(handlers)
-        self.__tooling.all_bindings = agent.tool_binding.bind_tools(*self.__tools_override)
-        self.__tooling.system_prompt = self.__compose_system_prompt(
-            self.config.system_prompt,
-            self.__tooling.all_bindings,
-        )
-        if (
-            self.__conversation.history
-            and self.__conversation.history[0].get("role") == "system"
-        ):
-            self.__conversation.history[0]["content"] = self.__tooling.system_prompt
 
     @property
     def system_prompt(self) -> str:

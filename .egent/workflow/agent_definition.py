@@ -78,7 +78,7 @@ class AgentDefinition:
             system_prompt=self.system_prompt,
             ignore_files=list(self.ignore_files),
             mcp_servers=agent.data_loader.load_mcp_servers(),
-            default_tools=list(self.default_tools),
+            default_tools=self.default_tools,
         )
         client = await agent.agent_client.AgentClient.create(
             self.name,

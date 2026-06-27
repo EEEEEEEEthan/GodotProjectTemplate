@@ -79,6 +79,4 @@ class AgentConfig:
         default_factory=lambda: list(DEFAULT_IGNORE_FILES)
     )
     mcp_servers: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
-    default_tools: list[agent.tool_binding.ToolHandler] = dataclasses.field(
-        default_factory=lambda: list(DEFAULT_TOOLS),
-    )
+    default_tools: tuple[agent.tool_binding.ToolHandler, ...] = DEFAULT_TOOLS

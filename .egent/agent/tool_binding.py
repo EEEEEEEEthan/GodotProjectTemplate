@@ -90,9 +90,9 @@ def wrap_tool(
 def wrap_tools(
     agent_client: typing.Any,
     *handlers: typing.Callable[..., typing.Any],
-) -> list[ToolHandler]:
+) -> tuple[ToolHandler, ...]:
     """批量注入 agent_client。"""
-    return [wrap_tool(agent_client, handler) for handler in handlers]
+    return tuple(wrap_tool(agent_client, handler) for handler in handlers)
 
 
 def bind_tools(*handlers: ToolHandler) -> dict[str, ToolBinding]:

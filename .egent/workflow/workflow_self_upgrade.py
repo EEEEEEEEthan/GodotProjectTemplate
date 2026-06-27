@@ -34,8 +34,10 @@ async def run(prompt: str) -> str:
         while True:
             tests_passed, tests_info = await asyncio.to_thread(run_all_tests.run_all)
             if tests_passed:
-                agent.tools = []
-                lst = await agent.send("写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)")
+                lst = await agent.send(
+                    "写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
+                    override_tools=(),
+                )
                 return "\n".join(lst)
             i += 1
             if i < 5:

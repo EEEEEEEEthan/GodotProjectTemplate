@@ -12,6 +12,6 @@ if typing.TYPE_CHECKING:
 
 def get_all_tools(
     agent_client: agent.agent_client.AgentClient,
-) -> list[agent.tool_binding.ToolHandler]:
+) -> tuple[agent.tool_binding.ToolHandler, ...]:
     """返回全量工具集（已注入 client）。"""
     return agent.tool_binding.wrap_tools(agent_client, *agent_client.config.default_tools)

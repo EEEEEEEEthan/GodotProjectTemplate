@@ -71,19 +71,15 @@ class WrappedAgent:
         return self.__client.tool_names
 
     @property
-    def tools(self) -> list[agent.tool_binding.ToolHandler]:
+    def tools(self) -> tuple[agent.tool_binding.ToolHandler, ...]:
         return self.__client.tools
-
-    @tools.setter
-    def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
-        self.__client.tools = handlers
 
     async def send(
         self,
         prompt: str,
         *,
         role: str = "user",
-        override_tools: list[agent.tool_binding.ToolHandler] | None = None,
+        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None = None,
     ) -> list[str]:
         """发送消息并打印流式输出，返回每轮 TurnCompleted 的完整文本。"""
         completions: list[str] = []
