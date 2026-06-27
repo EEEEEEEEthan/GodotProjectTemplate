@@ -35,8 +35,10 @@ def _read_log_tail(log_path: str, max_lines: int = 50) -> str:
         return "".join(lines) if lines else "(空)"
     except FileNotFoundError:
         return "(日志文件未找到)"
-    except Exception as error:
-        return f"(读取日志失败：{error})"
+    except PermissionError as error:
+        return f"(读取日志失败：权限不足 - {error})"
+    except OSError as error:
+        return f"(读取日志失败：系统错误 - {error})"
 
 
 def exec_command(
@@ -141,22 +143,26 @@ def bg_exec(
 
     try:
         log_file = open(log_path, "w", encoding="utf-8")
-        process = subprocess.Popen(
-            command,
-            shell=True,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            cwd=work_dir,
-        )
-        entry["process"] = process
-        entry["log_file"] = log_file
-    except Exception as error:
+        try:
+            process = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                cwd=work_dir,
+            )
+            entry["process"] = process
+            entry["log_file"] = log_file
+        except (FileNotFoundError, PermissionError, OSError, ValueError):
+            log_file.close()
+            raise
+    except (FileNotFoundError, PermissionError, OSError, ValueError) as error:
         entry["finished"] = True
         entry["returncode"] = -1
         try:
             with open(log_path, "w", encoding="utf-8") as handle:
                 handle.write(f"启动失败：{error}\n")
-        except Exception:
+        except OSError:
             pass
         return (
             f"错误：启动进程失败：{error}\n"
@@ -199,7 +205,7 @@ def bg_status(agent_client: typing.Any, process_id: str) -> str:
             if log_file is not None:
                 try:
                     log_file.close()
-                except Exception:
+                except OSError:
                     pass
                 entry["log_file"] = None
 
