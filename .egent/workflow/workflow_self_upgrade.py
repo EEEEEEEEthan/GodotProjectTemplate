@@ -1,8 +1,20 @@
+"""自升级 workflow：发送任务后轮询测试直至通过。"""
+
 import asyncio
+import pathlib
 import sys
 
-import agent_config
-import test
+_EGENT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+if str(_EGENT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_EGENT_ROOT))
+
+_TEST_DIR = _EGENT_ROOT / "test"
+if str(_TEST_DIR) not in sys.path:
+    sys.path.insert(0, str(_TEST_DIR))
+
+import run_all_tests
+import workflow.agent_config
+
 
 
 def read_prompt() -> str | None:
@@ -13,16 +25,20 @@ def read_prompt() -> str | None:
         return None
     return line.rstrip("\r\n")
 
+
 async def run(prompt: str) -> str:
-    agent = await agent_config.get_definition("jason").instantiate()
-    await agent.send(prompt)
-    for _ in range(3):
-        tests_passed, tests_info = await asyncio.to_thread(test.run_all_tests.run_all)
-        if not tests_passed:
+    agent = await workflow.agent_config.get_definition("egent").instantiate()
+    try:
+        await agent.send(prompt)
+        for _ in range(3):
+            tests_passed, tests_info = await asyncio.to_thread(run_all_tests.run_all)
+            if tests_passed:
+                return "执行完毕"
             await agent.send(f"测试未通过，请修复：\n{tests_info}")
-        else:
-            return "执行完毕"
+    finally:
+        await agent.aclose()
     return "执行失败"
+
 
 if __name__ == "__main__":
     prompt = read_prompt()
