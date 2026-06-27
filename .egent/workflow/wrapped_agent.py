@@ -79,11 +79,14 @@ class WrappedAgent:
     def tools(self, handlers: list[agent.tool_binding.ToolHandler]) -> None:
         self.__client.tools = handlers
 
-    async def send(self, prompt: str, *, role: str = "user") -> None:
-        """发送消息并打印流式输出。"""
+    async def send(self, prompt: str, *, role: str = "user") -> list[str]:
+        """发送消息并打印流式输出，返回每轮 TurnCompleted 的完整文本。"""
+        completions: list[str] = []
         try:
             async for event in self.__client.send(role, prompt):
                 self.__print_event(event)
+                if isinstance(event, agent.agent_events.TurnCompleted):
+                    completions.append(event.text)
         except agent.agent_client.STREAM_RETRYABLE_ERRORS as error:
             write_line_colored(
                 f"API 连接中断（已重试仍失败）: {error}",
@@ -93,6 +96,7 @@ class WrappedAgent:
             write_line_colored(f"API 错误: {error}", dim=False)
         sys.stdout.write("\n")
         sys.stdout.flush()
+        return completions
 
     def __print_event(self, event: agent.agent_events.AgentEvent) -> None:
         if isinstance(event, agent.agent_events.TextDelta):
