@@ -27,7 +27,7 @@ def read_prompt() -> str | None:
 
 
 async def run(prompt: str) -> str:
-    agent = await workflow.agent_config.get_definition("egent").instantiate()
+    agent = await workflow.agent_config.get_definition("nahte").instantiate()
     try:
         await agent.send(prompt)
         for _ in range(3):
