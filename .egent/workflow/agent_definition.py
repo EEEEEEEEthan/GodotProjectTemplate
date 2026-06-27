@@ -5,7 +5,9 @@ from __future__ import annotations
 import dataclasses
 import typing
 
+import agent.agent_config
 import agent.tool_binding
+import workflow.tools.self_upgrade_tool
 
 if typing.TYPE_CHECKING:
     import workflow.wrapped_agent
@@ -28,12 +30,6 @@ _DEFAULT_IGNORE_FILES: tuple[str, ...] = (
 )
 
 
-def _default_definition_tools() -> tuple[agent.tool_binding.ToolHandler, ...]:
-    import agent.agent_config
-
-    return agent.agent_config.DEFAULT_TOOLS
-
-
 @dataclasses.dataclass(frozen=True)
 class AgentDefinition:
     """单个 Agent 的静态配置（API Key 在 model.toml 中按 key 查找）。"""
@@ -44,10 +40,8 @@ class AgentDefinition:
     base_url: str
     system_prompt: str
     skills: tuple[str, ...]
+    default_tools: tuple[agent.tool_binding.ToolHandler, ...]
     ignore_files: tuple[str, ...] = _DEFAULT_IGNORE_FILES
-    default_tools: tuple[agent.tool_binding.ToolHandler, ...] = dataclasses.field(
-        default_factory=_default_definition_tools,
-    )
 
     async def instantiate(
         self,
@@ -118,6 +112,7 @@ AGENTS: dict[str, AgentDefinition] = {
             ".temp",
             ".egent",
         ),
+        default_tools=(),
     ),
     "egent": AgentDefinition(
         name="egent",
@@ -150,6 +145,10 @@ AGENTS: dict[str, AgentDefinition] = {
             ".claude",
             ".venv",
             ".temp",
+        ),
+        default_tools=(
+            *agent.agent_config.ALL_TOOLS,
+            workflow.tools.self_upgrade_tool.run_self_upgrade,
         ),
     ),
     "nahte": AgentDefinition(
@@ -190,6 +189,7 @@ AGENTS: dict[str, AgentDefinition] = {
             "*.tres",
             "*.rem",
         ),
+        default_tools=agent.agent_config.ALL_TOOLS,
     ),
 }
 
