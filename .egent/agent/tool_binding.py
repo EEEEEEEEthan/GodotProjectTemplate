@@ -333,7 +333,7 @@ def _hint_to_json_schema(hint: typing.Any) -> dict[str, typing.Any]:
     origin = typing.get_origin(hint)
     if origin is typing.Union or origin is types.UnionType:
         arguments = typing.get_args(hint)
-        non_none = [item for item in arguments if item is not type(None)]
+        non_none = [item for item in arguments if item is not types.NoneType]
         if len(non_none) == 1:
             return _hint_to_json_schema(non_none[0])
     if origin is list:
