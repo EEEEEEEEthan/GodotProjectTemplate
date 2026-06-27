@@ -69,9 +69,12 @@ class AgentDefinition:
             ignore_files=list(self.ignore_files),
             mcp_servers=agent.data_loader.load_mcp_servers(),
         )
-        client = agent.agent_client.AgentClient(self.name, agent_model, runtime_config)
-        client.tools = loop.tool_handlers.get_all_tools(client)
-        await client.list_tool_names()
+        client = await agent.agent_client.AgentClient.create(
+            self.name,
+            agent_model,
+            runtime_config,
+            tools_factory=loop.tool_handlers.get_all_tools,
+        )
         return loop.wrapped_agent.WrappedAgent(client, debug=debug)
 
 

@@ -62,6 +62,28 @@ class _AgentTooling:
 class AgentClient:
     """封装 LLM 会话、工具调用与对话历史。"""
 
+    @classmethod
+    async def create(
+        cls,
+        name: str,
+        model: agent.agent_model.AgentModel,
+        config: agent.agent_config.AgentConfig,
+        *,
+        tools_factory: (
+            collections.abc.Callable[
+                [AgentClient],
+                list[agent.tool_binding.ToolHandler],
+            ]
+            | None
+        ) = None,
+    ) -> AgentClient:
+        """构造并完成 MCP 工具发现的 AgentClient。"""
+        client = cls(name, model, config)
+        if tools_factory is not None:
+            client.tools = tools_factory(client)
+        await client.__ensure_mcp_ready()
+        return client
+
     @staticmethod
     async def load_agent(path: str) -> loop.wrapped_agent.WrappedAgent:
         """从 loop/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
@@ -202,11 +224,6 @@ class AgentClient:
             extra_schemas=extra_schemas,
             mcp_invoke=invoke_mcp_tool if mcp_bridge is not None and include_mcp else None,
         )
-
-    async def list_tool_names(self) -> list[str]:
-        """返回可用工具名（内置 + MCP），首次调用时启动 MCP。"""
-        await self.__ensure_mcp_ready()
-        return self.__collect_tool_names()
 
     async def summarize(self) -> None:
         """将当前对话历史压缩为摘要并替换旧消息。"""
