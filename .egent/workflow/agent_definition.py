@@ -110,6 +110,7 @@ AGENTS: dict[str, AgentDefinition] = {
         skills=(
             ".agents/skills/godot-autotest",
             ".agents/skills/godot-mcp-eval",
+            ".agents/skills/workflow-delegation",
         ),
         ignore_files=(
             ".git",
