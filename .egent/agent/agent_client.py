@@ -63,7 +63,7 @@ class AgentClient:
     """封装 LLM 会话、工具调用与对话历史。"""
 
     @staticmethod
-    def load_agent(path: str) -> AgentClient:
+    def load_agent(path: str) -> loop.wrapped_agent.WrappedAgent:
         """从 loop/agent_config.py 加载 agent，API Key 从 model.toml 解析。"""
         return loop.agent_config.get_definition(path).instantiate()
 

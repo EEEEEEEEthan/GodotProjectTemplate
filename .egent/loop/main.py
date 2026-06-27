@@ -9,22 +9,8 @@ _EGENT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 if str(_EGENT_ROOT) not in sys.path:
     sys.path.insert(0, str(_EGENT_ROOT))
 
-import httpx
-import openai
-
-import agent.agent_client
-import agent.agent_events
-import agent.agent_tools
 import loop.agent_config
-
-__DIM = "\033[90m"
-__RESET = "\033[0m"
-
-
-AGENT_CLIENTS: dict[str, agent.agent_client.AgentClient] = {
-    name: definition.instantiate()
-    for name, definition in loop.agent_config.AGENTS.items()
-}
+import loop.wrapped_agent
 
 
 def read_prompt() -> str | None:
@@ -35,14 +21,6 @@ def read_prompt() -> str | None:
     if not line:
         return None
     return line.rstrip("\r\n")
-
-
-def write_line_colored(value: str, *, dim: bool = True) -> None:
-    """向 stdout 输出一行，可选灰色。"""
-    if dim:
-        sys.stdout.write(f"{__DIM}{value}{__RESET}\n")
-    else:
-        sys.stdout.write(f"{value}\n")
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,67 +41,38 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def format_tool_header(
-    event: agent.agent_events.ToolInvoked,
-    *,
-    debug: bool,
-) -> str:
-    """按调试模式格式化工具调用摘要行。"""
-    if debug:
-        arguments_text = agent.agent_tools.format_tool_arguments(event.arguments)
-    else:
-        arguments_text = agent.agent_tools.format_tool_arguments_brief(event.arguments)
-    if not arguments_text:
-        return f"[{event.name}]"
-    return f"[{event.name}] {arguments_text}"
-
-
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    client = AGENT_CLIENTS.get(args.agent)
-    if client is None:
-        known = ", ".join(sorted(AGENT_CLIENTS))
-        write_line_colored(f"未知 Agent：{args.agent}（可用：{known}）", dim=False)
+    definition = loop.agent_config.AGENTS.get(args.agent)
+    if definition is None:
+        known = ", ".join(sorted(loop.agent_config.AGENTS))
+        loop.wrapped_agent.write_line_colored(
+            f"未知 Agent：{args.agent}（可用：{known}）",
+            dim=False,
+        )
         return
+    agent = definition.instantiate(debug=args.debug)
     try:
-        await client.prepare()
-        write_line_colored(f"@{client.name}, {client.model}, {client.base_url}")
-        tool_lines = ["loading tools..."] + [f"  - {tool}" for tool in client.tool_whitelist]
-        write_line_colored("\n".join(tool_lines))
-        write_line_colored(f"{client.system_prompt}")
+        await agent.prepare()
+        client = agent.client
+        loop.wrapped_agent.write_line_colored(
+            f"@{client.name}, {client.model}, {client.base_url}"
+        )
+        tool_lines = ["loading tools..."] + [
+            f"  - {tool}" for tool in client.tool_whitelist
+        ]
+        loop.wrapped_agent.write_line_colored("\n".join(tool_lines))
+        loop.wrapped_agent.write_line_colored(f"{client.system_prompt}")
         while True:
             line = read_prompt()
             if line is None:
                 break
             if not line.strip():
                 continue
-            try:
-                async for event in client.send("user", line):
-                    if isinstance(event, agent.agent_events.TextDelta):
-                        sys.stdout.write(event.text)
-                        sys.stdout.flush()
-                    elif isinstance(event, agent.agent_events.ToolInvoked):
-                        try:
-                            if sys.stdout.isatty():
-                                sys.stdout.write("\n")
-                        except OSError:
-                            pass
-                        write_line_colored(
-                            format_tool_header(event, debug=args.debug)
-                        )
-                        if args.debug and event.result:
-                            write_line_colored(event.result)
-            except agent.agent_client.STREAM_RETRYABLE_ERRORS as error:
-                write_line_colored(
-                    f"API 连接中断（已重试仍失败）: {error}",
-                    dim=False,
-                )
-            except openai.APIError as error:
-                write_line_colored(f"API 错误: {error}", dim=False)
-            sys.stdout.write("\n")
+            await agent.send(line)
     finally:
-        await client.aclose()
+        await agent.aclose()
 
 
 if __name__ == "__main__":
