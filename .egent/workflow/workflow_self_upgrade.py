@@ -43,12 +43,11 @@ async def run(prompt: str) -> str:
             if i < 5:
                 await agent.send(f"你的需求是:{prompt}\n，很遗憾测试未通过：\n{tests_info}\n请修复")
                 continue
-            else:
-                lst = await agent.send(
-                    "测试未通过，我们决定取消本次工作。写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
-                    override_tools=()
-                )
-                return "\n".join(lst)
+            lst = await agent.send(
+                "测试未通过，我们决定取消本次工作。写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
+                override_tools=()
+            )
+            return "\n".join(lst)
     finally:
         await agent.aclose()
     return "执行失败"

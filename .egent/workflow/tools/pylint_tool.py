@@ -54,6 +54,7 @@ def run_pylint(
             timeout=timeout_seconds,
             encoding="utf-8",
             errors="replace",
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return f"错误：pylint 执行超时（{timeout_seconds} 秒）"

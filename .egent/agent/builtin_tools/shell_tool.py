@@ -143,21 +143,22 @@ def bg_exec(
     _processes[process_id] = entry
 
     try:
-        log_file = open(log_path, "w", encoding="utf-8")
-        try:
-            process = subprocess.Popen(
-                command,
-                shell=True,
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                cwd=work_dir,
-            )
-            entry["process"] = process
-            entry["log_file"] = log_file
-        except (FileNotFoundError, PermissionError, OSError, ValueError):
-            log_file.close()
-            raise
+        log_file = open(log_path, "w", encoding="utf-8")  # pylint: disable=consider-using-with
+    except OSError as error:
+        entry["finished"] = True
+        entry["returncode"] = -1
+        return f"错误：无法创建日志文件：{error}"
+
+    try:
+        process = subprocess.Popen(  # pylint: disable=consider-using-with
+            command,
+            shell=True,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            cwd=work_dir,
+        )
     except (FileNotFoundError, PermissionError, OSError, ValueError) as error:
+        log_file.close()
         entry["finished"] = True
         entry["returncode"] = -1
         try:
@@ -170,6 +171,9 @@ def bg_exec(
             f"ID：{process_id}\n"
             f"日志路径：{log_path}"
         )
+
+    entry["process"] = process
+    entry["log_file"] = log_file
 
     return (
         f"进程已后台启动。\n"
