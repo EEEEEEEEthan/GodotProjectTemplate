@@ -127,6 +127,7 @@ AGENTS: dict[str, AgentDefinition] = {
             ".claude",
             ".venv",
             ".temp",
+            ".godot",
         ),
         default_tools=(
             *agent.agent_config.ALL_TOOLS,

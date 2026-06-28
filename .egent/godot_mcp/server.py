@@ -28,8 +28,8 @@ def game_command(
 
     Args:
         port: launch_game 返回值中的 MCP 端口，或日志行 <<<EGENT::GAME_MCP::HANDSHAKE::v1::port=XXXX>>> 或用户指定端口。
-        command: 已在游戏侧 register_handle 注册的命令名。
-        data: 传给 handle.on_receive 的载荷，不含 command 字段。
+        command: 已在游戏侧注册的命令名（如 mcp_handler.gd 的 on_receive 中 match 的命令）。
+        data: 传给命令处理器的载荷，不含 command 字段。
         timeout_seconds: 等待游戏回调 func_return 的最长时间（秒）。
     """
     try:

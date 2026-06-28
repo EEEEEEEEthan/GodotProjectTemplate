@@ -21,17 +21,6 @@ func _init(handler: Callable) -> void:
 	if port > 0:
 		print(READY_LOG_TEMPLATE % port)
 
-func register_handle(handle: Object) -> void:
-	var command_name := _resolve_command_name(handle)
-	if command_name.is_empty():
-		push_error("Game MCP: handle 缺少 command")
-		return
-	if not handle.has_method("on_receive"):
-		push_error("Game MCP: handle 缺少 on_receive 方法")
-		return
-	_handler = handle
-
-
 func get_listening_port() -> int:
 	return _listening_port
 
@@ -47,12 +36,6 @@ func start(preferred_port: int = 0) -> int:
 	push_error(BIND_FAILED_LOG_LINE)
 	print(BIND_FAILED_LOG_LINE)
 	return -1
-
-
-func _resolve_command_name(handle: Object) -> String:
-	if handle.has_method("get_command"):
-		return str(handle.get_command())
-	return str(handle.get("command"))
 
 
 func _on_command_received(command: String, data: Dictionary, respond: Callable) -> void:
