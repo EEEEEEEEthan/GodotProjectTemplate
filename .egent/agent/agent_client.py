@@ -13,7 +13,6 @@ import httpx
 import openai
 
 import agent.agent_config
-import workflow.agent_definition
 import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
@@ -21,6 +20,8 @@ import agent.data_loader
 import agent.mcp_bridge
 import agent.skill_index
 import agent.tool_binding
+
+import workflow.agent_definition
 
 MAX_INFLIGHT_CONTEXT_CHARS = 120_000
 KEEP_RECENT_TOOL_MESSAGES = 8
@@ -320,16 +321,6 @@ class AgentClient:
                     )
                     conversation.log.write(f"{tool_header}\n")
                 elif isinstance(event, agent.agent_events.ToolInvoked):
-                    conversation.log.write("\n")
-                    tool_header = (
-                        f"[{event.name}]"
-                        if not event.arguments
-                        else (
-                            f"[{event.name}] "
-                            f"{agent.agent_tools.format_tool_arguments(event.arguments)}"
-                        )
-                    )
-                    conversation.log.write(f"{tool_header}\n")
                     if event.result:
                         conversation.log.write(f"{event.result}\n")
             yield event

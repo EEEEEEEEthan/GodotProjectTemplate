@@ -51,13 +51,14 @@ class AgentDefinition:
     ) -> workflow.wrapped_agent.WrappedAgent:
         """构造已就绪的 WrappedAgent（含 MCP 工具发现）。"""
         import agent.agent_client
-        import agent.agent_config
         import agent.agent_model
         import agent.data_loader
         import workflow.wrapped_agent
 
         agent.data_loader.resolve_agent_directory(self.name)
-        api_keys = agent.data_loader.load_api_keys()
+        api_keys = agent.data_loader.load_api_keys(
+            {d.key for d in AGENTS.values()}
+        )
         api_key = api_keys.get(self.key)
         if not api_key:
             raise ValueError(

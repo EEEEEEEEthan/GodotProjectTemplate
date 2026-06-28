@@ -32,9 +32,9 @@ DEFAULT_MCP: dict[str, dict[str, object]] = {
 }
 
 
-def load_api_keys() -> dict[str, str]:
+def load_api_keys(known_keys: set[str] | None = None) -> dict[str, str]:
     """加载 model.toml 中的 API Key 键值对（global → project，后者覆盖）。"""
-    __ensure_model_keys_file()
+    __ensure_model_keys_file(known_keys or set())
     merged: dict[str, str] = {}
     for filepath in (GLOBAL_MODEL_KEYS_FILE, DEFAULT_MODEL_KEYS_FILE):
         if not filepath.is_file():
@@ -46,18 +46,15 @@ def load_api_keys() -> dict[str, str]:
     return merged
 
 
-def __ensure_model_keys_file() -> None:
-    """若项目 model.toml 不存在则按 agent_definition 自动生成。"""
+def __ensure_model_keys_file(known_keys: set[str]) -> None:
+    """若项目 model.toml 不存在则按 known_keys 自动生成（空集合则跳过）。"""
     if DEFAULT_MODEL_KEYS_FILE.is_file():
         return
-    import workflow.agent_definition
-
-    required_keys = {
-        definition.key for definition in workflow.agent_definition.AGENTS.values()
-    }
+    if not known_keys:
+        return
     __write_toml_object(
         DEFAULT_MODEL_KEYS_FILE,
-        {key: "" for key in sorted(required_keys)},
+        {key: "" for key in sorted(known_keys)},
         header="API Key 键值对；由程序自动生成，请填写真实 key",
     )
 

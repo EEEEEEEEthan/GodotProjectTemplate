@@ -6,16 +6,16 @@ import dataclasses
 import typing
 
 import agent.tool_binding
-import agent.builtin_tools.file_edit_tool as file_edit_tool
-import agent.builtin_tools.fuck_tool as fuck_tool
-import agent.builtin_tools.grep_search_tool as grep_search_tool
-import agent.builtin_tools.launch_game_tool as launch_game_tool
-import agent.builtin_tools.memory_tool as memory_tool
-import agent.builtin_tools.read_file_tool as read_file_tool
-import agent.builtin_tools.shell_tool as shell_tool
-import agent.builtin_tools.skill_tool as skill_tool
-import agent.builtin_tools.system_info_tool as system_info_tool
-import agent.builtin_tools.walk_files_tool as walk_files_tool
+from agent.builtin_tools import file_edit_tool
+from agent.builtin_tools import fuck_tool
+from agent.builtin_tools import grep_search_tool
+from agent.builtin_tools import launch_game_tool
+from agent.builtin_tools import memory_tool
+from agent.builtin_tools import read_file_tool
+from agent.builtin_tools import shell_tool
+from agent.builtin_tools import skill_tool
+from agent.builtin_tools import system_info_tool
+from agent.builtin_tools import walk_files_tool
 
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
