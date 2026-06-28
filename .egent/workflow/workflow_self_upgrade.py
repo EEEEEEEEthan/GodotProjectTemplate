@@ -13,8 +13,6 @@ if str(_TEST_DIR) not in sys.path:
     sys.path.insert(0, str(_TEST_DIR))
 
 import run_all_tests
-import workflow.agent_definition
-
 
 
 def read_prompt() -> str | None:
@@ -27,6 +25,8 @@ def read_prompt() -> str | None:
 
 
 async def run(prompt: str) -> str:
+    import workflow.agent_definition
+
     agent = await workflow.agent_definition.get_definition("nahte").instantiate()
     try:
         await agent.send(prompt)

@@ -1,4 +1,4 @@
-"""各 Agent 硬编码定义。"""
+"""各 Agent 硬编码定义。"""  # pylint: disable=cyclic-import
 
 from __future__ import annotations
 
@@ -13,24 +13,6 @@ import workflow.tools.workflow_tool
 if typing.TYPE_CHECKING:
     import workflow.wrapped_agent
 
-_DEFAULT_IGNORE_FILES: tuple[str, ...] = (
-    ".git",
-    ".idea",
-    ".vs",
-    "__pycache__",
-    "node_modules",
-    "bin",
-    "obj",
-    "*.pyc",
-    ".agents",
-    ".cursor",
-    ".claude",
-    ".egent",
-    ".venv",
-    ".temp",
-)
-
-
 @dataclasses.dataclass(frozen=True)
 class AgentDefinition:
     """单个 Agent 的静态配置（API Key 在 model.toml 中按 key 查找）。"""
@@ -42,7 +24,7 @@ class AgentDefinition:
     system_prompt: str
     skills: tuple[str, ...]
     default_tools: tuple[agent.tool_binding.ToolHandler, ...]
-    ignore_files: tuple[str, ...] = _DEFAULT_IGNORE_FILES
+    ignore_files: tuple[str, ...] = agent.agent_config.DEFAULT_IGNORE_FILES
 
     async def instantiate(
         self,
