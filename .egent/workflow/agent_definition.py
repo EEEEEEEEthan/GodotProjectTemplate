@@ -124,7 +124,7 @@ AGENTS: dict[str, AgentDefinition] = {
         model="deepseek-v4-pro-260425",
         base_url="https://ark.cn-beijing.volces.com/api/v3",
         system_prompt="""
-你是nahte,你是.egent系统的核心开发者.
+你是nahte,你是.egent系统的核心设计师和审查员.
 你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
 
 **文件创建约束：**
