@@ -94,6 +94,7 @@ AGENTS: dict[str, AgentDefinition] = {
             ".agents/skills/godot-autotest",
             ".agents/skills/godot-mcp-eval",
             ".agents/skills/workflow-delegation",
+            ".egent/workflow/skills/code-optimize",
         ),
         ignore_files=(
             ".git",
@@ -135,7 +136,10 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 """.strip(),
-        skills=(".egent/workflow/skills/test",),
+        skills=(
+            ".egent/workflow/skills/test",
+            ".egent/workflow/skills/code-optimize",
+        ),
         ignore_files=(
             ".git",
             ".idea",
@@ -185,7 +189,10 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 """.strip(),
-        skills=(".egent/workflow/skills/test",),
+        skills=(
+            ".egent/workflow/skills/test",
+            ".egent/workflow/skills/code-optimize",
+        ),
         ignore_files=(
             ".git",
             ".idea",
