@@ -20,30 +20,35 @@ from workflow._console import read_prompt
 async def run(prompt: str) -> str:
     """执行自升级工作流：委派任务给 nahte，轮询测试直至通过。"""
     import workflow.agent_definition
-
-    agent = await workflow.agent_definition.get_definition("nahte").instantiate()
+    nahte = await workflow.agent_definition.get_definition("nahte").instantiate()
+    jack = await workflow.agent_definition.get_definition("jack").instantiate()
     try:
-        await agent.send(prompt)
+        await jack.send(prompt)
         i = 0
         while True:
             tests_passed, tests_info = await asyncio.to_thread(_run_all_tests.run_all)
             if tests_passed:
-                lst = await agent.send(
+                lst_report = await jack.send(
                     "写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
                     override_tools=(),
                 )
-                return "\n".join(lst) + "任务完成，请根据git diff审查修改"
+                lst_review = await nahte.send(f"jack完成了需求:{prompt}\n,测试通过了。现在你需要审查代码。如果审查通过，直接输出通过二字，不要有任何多余的输出。否则，输出修改意见")
+                if "通过" in lst_review[-1]:
+                    return "\n".join(lst_report) + "任务完成，请根据git diff审查修改"
+                else:
+                    await jack.send(f"你的需求是:{prompt}\n，很遗憾审查未通过：\n{lst_review[-1]}\n请修复")
+                    continue
             i += 1
             if i < 5:
-                await agent.send(f"你的需求是:{prompt}\n，很遗憾测试未通过：\n{tests_info}\n请修复")
+                await jack.send(f"你的需求是:{prompt}\n，很遗憾测试未通过：\n{tests_info}\n请修复")
                 continue
-            lst = await agent.send(
+            lst_report = await jack.send(
                 "测试未通过，我们决定取消本次工作。写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
                 override_tools=()
             )
-            return "\n".join(lst)
+            return "\n".join(lst_report)
     finally:
-        await agent.aclose()
+        await jack.aclose()
     return "执行失败"
 
 
