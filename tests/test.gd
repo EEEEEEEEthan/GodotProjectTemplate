@@ -23,9 +23,40 @@ func _init() -> void:
 	run_named(test_name)
 
 func run_named(test_name: String) -> void:
-	match test_name:
-		"hellotest":
-			HelloTest.run(self)
-			return
+	const TESTS_DIR := "res://tests/"
+	var dir := DirAccess.open(TESTS_DIR)
+	if dir == null:
+		push_error("Failed to open tests directory: " + TESTS_DIR)
+		quit(1)
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with("_test.gd"):
+			# Derive test name: "hello_test.gd" -> "hello"
+			var derived_name := file_name.trim_suffix(".gd").trim_suffix("_test")
+			if derived_name == test_name:
+				var script_path := TESTS_DIR + file_name
+				var script := load(script_path)
+				if script == null:
+					push_error("Failed to load test script: " + script_path)
+					quit(1)
+					return
+				if not _has_static_method(script, "run"):
+					push_error("Test script missing static run(): " + script_path)
+					quit(1)
+					return
+				script.run(self)
+				return
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
 	push_error("'%s' not found" % test_name)
 	quit(1)
+
+static func _has_static_method(script: Script, method_name: String) -> bool:
+	for method in script.get_script_method_list():
+		if method["name"] == method_name and method["flags"] & METHOD_FLAG_STATIC:
+			return true
+	return false

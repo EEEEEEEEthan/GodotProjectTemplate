@@ -22,15 +22,17 @@ if errorlevel 1 exit /b 1
 .\.engine\.engine.exe --headless --import
 if errorlevel 1 exit /b 1
 
-REM Registered test names; keep in sync with the autotest node
-for %%t in (hellotest) do (
-    echo === Running test: %%t ===
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0.engine-test.ps1" -TestName %%t -IgnorePrepare %headlessFlag%
+REM Auto-discover test names from tests/*_test.gd
+for %%f in (tests\*_test.gd) do (
+    set "filename=%%~nf"
+    set "testname=!filename:_test=!"
+    echo === Running test: !testname! ===
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0.engine-test.ps1" -TestName !testname! -IgnorePrepare %headlessFlag%
     if errorlevel 1 (
-        echo [FAILED] %%t
+        echo [FAILED] !testname!
         set "anyFailed=1"
     ) else (
-        echo [PASSED] %%t
+        echo [PASSED] !testname!
     )
 )
 
