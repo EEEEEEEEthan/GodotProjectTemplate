@@ -35,9 +35,8 @@ async def run(prompt: str) -> str:
                 lst_review = await nahte.send(f"jack完成了需求:{prompt}\n,测试通过了。现在你需要审查代码。如果审查通过，直接输出通过二字，不要有任何多余的输出。否则，输出修改意见")
                 if "通过" in lst_review[-1]:
                     return "\n".join(lst_report) + "任务完成，请根据git diff审查修改"
-                else:
-                    await jack.send(f"你的需求是:{prompt}\n，很遗憾审查未通过：\n{lst_review[-1]}\n请修复")
-                    continue
+                await jack.send(f"你的需求是:{prompt}\n，很遗憾审查未通过：\n{lst_review[-1]}\n请修复")
+                continue
             i += 1
             if i < 5:
                 await jack.send(f"你的需求是:{prompt}\n，很遗憾测试未通过：\n{tests_info}\n请修复")
@@ -49,7 +48,6 @@ async def run(prompt: str) -> str:
             return "\n".join(lst_report)
     finally:
         await jack.aclose()
-    return "执行失败"
 
 
 if __name__ == "__main__":

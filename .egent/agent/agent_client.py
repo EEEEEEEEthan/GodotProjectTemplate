@@ -49,7 +49,6 @@ class _ConversationState:
 
 @dataclasses.dataclass
 class _AgentTooling:
-    all_bindings: dict[str, agent.tool_binding.ToolBinding]
     skill_index: agent.skill_index.SkillIndex
     system_prompt: str
     mcp_bridge: agent.mcp_bridge.McpBridge | None = None
@@ -123,13 +122,9 @@ class AgentClient:
             base_history_count=0,
         )
 
-    def __compose_system_prompt(
-        self,
-        base_prompt: str,
-        all_bindings: dict[str, agent.tool_binding.ToolBinding],
-    ) -> str:
+    def __compose_system_prompt(self, base_prompt: str) -> str:
         parts: list[str] = []
-        has_learn_skill = "skill_tool_learn_skill" in all_bindings or any(
+        has_learn_skill = any(
             agent.tool_binding.resolve_tool_name(handler) == "skill_tool_learn_skill"
             for handler in self.config.default_tools
         )
@@ -143,19 +138,14 @@ class AgentClient:
         )
 
     def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
-        all_bindings: dict[str, agent.tool_binding.ToolBinding] = {}
         mcp_bridge_instance = (
             agent.mcp_bridge.McpBridge(config.mcp_servers)
             if config.mcp_servers
             else None
         )
         return _AgentTooling(
-            all_bindings=all_bindings,
             skill_index=self.skill_index,
-            system_prompt=self.__compose_system_prompt(
-                config.system_prompt,
-                all_bindings,
-            ),
+            system_prompt=self.__compose_system_prompt(config.system_prompt),
             mcp_bridge=mcp_bridge_instance,
         )
 
@@ -304,7 +294,6 @@ class AgentClient:
             text_buffer,
             advertised_tools,
             invoke,
-            active_bindings,
         ):
             if add_to_history:
                 if isinstance(event, agent.agent_events.TextDelta):
@@ -345,7 +334,6 @@ class AgentClient:
             [str, dict[str, typing.Any]],
             collections.abc.Awaitable[str],
         ],
-        active_bindings: dict[str, agent.tool_binding.ToolBinding],
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         client = self.__get_or_create_client()
 
@@ -403,7 +391,6 @@ class AgentClient:
                 tool_calls,
                 messages,
                 invoke,
-                active_bindings,
             ):
                 yield event
 
@@ -415,19 +402,13 @@ class AgentClient:
             [str, dict[str, typing.Any]],
             collections.abc.Awaitable[str],
         ],
-        active_bindings: dict[str, agent.tool_binding.ToolBinding],
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         for tool_call in tool_calls:
             openai_name = tool_call["function"]["name"]
             arguments = agent.agent_tools.parse_tool_arguments(
                 tool_call["function"]["arguments"],
             )
-            tool_name = (
-                openai_name
-                if openai_name in active_bindings
-                or openai_name in self.__tooling.mcp_schemas
-                else openai_name
-            )
+            tool_name = openai_name
             yield agent.agent_events.ToolInvoking(tool_name, arguments)
             result = await invoke(openai_name, arguments)
             yield agent.agent_events.ToolInvoked(
