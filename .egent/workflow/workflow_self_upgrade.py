@@ -14,14 +14,7 @@ _run_all_tests_spec = importlib.util.spec_from_file_location(
 _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
 _run_all_tests_spec.loader.exec_module(_run_all_tests)
 
-
-def read_prompt() -> str | None:
-    sys.stdout.write("> ")
-    sys.stdout.flush()
-    line = sys.stdin.readline()
-    if not line:
-        return None
-    return line.rstrip("\r\n")
+from workflow._console import read_prompt
 
 
 async def run(prompt: str) -> str:

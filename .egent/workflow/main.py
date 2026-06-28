@@ -11,16 +11,7 @@ if str(_EGENT_ROOT) not in sys.path:
 
 import workflow.agent_definition
 import workflow.wrapped_agent
-
-
-def read_prompt() -> str | None:
-    """读取一行用户输入，EOF 时返回 None。"""
-    sys.stdout.write("> ")
-    sys.stdout.flush()
-    line = sys.stdin.readline()
-    if not line:
-        return None
-    return line.rstrip("\r\n")
+from workflow._console import read_prompt
 
 
 def parse_args() -> argparse.Namespace:
