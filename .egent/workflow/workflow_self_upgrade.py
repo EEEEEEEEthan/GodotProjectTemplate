@@ -18,6 +18,7 @@ from workflow._console import read_prompt
 
 
 async def run(prompt: str) -> str:
+    """执行自升级工作流：委派任务给 nahte，轮询测试直至通过。"""
     import workflow.agent_definition
 
     agent = await workflow.agent_definition.get_definition("nahte").instantiate()

@@ -22,6 +22,8 @@ _ENUM_LINE = re.compile(r"^@enum\s+(\w+)\s*:\s*(.+)$")
 
 @dataclasses.dataclass(frozen=True)
 class ParsedToolDoc:
+    """解析后的工具文档。"""
+
     summary: str
     tool_name: str | None
     param_descriptions: dict[str, str]
@@ -30,6 +32,8 @@ class ParsedToolDoc:
 
 @dataclasses.dataclass(frozen=True)
 class ToolBinding:
+    """工具绑定：名称、处理器与 JSON Schema。"""
+
     name: str
     handler: ToolHandler
     schema: dict[str, typing.Any]

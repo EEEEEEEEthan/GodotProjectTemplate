@@ -52,26 +52,32 @@ class WrappedAgent:
 
     @property
     def name(self) -> str:
+        """代理名称。"""
         return self.__client.name
 
     @property
     def model(self) -> str:
+        """模型标识。"""
         return self.__client.model
 
     @property
     def base_url(self) -> str:
+        """API 地址。"""
         return self.__client.base_url
 
     @property
     def system_prompt(self) -> str:
+        """系统提示词。"""
         return self.__client.system_prompt
 
     @property
     def tool_names(self) -> list[str]:
+        """已注册工具名称列表。"""
         return self.__client.tool_names
 
     @property
     def tools(self) -> tuple[agent.tool_binding.ToolHandler, ...]:
+        """已注册工具处理器元组。"""
         return self.__client.tools
 
     async def send(
@@ -125,4 +131,5 @@ class WrappedAgent:
                 write_line_colored(event.result)
 
     async def aclose(self) -> None:
+        """关闭客户端连接。"""
         await self.__client.aclose()

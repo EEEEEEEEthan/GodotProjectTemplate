@@ -5,6 +5,5 @@ jobs=0
 
 [MESSAGES CONTROL]
 disable=
-    C0114,
-    C0115,
-    C0116,
+    R0912,  # too-many-branches
+    R0915,  # too-many-statements
