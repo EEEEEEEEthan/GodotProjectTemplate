@@ -1,4 +1,4 @@
-"""从 .egent/ 目录加载 model.toml（API Key）与 mcp.json。"""
+"""从 .egent/ 与 .agents/ 加载 model.toml（API Key）与 mcp.json。"""
 
 from __future__ import annotations
 
@@ -13,20 +13,22 @@ _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 BUILTIN_ROOT = _PACKAGE_DIR.parent
 EGENT_ROOT = BUILTIN_ROOT.parent
 PROJECT_ROOT = EGENT_ROOT.parent
+AGENTS_ROOT = PROJECT_ROOT / ".agents"
+MCP_ROOT = PROJECT_ROOT / "addons" / "godot_mcp"
 EGENT_TEMP_DIR = EGENT_ROOT / ".temp"
 DATA_ROOT = EGENT_ROOT / ".data"
 GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
 GLOBAL_MODEL_KEYS_FILE = GLOBAL_EGENT_ROOT / "model.toml"
 DEFAULT_MODEL_KEYS_FILE = EGENT_ROOT / "model.toml"
 GLOBAL_MCP_FILE = GLOBAL_EGENT_ROOT / "mcp.json"
-DEFAULT_MCP_FILE = EGENT_ROOT / "mcp.json"
+DEFAULT_MCP_FILE = AGENTS_ROOT / "mcp.json"
 
 DEFAULT_MCP: dict[str, dict[str, object]] = {
     "mcpServers": {
         "godot-game": {
             "command": "python",
             "args": ["-m", "godot_mcp.server"],
-            "cwd": ".egent/builtin",
+            "cwd": "addons",
         },
     },
 }

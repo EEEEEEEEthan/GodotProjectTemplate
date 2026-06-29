@@ -167,6 +167,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         default_tools=(
             *agent.agent_config.BASIC_TOOLS,
+            *agent.agent_config.GAME_TOOLS,
             workflow.tools.pylint_tool.run_pylint,
         ),
     ),

@@ -27,7 +27,7 @@ pip install -r requirements.txt
 	"godot-game": {
 	  "command": "python",
 	  "args": ["-m", "godot_mcp.server"],
-	  "cwd": "C:/Projects/Template/.egent"
+	  "cwd": "C:/Projects/Template/addons"
 	}
   }
 }

@@ -8,7 +8,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from godot_mcp.game_client import GameCommandError, send_command
+import godot_mcp.game_client as game_client
 
 mcp = FastMCP("godot-game")
 
@@ -33,13 +33,13 @@ def game_command(
         timeout_seconds: 等待游戏回调 func_return 的最长时间（秒）。
     """
     try:
-        result = send_command(
+        result = game_client.send_command(
             port,
             command,
             data,
             timeout_seconds=timeout_seconds,
         )
-    except GameCommandError as error:
+    except game_client.GameCommandError as error:
         return f"错误: {error}"
     return _format_result(result)
 

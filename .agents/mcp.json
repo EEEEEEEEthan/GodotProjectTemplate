@@ -3,7 +3,7 @@
     "godot-game": {
       "command": "python",
       "args": ["-m", "godot_mcp.server"],
-      "cwd": ".egent/builtin"
+      "cwd": "addons"
     }
   }
 }
