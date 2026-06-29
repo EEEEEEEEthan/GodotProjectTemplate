@@ -5,13 +5,13 @@ import asyncio
 import pathlib
 import sys
 
-_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent.parent
+_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent
 if str(_BUILTIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_BUILTIN_ROOT))
 
-import workflow.agent_definition
-import workflow.wrapped_agent
-from workflow._console import read_prompt
+import agent_definition
+import wrapped_agent
+from _console import read_prompt
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,24 +35,24 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    definition = workflow.agent_definition.AGENTS.get(args.agent)
+    definition = agent_definition.AGENTS.get(args.agent)
     if definition is None:
-        known = ", ".join(sorted(workflow.agent_definition.AGENTS))
-        workflow.wrapped_agent.write_line_colored(
+        known = ", ".join(sorted(agent_definition.AGENTS))
+        wrapped_agent.write_line_colored(
             f"未知 Agent：{args.agent}（可用：{known}）",
             dim=False,
         )
         return
     agent = await definition.instantiate(debug=args.debug)
     try:
-        workflow.wrapped_agent.write_line_colored(
+        wrapped_agent.write_line_colored(
             f"@{agent.name}, {agent.model}, {agent.base_url}"
         )
         tool_lines = ["loading tools..."] + [
             f"  - {tool}" for tool in agent.tool_names
         ]
-        workflow.wrapped_agent.write_line_colored("\n".join(tool_lines))
-        workflow.wrapped_agent.write_line_colored(f"{agent.system_prompt}")
+        wrapped_agent.write_line_colored("\n".join(tool_lines))
+        wrapped_agent.write_line_colored(f"{agent.system_prompt}")
         while True:
             line = read_prompt()
             if line is None:

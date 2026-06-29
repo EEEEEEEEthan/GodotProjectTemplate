@@ -21,7 +21,10 @@ import agent.mcp_bridge
 import agent.skill_index
 import agent.tool_binding
 
-import workflow.agent_definition
+import agent_definition
+
+if typing.TYPE_CHECKING:
+    import wrapped_agent
 
 MAX_INFLIGHT_CONTEXT_CHARS = 120_000
 KEEP_RECENT_TOOL_MESSAGES = 8
@@ -74,9 +77,9 @@ class AgentClient:
         return client
 
     @staticmethod
-    async def load_agent(path: str) -> workflow.wrapped_agent.WrappedAgent:
-        """从 workflow/agent_definition.py 加载 agent，API Key 从 model.toml 解析。"""
-        return await workflow.agent_definition.get_definition(path).instantiate()
+    async def load_agent(path: str) -> wrapped_agent.WrappedAgent:
+        """从 agent_definition.py 加载 agent，API Key 从 model.toml 解析。"""
+        return await agent_definition.get_definition(path).instantiate()
 
     def __init__(
         self,

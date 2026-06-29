@@ -15,6 +15,6 @@ async def run_self_upgrade(agent_client: typing.Any, prompt: str) -> str:
     if not task_prompt:
         return "错误：prompt 不能为空。"
 
-    import workflow.workflow_self_upgrade
+    import workflow_self_upgrade
 
-    return await workflow.workflow_self_upgrade.run(task_prompt)
+    return await workflow_self_upgrade.run(task_prompt)

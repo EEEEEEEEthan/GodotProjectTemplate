@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import agent.tool_binding
-import workflow.agent_definition
+import agent_definition
 import tools.pylint_tool
 from agent.agent_config import AgentConfig
 
@@ -56,7 +56,7 @@ def test_pylint_tool_runs() -> None:
 def test_egent_definition_includes_pylint_tool() -> None:
     tool_names = {
         agent.tool_binding.resolve_tool_name(handler)
-        for handler in workflow.agent_definition.AGENTS["egent"].default_tools
+        for handler in agent_definition.AGENTS["egent"].default_tools
     }
     assert "pylint_tool_run_pylint" in tool_names
 
@@ -64,7 +64,7 @@ def test_egent_definition_includes_pylint_tool() -> None:
 def test_nahte_definition_includes_pylint_tool() -> None:
     tool_names = {
         agent.tool_binding.resolve_tool_name(handler)
-        for handler in workflow.agent_definition.AGENTS["nahte"].default_tools
+        for handler in agent_definition.AGENTS["nahte"].default_tools
     }
     assert "pylint_tool_run_pylint" in tool_names
 

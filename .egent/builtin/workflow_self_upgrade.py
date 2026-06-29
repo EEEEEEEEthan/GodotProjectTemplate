@@ -5,7 +5,7 @@ import importlib.util
 import pathlib
 import sys
 
-_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent.parent
+_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent
 
 # 通过文件路径直接加载 run_all_tests，避免 sys.path hack
 _run_all_tests_spec = importlib.util.spec_from_file_location(
@@ -14,14 +14,14 @@ _run_all_tests_spec = importlib.util.spec_from_file_location(
 _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
 _run_all_tests_spec.loader.exec_module(_run_all_tests)
 
-from workflow._console import read_prompt
+from _console import read_prompt
 
 
 async def run(prompt: str) -> str:
     """执行自升级工作流：委派任务给 nahte，轮询测试直至通过。"""
-    import workflow.agent_definition
-    nahte = await workflow.agent_definition.get_definition("nahte").instantiate()
-    jack = await workflow.agent_definition.get_definition("jack").instantiate()
+    import agent_definition
+    nahte = await agent_definition.get_definition("nahte").instantiate()
+    jack = await agent_definition.get_definition("jack").instantiate()
     try:
         await jack.send(prompt)
         i = 0

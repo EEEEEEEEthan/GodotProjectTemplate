@@ -1,1 +1,1 @@
-"""Egent 内置模块：agent、workflow、tools、test。"""
+"""Egent 内置模块：agent、tools、test。"""

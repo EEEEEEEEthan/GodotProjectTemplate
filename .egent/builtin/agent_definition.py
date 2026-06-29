@@ -11,7 +11,7 @@ import tools.pylint_tool
 import tools.workflow_tool
 
 if typing.TYPE_CHECKING:
-    import workflow.wrapped_agent
+    import wrapped_agent
 
 @dataclasses.dataclass(frozen=True)
 class AgentDefinition:
@@ -30,12 +30,12 @@ class AgentDefinition:
         self,
         *,
         debug: bool = False,
-    ) -> workflow.wrapped_agent.WrappedAgent:
+    ) -> wrapped_agent.WrappedAgent:
         """构造已就绪的 WrappedAgent（含 MCP 工具发现）。"""
         import agent.agent_client
         import agent.agent_model
         import agent.data_loader
-        import workflow.wrapped_agent
+        import wrapped_agent
 
         agent.data_loader.resolve_agent_directory(self.name)
         api_keys = agent.data_loader.load_api_keys(
@@ -63,7 +63,7 @@ class AgentDefinition:
             agent_model,
             runtime_config,
         )
-        return workflow.wrapped_agent.WrappedAgent(client, debug=debug)
+        return wrapped_agent.WrappedAgent(client, debug=debug)
 
 
 AGENTS: dict[str, AgentDefinition] = {

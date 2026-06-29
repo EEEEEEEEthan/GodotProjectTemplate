@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import agent.tool_binding
-import workflow.agent_definition
+import agent_definition
 import tools.workflow_tool
 from agent.agent_config import AgentConfig
 
@@ -48,7 +48,7 @@ def test_workflow_tool_empty_prompt() -> None:
 def test_egent_definition_includes_workflow_tool() -> None:
     tool_names = {
         agent.tool_binding.resolve_tool_name(handler)
-        for handler in workflow.agent_definition.AGENTS["egent"].default_tools
+        for handler in agent_definition.AGENTS["egent"].default_tools
     }
     assert "workflow_tool_run_self_upgrade" in tool_names
 
