@@ -37,9 +37,9 @@ async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
             tests_passed, tests_info = await asyncio.to_thread(_run_all_tests.run_all)
             if tests_passed:
                 lst_review = await nahte.send(
-                    f"jack完成了需求:{task_prompt}\n,测试通过了。现在你需要根据git diff审查代码。如果审查通过，直接输出通过二字，不要有任何多余的输出。否则，输出修改意见"
+                    f"jack完成了需求:{task_prompt}\n,测试通过了。现在你需要根据git diff审查代码。如果审查通过，直接输出`<<<通过>>>`（三个尖括号包裹的通过），不要有任何多余的输出。否则，输出修改意见"
                 )
-                if "通过" in lst_review[-1]:
+                if "<<<通过>>>" in lst_review[-1]:
                     lst_report = await jack.send(
                         "写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
                         override_tools=(),
