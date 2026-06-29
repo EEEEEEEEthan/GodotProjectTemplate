@@ -5,9 +5,9 @@ import asyncio
 import pathlib
 import sys
 
-_EGENT_ROOT = pathlib.Path(__file__).resolve().parent.parent
-if str(_EGENT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_EGENT_ROOT))
+_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent.parent
+if str(_BUILTIN_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BUILTIN_ROOT))
 
 import workflow.agent_definition
 import workflow.wrapped_agent

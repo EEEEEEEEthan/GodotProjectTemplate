@@ -1,18 +1,18 @@
 ---
 name: test
-description: 运行 .egent/test/ 下的自动化测试套件，验证 .egent 核心功能。
+description: 运行 .egent/builtin/test/ 下的自动化测试套件，验证 .egent 核心功能。
 ---
 
 # 测试技能
 
 ## 概述
-运行 `.egent/test/` 目录下的所有 `test_*.py` 测试脚本。
+运行 `.egent/builtin/test/` 目录下的所有 `test_*.py` 测试脚本。
 
 ## 使用方式
 调用 `run.py` 脚本即可运行全部测试：
 
 ```
-python .egent/workflow/skills/test/run.py
+python .egent/builtin/workflow/skills/test/run.py
 ```
 
 ## 测试内容

@@ -49,7 +49,7 @@ def test_pylint_tool_runs() -> None:
         MockAgent(),
         workflow.tools.pylint_tool.run_pylint,
     )
-    result = wrapped(paths="workflow/tools")
+    result = wrapped(paths="builtin/workflow/tools")
     assert "检查范围" in result
 
 

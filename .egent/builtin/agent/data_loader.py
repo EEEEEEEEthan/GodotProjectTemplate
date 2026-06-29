@@ -10,7 +10,8 @@ import tomllib
 import agent.mcp_bridge
 
 _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
-EGENT_ROOT = _PACKAGE_DIR.parent
+BUILTIN_ROOT = _PACKAGE_DIR.parent
+EGENT_ROOT = BUILTIN_ROOT.parent
 PROJECT_ROOT = EGENT_ROOT.parent
 EGENT_TEMP_DIR = EGENT_ROOT / ".temp"
 DATA_ROOT = EGENT_ROOT / ".data"
@@ -25,7 +26,7 @@ DEFAULT_MCP: dict[str, dict[str, object]] = {
         "godot-game": {
             "command": "python",
             "args": ["-m", "godot_mcp.server"],
-            "cwd": ".egent",
+            "cwd": ".egent/builtin",
         },
     },
 }

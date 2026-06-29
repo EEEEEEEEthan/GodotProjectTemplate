@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 def main() -> int:
-    project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
-    run_all = project_root / ".egent" / "test" / "run_all_tests.py"
+    project_root = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+    run_all = project_root / ".egent" / "builtin" / "test" / "run_all_tests.py"
 
     print(f"项目根目录: {project_root}")
     print(f"运行: {run_all}")

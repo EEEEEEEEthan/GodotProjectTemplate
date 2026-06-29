@@ -88,13 +88,13 @@ AGENTS: dict[str, AgentDefinition] = {
 
 你尽量用workflow_tool*工具完成工作，而不是亲自动手
 做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
-测试包括自动化测试(.egent/test)和白盒测试(用shell工具跑你即时写的测试代码)
+测试包括自动化测试(.egent/builtin/test)和白盒测试(用shell工具跑你即时写的测试代码)
 """.strip(),
         skills=(
             ".agents/skills/godot-autotest",
             ".agents/skills/godot-mcp-eval",
             ".agents/skills/workflow-delegation",
-            ".egent/workflow/skills/code-optimize",
+            ".egent/builtin/workflow/skills/code-optimize",
         ),
         ignore_files=(
             ".git",
@@ -128,7 +128,7 @@ AGENTS: dict[str, AgentDefinition] = {
 你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
 
 **文件创建约束：**
-- 所有测试文件必须放在 .egent/test/ 目录下
+- 所有测试文件必须放在 .egent/builtin/test/ 目录下
 - 禁止在 .egent/ 根目录下创建临时测试文件（如 test_*.py, quick_test.py, final_test.py 等）
 - 禁止在 .egent/ 根目录下创建 .bat, .sh 等脚本文件
 - 只允许在 .egent/ 根目录下创建必要的配置文件和文档
@@ -137,8 +137,8 @@ AGENTS: dict[str, AgentDefinition] = {
 你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 """.strip(),
         skills=(
-            ".egent/workflow/skills/test",
-            ".egent/workflow/skills/code-optimize",
+            ".egent/builtin/workflow/skills/test",
+            ".egent/builtin/workflow/skills/code-optimize",
         ),
         ignore_files=(
             ".git",
@@ -180,7 +180,7 @@ AGENTS: dict[str, AgentDefinition] = {
 你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
 
 **文件创建约束：**
-- 所有测试文件必须放在 .egent/test/ 目录下
+- 所有测试文件必须放在 .egent/builtin/test/ 目录下
 - 禁止在 .egent/ 根目录下创建临时测试文件（如 test_*.py, quick_test.py, final_test.py 等）
 - 禁止在 .egent/ 根目录下创建 .bat, .sh 等脚本文件
 - 只允许在 .egent/ 根目录下创建必要的配置文件和文档
@@ -189,8 +189,8 @@ AGENTS: dict[str, AgentDefinition] = {
 你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
 """.strip(),
         skills=(
-            ".egent/workflow/skills/test",
-            ".egent/workflow/skills/code-optimize",
+            ".egent/builtin/workflow/skills/test",
+            ".egent/builtin/workflow/skills/code-optimize",
         ),
         ignore_files=(
             ".git",

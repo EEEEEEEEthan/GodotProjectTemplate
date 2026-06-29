@@ -23,7 +23,7 @@ def main() -> int:
         print("这是一个集成测试，需要外部环境支持")
         return 0  # 返回 0 表示测试跳过，不算失败
 
-    cmd = [sys.executable, ".egent/workflow/main.py", "jason"]
+    cmd = [sys.executable, ".egent/builtin/workflow/main.py", "jason"]
 
     try:
         result = subprocess.run(
