@@ -68,9 +68,9 @@ class AgentDefinition:
 AGENTS: dict[str, AgentDefinition] = {
     "egent": AgentDefinition(
         name="egent",
-        key="volc",
-        model="deepseek-v4-pro-260425",
-        base_url="https://ark.cn-beijing.volces.com/api/v3",
+        key="coconut",
+        model="deepseek/deepseek-v4-pro",
+        base_url="https://developer.coconut.is:1073/",
         system_prompt="""
 你是egent,你是这个项目的leader.这是一个专注于godot开发的ai agent.
 同时,你也是这个项目本身.
@@ -133,9 +133,9 @@ AGENTS: dict[str, AgentDefinition] = {
     ),
     "jack": AgentDefinition(
         name="jack",
-        key="volc",
-        model="deepseek-v4-pro-260425",
-        base_url="https://ark.cn-beijing.volces.com/api/v3",
+        key="coconut",
+        model="deepseek/deepseek-v4-flash",
+        base_url="https://developer.coconut.is:1073/",
         system_prompt="""
 你是jack,你是nahte的手下程序员.
 你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
@@ -165,9 +165,9 @@ AGENTS: dict[str, AgentDefinition] = {
     ),
     "jason": AgentDefinition(
         name="jason",
-        key="volc",
-        model="deepseek-v4-pro-260425",
-        base_url="https://ark.cn-beijing.volces.com/api/v3",
+        key="coconut",
+        model="deepseek/deepseek-v4-flash",
+        base_url="https://developer.coconut.is:1073/",
         system_prompt="""
 你是jason,你是一个游戏开发程序员.你说话非常简短,除了做需求以外你不想多说一个字.
 你应该在合适的时候查看和更新你的memory
