@@ -24,6 +24,7 @@ class AgentDefinition:
     skills: tuple[str, ...]
     default_tools: tuple[agent.tool_binding.ToolHandler, ...]
     ignore_files: tuple[str, ...] = agent.agent_config.DEFAULT_IGNORE_FILES
+    no_write_files: tuple[str, ...] = agent.agent_config.DEFAULT_NO_WRITE_FILES
 
     async def instantiate(
         self,
@@ -54,6 +55,7 @@ class AgentDefinition:
             skills=list(self.skills),
             system_prompt=self.system_prompt,
             ignore_files=list(self.ignore_files),
+            no_write_files=list(self.no_write_files),
             mcp_servers=agent.data_loader.load_mcp_servers(),
             default_tools=self.default_tools,
         )
@@ -157,6 +159,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
         ),
+        no_write_files=(),
         default_tools=(
             *agent.agent_config.BASIC_TOOLS,
             *agent.agent_config.DEV_TOOLS,

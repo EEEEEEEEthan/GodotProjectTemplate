@@ -1,9 +1,54 @@
-"""文件编辑工具：创建文件与应用 unified diff 补丁。"""
+"""文件编辑工具：创建文件、删除文件与替换文本。"""
 
 from __future__ import annotations
 
+import fnmatch
 import pathlib
 import typing
+
+from . import _path_util
+
+
+def _resolve_writable_file(
+    agent_client: typing.Any,
+    file_path: str,
+    *,
+    must_exist: bool,
+) -> tuple[pathlib.Path | None, str | None]:
+    """统一写权限检查，返回 (resolved_absolute_path, error)。
+
+    三层检查：
+    L1 - 路径合法性：复用 path_util.resolve_relative_path（不可读则不可写）
+    L2 - 写黑名单：fnmatch 匹配 no_write_files 的各路径段
+    L3 - 存在性：根据 must_exist 检查文件是否存在
+    """
+    # L1: 复用路径校验（拒绝空路径、绝对路径）
+    relative_path, l1_error = _path_util.resolve_relative_path(file_path)
+    if l1_error is not None:
+        return None, l1_error
+
+    # L2: 写黑名单 — 对路径的每个段做 fnmatch
+    no_write_patterns: list[str] = getattr(
+        agent_client.config, "no_write_files", []
+    )
+    for segment in relative_path.parts:
+        for pattern in no_write_patterns:
+            if fnmatch.fnmatch(segment, pattern):
+                return None, (
+                    f"错误：文件 {relative_path} 被写保护"
+                    f"（路径段 '{segment}' 匹配禁止写模式 '{pattern}'）"
+                )
+
+    # L3: 存在性检查
+    full_path = (pathlib.Path.cwd() / relative_path).resolve()
+    if must_exist:
+        if not full_path.is_file():
+            return None, f"错误：文件不存在：{relative_path}"
+    else:
+        if full_path.exists():
+            return None, f"错误：文件已存在：{relative_path}"
+
+    return full_path, None
 
 
 def create_file(
@@ -16,17 +61,9 @@ def create_file(
     @param file_path: 目标文件路径（相对工作目录，不接受绝对路径）
     @param content: 文件初始内容，缺省创建空文件
     """
-    del agent_client
-    if not file_path or not file_path.strip():
-        return "错误：file_path 不能为空。"
-
-    relative_path = pathlib.Path(file_path.strip())
-    if relative_path.is_absolute():
-        return f"错误：file_path 必须是相对工作目录的路径，不接受绝对路径：{file_path}"
-
-    full_path = (pathlib.Path.cwd() / relative_path).resolve()
-    if full_path.exists():
-        return f"错误：文件已存在：{relative_path}"
+    full_path, error = _resolve_writable_file(agent_client, file_path, must_exist=False)
+    if error is not None:
+        return error
 
     try:
         full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,20 +87,9 @@ def delete_file(
 
     @param file_path: 目标文件路径（相对工作目录，不接受绝对路径）
     """
-    del agent_client
-    if not file_path or not file_path.strip():
-        return "错误：file_path 不能为空。"
-
-    relative_path = pathlib.Path(file_path.strip())
-    if relative_path.is_absolute():
-        return f"错误：file_path 必须是相对工作目录的路径，不接受绝对路径：{file_path}"
-
-    full_path = (pathlib.Path.cwd() / relative_path).resolve()
-    if not full_path.exists():
-        return f"错误：文件不存在：{relative_path}"
-
-    if full_path.is_dir():
-        return f"错误：不支持删除目录：{relative_path}"
+    full_path, error = _resolve_writable_file(agent_client, file_path, must_exist=True)
+    if error is not None:
+        return error
 
     try:
         full_path.unlink()
@@ -81,25 +107,19 @@ def apply_patch(
 ) -> str:
     """替换文本。
 
-    @param file_path: 目标文件路径，可为绝对路径或相对当前工作目录
+    @param file_path: 目标文件路径（相对工作目录，不接受绝对路径）
     @param old_text: 要被替换的原文片段，须在文件中出现且仅出现一次
     @param new_text: 替换后的内容，缺省为空字符串
     """
-    del agent_client
-    validation_error = _validate_patch_input(file_path, old_text)
-    if validation_error is not None:
-        return validation_error
+    full_path, error = _resolve_writable_file(agent_client, file_path, must_exist=True)
+    if error is not None:
+        return error
 
-    full_path, resolve_error = _resolve_patch_target(file_path)
-    if resolve_error is not None:
-        return resolve_error
+    if not old_text:
+        return "错误：old_text 不能为空字符串。"
 
     replacement = new_text if new_text is not None else ""
-    updated, patch_error = _patch_file_content(
-        full_path,
-        old_text,
-        replacement,
-    )
+    updated, patch_error = _patch_file_content(full_path, old_text, replacement)
     if patch_error is not None:
         return patch_error
 
@@ -108,26 +128,6 @@ def apply_patch(
     except OSError as exception:
         return f"错误：无法写入文件：{exception}"
     return "成功"
-
-
-def _validate_patch_input(file_path: str, old_text: str) -> str | None:
-    if not file_path or not file_path.strip():
-        return "错误：file_path 不能为空。"
-    if not old_text:
-        return "错误：old_text 不能为空字符串。"
-    return None
-
-
-def _resolve_patch_target(
-    file_path: str,
-) -> tuple[pathlib.Path | None, str | None]:
-    try:
-        full_path = pathlib.Path(file_path.strip()).resolve()
-    except OSError as exception:
-        return None, f"错误：路径无效：{exception}"
-    if not full_path.is_file():
-        return None, f"错误：文件不存在：{full_path}"
-    return full_path, None
 
 
 def _patch_file_content(
@@ -156,7 +156,7 @@ def _patch_file_content(
     updated_lf = (
         work_content[:index]
         + work_replacement
-        + work_content[index + len(work_old) :]
+        + work_content[index + len(work_old):]
     )
     if file_originally_had_crlf:
         updated = updated_lf.replace("\n", "\r\n")

@@ -46,6 +46,11 @@ EGENT_IGNORE_FILES: tuple[str, ...] = (".egent",)
 
 DEFAULT_IGNORE_FILES: tuple[str, ...] = (*COMMON_IGNORE_FILES, *EGENT_IGNORE_FILES)
 
+DEFAULT_NO_WRITE_FILES: tuple[str, ...] = (
+    ".egent",
+    "*.pyc",
+)
+
 BASIC_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
     tools.skill_tool.learn_skill,
     tools.git_tool.git_diff,
@@ -70,6 +75,8 @@ DEV_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
     tools.memory_tool.remove_item,
     tools.memory_tool.update_item,
     tools.fuck_tool.fuck,
+    tools.git_tool.git_add,
+    tools.git_tool.git_commit,
 )
 
 ADMIN_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
@@ -106,6 +113,9 @@ class AgentConfig:
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
     ignore_files: list[str] = dataclasses.field(
         default_factory=lambda: list(DEFAULT_IGNORE_FILES)
+    )
+    no_write_files: list[str] = dataclasses.field(
+        default_factory=lambda: list(DEFAULT_NO_WRITE_FILES)
     )
     mcp_servers: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
     default_tools: tuple[agent.tool_binding.ToolHandler, ...] = DEFAULT_TOOLS
