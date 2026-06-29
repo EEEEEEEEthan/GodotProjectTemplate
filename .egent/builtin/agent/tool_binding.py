@@ -154,13 +154,18 @@ async def invoke_handler(handler: ToolHandler, arguments: dict[str, typing.Any])
     """调用工具方法并规范化返回值为字符串。"""
     if "__parse_error__" in arguments:
         return f"错误：工具参数 JSON 无效：{arguments['__parse_error__']}"
+    tool_name = resolve_tool_name(handler)
     try:
         result = handler(**arguments)
     except TypeError as exception:
-        tool_name = resolve_tool_name(handler)
         return f"错误：工具参数无效（{tool_name}）：{exception}"
-    if inspect.isawaitable(result):
-        result = await result
+    except Exception as exception:
+        return f"错误：工具执行失败（{tool_name}）：{exception}"
+    try:
+        if inspect.isawaitable(result):
+            result = await result
+    except Exception as exception:
+        return f"错误：工具执行失败（{tool_name}）：{exception}"
     return str(result)
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
 
 import openai
@@ -103,8 +104,16 @@ class WrappedAgent:
                 f"API 连接中断（已重试仍失败）: {error}",
                 dim=False,
             )
+            completions.append(f"错误：API 连接中断：{error}")
         except openai.APIError as error:
             write_line_colored(f"API 错误: {error}", dim=False)
+            completions.append(f"错误：API 错误：{error}")
+        except asyncio.CancelledError:
+            write_line_colored("请求被取消", dim=False)
+            completions.append("错误：请求被取消")
+        except Exception as error:
+            write_line_colored(f"执行失败: {error}", dim=False)
+            completions.append(f"错误：执行失败：{error}")
         sys.stdout.write("\n")
         sys.stdout.flush()
         return completions

@@ -10,6 +10,7 @@ if str(_BUILTIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_BUILTIN_ROOT))
 
 import agent_definition
+import agent.mcp_bridge
 import wrapped_agent
 from _console import read_prompt
 
@@ -62,6 +63,7 @@ async def main() -> None:
             await agent.send(line)
     finally:
         await agent.aclose()
+        await agent.mcp_bridge.close_shared_bridge()
 
 
 if __name__ == "__main__":

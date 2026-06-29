@@ -138,25 +138,21 @@ class AgentClient:
         )
 
     def __build_tooling(self, config: agent.agent_config.AgentConfig) -> _AgentTooling:
-        mcp_bridge_instance = (
-            agent.mcp_bridge.McpBridge(config.mcp_servers)
-            if config.mcp_servers
-            else None
-        )
         return _AgentTooling(
             skill_index=self.skill_index,
             system_prompt=self.__compose_system_prompt(config.system_prompt),
-            mcp_bridge=mcp_bridge_instance,
         )
 
     async def __ensure_mcp_ready(self) -> None:
         tooling = self.__tooling
-        if tooling.mcp_bridge is None or tooling.mcp_ready:
+        if not self.config.mcp_servers or tooling.mcp_ready:
             return
         async with self.__mcp_ready_lock:
-            if tooling.mcp_bridge is None or tooling.mcp_ready:
+            if not self.config.mcp_servers or tooling.mcp_ready:
                 return
-            await tooling.mcp_bridge.start()
+            tooling.mcp_bridge = await agent.mcp_bridge.get_shared_bridge(
+                self.config.mcp_servers,
+            )
             tooling.mcp_schemas = tooling.mcp_bridge.all_schemas()
             tooling.mcp_ready = True
 
@@ -527,11 +523,9 @@ class AgentClient:
         return self.__model.base_url.strip() or "https://api.openai.com/v1"
 
     async def aclose(self) -> None:
-        """关闭 MCP 连接与会话日志。"""
-        tooling = self.__tooling
-        if tooling.mcp_bridge is not None and tooling.mcp_ready:
-            await tooling.mcp_bridge.close()
-            tooling.mcp_ready = False
+        """关闭会话日志（MCP 由进程级共享桥接管理）。"""
+        self.__tooling.mcp_ready = False
+        self.__tooling.mcp_bridge = None
         self.__conversation.resources.close()
 
     def close(self) -> None:
@@ -560,11 +554,4 @@ class AgentClient:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        tooling = self.__tooling
-        if tooling.mcp_bridge is not None and tooling.mcp_ready:
-            try:
-                asyncio.get_running_loop()
-            except RuntimeError:
-                asyncio.run(self.aclose())
-                return
         self.close()

@@ -21,6 +21,30 @@ import tools._output_util as output_util
 
 MCP_TOOL_PREFIX = "mcp__"
 
+_shared_bridge: McpBridge | None = None
+_shared_lock = asyncio.Lock()
+
+
+async def get_shared_bridge(servers: dict[str, McpServerConfig]) -> McpBridge:
+    """获取进程内唯一的共享 MCP 桥接。"""
+    global _shared_bridge
+    if not servers:
+        raise ValueError("servers 不能为空")
+    async with _shared_lock:
+        if _shared_bridge is None:
+            _shared_bridge = McpBridge(servers)
+            await _shared_bridge.start()
+        return _shared_bridge
+
+
+async def close_shared_bridge() -> None:
+    """关闭共享 MCP 桥接（进程退出时调用）。"""
+    global _shared_bridge
+    async with _shared_lock:
+        if _shared_bridge is not None:
+            await _shared_bridge.close()
+            _shared_bridge = None
+
 
 @dataclasses.dataclass(frozen=True)
 class _McpServerConnection:
@@ -61,6 +85,7 @@ class McpBridge:
         self.__sessions: dict[str, mcp.client.session.ClientSession] = {}
         self.__bindings: dict[str, McpToolBinding] = {}
         self.__started = False
+        self.__invoke_lock = asyncio.Lock()
 
     @property
     def bindings(self) -> dict[str, McpToolBinding]:
@@ -106,14 +131,12 @@ class McpBridge:
             return f"错误：MCP 服务未连接 {binding.server_id}"
 
         try:
-            result = await session.call_tool(binding.tool_name, arguments=arguments)
-        except (
-            mcp.shared.exceptions.McpError,
-            RuntimeError,
-            anyio.ClosedResourceError,
-            anyio.BrokenResourceError,
-            OSError,
-        ) as error:
+            async with self.__invoke_lock:
+                result = await session.call_tool(
+                    binding.tool_name,
+                    arguments=arguments,
+                )
+        except Exception as error:
             return f"错误：MCP 调用失败（{openai_name}）：{error}"
 
         return output_util.truncate_output(format_call_tool_result(result))
