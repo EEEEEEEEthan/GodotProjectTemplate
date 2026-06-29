@@ -46,7 +46,6 @@ class _ConversationState:
     resources: contextlib.ExitStack
     log: typing.TextIO
     history: list[dict[str, typing.Any]]
-    base_history_count: int
     openai_client: openai.AsyncOpenAI | None = None
 
 
@@ -103,7 +102,6 @@ class AgentClient:
         self.__conversation.history.append(
             {"role": "system", "content": self.__tooling.system_prompt}
         )
-        self.__conversation.base_history_count = len(self.__conversation.history)
 
     def __open_conversation(self) -> _ConversationState:
         log_directory = agent.data_loader.EGENT_TEMP_DIR
@@ -122,7 +120,6 @@ class AgentClient:
             resources=resources,
             log=log_file,
             history=[],
-            base_history_count=0,
         )
 
     def __compose_system_prompt(self, base_prompt: str) -> str:
@@ -220,29 +217,6 @@ class AgentClient:
             extra_schemas=extra_schemas,
             mcp_invoke=invoke_mcp_tool if mcp_bridge is not None and include_mcp else None,
         )
-
-    async def summarize(self) -> None:
-        """将当前对话历史压缩为摘要并替换旧消息。"""
-        conversation = self.__conversation
-        if len(conversation.history) <= conversation.base_history_count:
-            return
-
-        client = self.__get_or_create_client()
-        summarization_history = list(conversation.history)
-        summarization_history.append(
-            {
-                "role": "user",
-                "content": "请将以上对话压缩为简洁摘要，保留关键决策、结论、未完成任务与重要上下文。",
-            }
-        )
-        response = await client.chat.completions.create(
-            model=self.__model.model,
-            messages=summarization_history,
-        )
-        summary = response.choices[0].message.content or ""
-        del conversation.history[conversation.base_history_count :]
-        if summary:
-            conversation.history.append({"role": "assistant", "content": summary})
 
     async def send(
         self,

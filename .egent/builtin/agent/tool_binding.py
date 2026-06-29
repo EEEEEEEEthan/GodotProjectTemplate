@@ -128,18 +128,6 @@ def to_openai_tools(bindings: dict[str, ToolBinding]) -> list[dict[str, typing.A
     return [bindings[name].schema for name in sorted(bindings)]
 
 
-def select_bindings(
-    all_bindings: dict[str, ToolBinding],
-    whitelist: collections.abc.Iterable[str],
-) -> dict[str, ToolBinding]:
-    """按白名单筛选绑定。"""
-    allowed = set(whitelist)
-    return {
-        name: binding
-        for name, binding in all_bindings.items()
-        if name in allowed
-    }
-
 
 def merge_advertised_tools(
     bindings: dict[str, ToolBinding],
