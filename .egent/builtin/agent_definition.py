@@ -8,7 +8,6 @@ import typing
 import agent.agent_config
 import agent.tool_binding
 import tools.pylint_tool
-import tools.workflow_tool
 
 if typing.TYPE_CHECKING:
     import wrapped_agent
@@ -113,9 +112,10 @@ AGENTS: dict[str, AgentDefinition] = {
             ".godot",
         ),
         default_tools=(
-            *agent.agent_config.ALL_TOOLS,
-            tools.pylint_tool.run_pylint,
-            tools.workflow_tool.run_self_upgrade,
+            *agent.agent_config.DEFAULT_TOOLS,
+            *agent.agent_config.ADMIN_TOOLS,
+            *agent.agent_config.EGENT_TOOLS,
+            *agent.agent_config.EGENT_WORKFLOW_TOOLS,
         ),
     ),
     "nahte": AgentDefinition(
@@ -168,7 +168,8 @@ AGENTS: dict[str, AgentDefinition] = {
         default_tools=(
             *agent.agent_config.BASIC_TOOLS,
             *agent.agent_config.GAME_TOOLS,
-            tools.pylint_tool.run_pylint,
+            *agent.agent_config.EGENT_TOOLS,
+            *agent.agent_config.EGENT_WORKFLOW_TOOLS,
         ),
     ),
     "jack": AgentDefinition(
@@ -221,7 +222,7 @@ AGENTS: dict[str, AgentDefinition] = {
         default_tools=(
             *agent.agent_config.BASIC_TOOLS,
             *agent.agent_config.DEV_TOOLS,
-            tools.pylint_tool.run_pylint,
+            *agent.agent_config.EGENT_TOOLS,
         ),
     ),
     "jason": AgentDefinition(
