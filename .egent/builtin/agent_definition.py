@@ -108,9 +108,9 @@ AGENTS: dict[str, AgentDefinition] = {
     ),
     "nahte": AgentDefinition(
         name="nahte",
-        key="volc",
-        model="deepseek-v4-pro-260425",
-        base_url="https://ark.cn-beijing.volces.com/api/v3",
+        key="coconut",
+        model="deepseek/deepseek-v4-pro",
+        base_url="https://developer.coconut.is:1073/",
         system_prompt="""
 你是nahte,你是.egent系统的核心设计师和审查员.
 开发任务都交给jack完成,你只需要设计和审查.
