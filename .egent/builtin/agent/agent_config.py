@@ -85,7 +85,7 @@ EGENT_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
 )
 
 EGENT_WORKFLOW_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
-    tools.workflow_tool.run_self_upgrade,
+    tools.workflow_tool.run_egent_development,
 )
 
 DEFAULT_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (

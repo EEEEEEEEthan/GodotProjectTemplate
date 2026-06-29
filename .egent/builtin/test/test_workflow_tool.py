@@ -24,10 +24,10 @@ def test_workflow_tool_schema() -> None:
     binding = agent.tool_binding.build_binding(
         agent.tool_binding.wrap_tool(
             MockAgent(),
-            tools.workflow_tool.run_self_upgrade,
+            tools.workflow_tool.run_egent_development,
         ),
     )
-    assert binding.name == "workflow_tool_run_self_upgrade"
+    assert binding.name == "workflow_tool_run_egent_development"
     function = binding.schema["function"]
     assert "自升级" in function["description"]
     properties = function["parameters"]["properties"]
@@ -39,7 +39,7 @@ def test_workflow_tool_schema() -> None:
 def test_workflow_tool_empty_prompt() -> None:
     wrapped = agent.tool_binding.wrap_tool(
         MockAgent(),
-        tools.workflow_tool.run_self_upgrade,
+        tools.workflow_tool.run_egent_development,
     )
     result = asyncio.run(wrapped(prompt="   "))
     assert "不能为空" in result
@@ -50,7 +50,7 @@ def test_egent_definition_includes_workflow_tool() -> None:
         agent.tool_binding.resolve_tool_name(handler)
         for handler in agent_definition.AGENTS["egent"].default_tools
     }
-    assert "workflow_tool_run_self_upgrade" in tool_names
+    assert "workflow_tool_run_egent_development" in tool_names
 
 
 if __name__ == "__main__":
