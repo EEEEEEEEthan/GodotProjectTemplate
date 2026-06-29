@@ -145,7 +145,7 @@ AGENTS: dict[str, AgentDefinition] = {
 - 只允许在 .egent/ 根目录下创建必要的配置文件和文档
 
 你极度优雅,对代码的要求极高.
-你做出任何修改之后一定要进行测试,否则下次启动就会出现问题.
+你做出任何修改之后一定要进行测试.
 """.strip(),
         skills=(
             ".egent/builtin/skills/test",
