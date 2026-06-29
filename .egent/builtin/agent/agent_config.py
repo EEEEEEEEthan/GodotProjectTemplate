@@ -8,6 +8,7 @@ import typing
 import agent.tool_binding
 import tools.file_edit_tool
 import tools.fuck_tool
+import tools.git_tool
 import tools.grep_search_tool
 import tools.launch_game_tool
 import tools.memory_tool
@@ -47,6 +48,7 @@ DEFAULT_IGNORE_FILES: tuple[str, ...] = (*COMMON_IGNORE_FILES, *EGENT_IGNORE_FIL
 
 BASIC_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
     tools.skill_tool.learn_skill,
+    tools.git_tool.git_diff,
     tools.grep_search_tool.grep_search,
     tools.walk_files_tool.walk_files,
     tools.system_info_tool.system_info,
