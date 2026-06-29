@@ -5,8 +5,6 @@ from __future__ import annotations
 import dataclasses
 import typing
 
-import agent.agent_config
-import agent.tool_binding
 import tools.file_edit_tool
 import tools.fuck_tool
 import tools.git_tool
@@ -20,6 +18,9 @@ import tools.skill_tool
 import tools.system_info_tool
 import tools.walk_files_tool
 import tools.workflow_tool
+
+import agent.agent_config
+import agent.tool_binding
 
 if typing.TYPE_CHECKING:
     import wrapped_agent

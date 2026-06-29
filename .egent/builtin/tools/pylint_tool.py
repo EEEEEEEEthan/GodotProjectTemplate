@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import pathlib
 import subprocess
 import sys
 import typing
 
-import agent.data_loader
 import tools._output_util as output_util
 
 _DEFAULT_PATHS = ("builtin/agent", "builtin/tools")
-_PYLINTRC = agent.data_loader.EGENT_ROOT / "pylintrc"
+_EGENT_ROOT = pathlib.Path(__file__).resolve().parents[2]
+_PYLINTRC = _EGENT_ROOT / "pylintrc"
 _DEFAULT_TIMEOUT_SECONDS = 120
 
 
@@ -48,7 +49,7 @@ def run_pylint(
     try:
         result = subprocess.run(
             command,
-            cwd=agent.data_loader.EGENT_ROOT,
+            cwd=_EGENT_ROOT,
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
@@ -92,9 +93,9 @@ def _resolve_targets(paths: str | None) -> tuple[str, ...] | str:
             continue
         if relative_path.startswith("/") or ":" in relative_path[:3]:
             return f"错误：paths 必须是相对 .egent 的路径：{segment!r}"
-        absolute_path = (agent.data_loader.EGENT_ROOT / relative_path).resolve()
+        absolute_path = (_EGENT_ROOT / relative_path).resolve()
         try:
-            absolute_path.relative_to(agent.data_loader.EGENT_ROOT.resolve())
+            absolute_path.relative_to(_EGENT_ROOT.resolve())
         except ValueError:
             return f"错误：路径必须在 .egent 内：{segment!r}"
         if not absolute_path.exists():

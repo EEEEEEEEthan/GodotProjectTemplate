@@ -16,13 +16,10 @@ import agent.agent_config
 import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
-import agent.tool_binding
-
-import agent_definition
-
 import agent.data_loader
 import agent.mcp_bridge
 import agent.skill_index
+import agent.tool_binding
 
 if typing.TYPE_CHECKING:
     import wrapped_agent
@@ -79,6 +76,8 @@ class AgentClient:
     @staticmethod
     async def load_agent(path: str) -> wrapped_agent.WrappedAgent:
         """从 agent_definition.py 加载 agent，API Key 从 model.toml 解析。"""
+        import agent_definition
+
         return await agent_definition.get_definition(path).instantiate()
 
     def __init__(

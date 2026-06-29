@@ -7,8 +7,6 @@ import os
 import pathlib
 import tomllib
 
-import agent.mcp_bridge
-
 _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 BUILTIN_ROOT = _PACKAGE_DIR.parent
 EGENT_ROOT = BUILTIN_ROOT.parent
@@ -61,8 +59,10 @@ def __ensure_model_keys_file(known_keys: set[str]) -> None:
     )
 
 
-def load_mcp_servers() -> dict[str, agent.mcp_bridge.McpServerConfig]:
+def load_mcp_servers() -> dict[str, "agent.mcp_bridge.McpServerConfig"]:
     """加载合并后的 mcp.json（global → project）。"""
+    import agent.mcp_bridge
+
     merged = __load_merged_json(
         GLOBAL_MCP_FILE,
         DEFAULT_MCP_FILE,
