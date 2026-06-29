@@ -17,7 +17,7 @@ _run_all_tests_spec.loader.exec_module(_run_all_tests)
 
 
 async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
-    """执行自升级工作流：委派任务给 jack，轮询测试直至通过，最后由 nahte 验收。
+    """执行egent开发工作流：委派任务给 jack，轮询测试直至通过，最后由 nahte 验收。
 
     @param prompt: 升级任务描述
     """
