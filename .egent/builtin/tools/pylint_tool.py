@@ -7,9 +7,9 @@ import sys
 import typing
 
 import agent.data_loader
-import agent.builtin_tools._output_util as output_util
+import tools._output_util as output_util
 
-_DEFAULT_PATHS = ("builtin/agent", "builtin/workflow")
+_DEFAULT_PATHS = ("builtin/agent", "builtin/workflow", "builtin/tools")
 _PYLINTRC = agent.data_loader.EGENT_ROOT / "pylintrc"
 _DEFAULT_TIMEOUT_SECONDS = 120
 
@@ -21,7 +21,7 @@ def run_pylint(
 ) -> str:
     """对 .egent 目录运行 pylint，返回文本诊断报告。用于修改 .egent 代码后自查 lint 问题。
 
-    @param paths: 要检查的路径（相对 .egent），多个用逗号分隔，缺省 `builtin/agent,builtin/workflow`
+    @param paths: 要检查的路径（相对 .egent），多个用逗号分隔，缺省 `builtin/agent,builtin/workflow,builtin/tools`
     @param timeout: 超时秒数，缺省 120
     """
     del agent_client

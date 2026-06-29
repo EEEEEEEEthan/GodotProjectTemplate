@@ -8,8 +8,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import agent.tool_binding
-import agent.builtin_tools.grep_search_tool
-import agent.builtin_tools.shell_tool
+import tools.grep_search_tool
+import tools.shell_tool
 from agent.agent_config import AgentConfig
 
 
@@ -23,7 +23,7 @@ def test_grep_search_schema() -> None:
     binding = agent.tool_binding.build_binding(
         agent.tool_binding.wrap_tool(
             MockAgent(),
-            agent.builtin_tools.grep_search_tool.grep_search,
+            tools.grep_search_tool.grep_search,
         ),
     )
     assert binding.name == "grep_search_tool_grep_search"
@@ -41,7 +41,7 @@ def test_bg_tool_custom_name() -> None:
     binding = agent.tool_binding.build_binding(
         agent.tool_binding.wrap_tool(
             MockAgent(),
-            agent.builtin_tools.shell_tool.bg_exec,
+            tools.shell_tool.bg_exec,
         ),
     )
     assert binding.name == "shell_tool_bg_exec"

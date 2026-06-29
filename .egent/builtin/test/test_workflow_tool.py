@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import agent.tool_binding
 import workflow.agent_definition
-import workflow.tools.workflow_tool
+import tools.workflow_tool
 from agent.agent_config import AgentConfig
 
 
@@ -24,7 +24,7 @@ def test_workflow_tool_schema() -> None:
     binding = agent.tool_binding.build_binding(
         agent.tool_binding.wrap_tool(
             MockAgent(),
-            workflow.tools.workflow_tool.run_self_upgrade,
+            tools.workflow_tool.run_self_upgrade,
         ),
     )
     assert binding.name == "workflow_tool_run_self_upgrade"
@@ -39,7 +39,7 @@ def test_workflow_tool_schema() -> None:
 def test_workflow_tool_empty_prompt() -> None:
     wrapped = agent.tool_binding.wrap_tool(
         MockAgent(),
-        workflow.tools.workflow_tool.run_self_upgrade,
+        tools.workflow_tool.run_self_upgrade,
     )
     result = asyncio.run(wrapped(prompt="   "))
     assert "不能为空" in result

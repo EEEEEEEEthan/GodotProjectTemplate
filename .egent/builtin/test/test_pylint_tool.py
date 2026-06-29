@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import agent.tool_binding
 import workflow.agent_definition
-import workflow.tools.pylint_tool
+import tools.pylint_tool
 from agent.agent_config import AgentConfig
 
 
@@ -23,7 +23,7 @@ def test_pylint_tool_schema() -> None:
     binding = agent.tool_binding.build_binding(
         agent.tool_binding.wrap_tool(
             MockAgent(),
-            workflow.tools.pylint_tool.run_pylint,
+            tools.pylint_tool.run_pylint,
         ),
     )
     assert binding.name == "pylint_tool_run_pylint"
@@ -38,7 +38,7 @@ def test_pylint_tool_schema() -> None:
 def test_pylint_tool_invalid_path() -> None:
     wrapped = agent.tool_binding.wrap_tool(
         MockAgent(),
-        workflow.tools.pylint_tool.run_pylint,
+        tools.pylint_tool.run_pylint,
     )
     result = wrapped(paths="../outside")
     assert "必须在 .egent 内" in result
@@ -47,9 +47,9 @@ def test_pylint_tool_invalid_path() -> None:
 def test_pylint_tool_runs() -> None:
     wrapped = agent.tool_binding.wrap_tool(
         MockAgent(),
-        workflow.tools.pylint_tool.run_pylint,
+        tools.pylint_tool.run_pylint,
     )
-    result = wrapped(paths="builtin/workflow/tools")
+    result = wrapped(paths="builtin/tools")
     assert "检查范围" in result
 
 

@@ -7,7 +7,7 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from agent.agent_config import AgentConfig
-import agent.builtin_tools.grep_search_tool as grep_search_tool_module
+import tools.grep_search_tool as grep_search_tool_module
 import agent.tool_binding
 
 

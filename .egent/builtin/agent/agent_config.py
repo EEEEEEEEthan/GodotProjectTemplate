@@ -6,18 +6,16 @@ import dataclasses
 import typing
 
 import agent.tool_binding
-from agent.builtin_tools import (
-    file_edit_tool,
-    fuck_tool,
-    grep_search_tool,
-    launch_game_tool,
-    memory_tool,
-    read_file_tool,
-    shell_tool,
-    skill_tool,
-    system_info_tool,
-    walk_files_tool,
-)
+import tools.file_edit_tool
+import tools.fuck_tool
+import tools.grep_search_tool
+import tools.launch_game_tool
+import tools.memory_tool
+import tools.read_file_tool
+import tools.shell_tool
+import tools.skill_tool
+import tools.system_info_tool
+import tools.walk_files_tool
 
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
@@ -45,39 +43,39 @@ DEFAULT_IGNORE_FILES: tuple[str, ...] = (
 )
 
 BASIC_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
-    skill_tool.learn_skill,
-    grep_search_tool.grep_search,
-    walk_files_tool.walk_files,
-    system_info_tool.system_info,
-    memory_tool.list_items,
-    memory_tool.find_str,
-    read_file_tool.read_file_outline_cs,
-    read_file_tool.read_file_outline_md,
-    read_file_tool.read_file_outline_py,
-    read_file_tool.read_lines,
-    read_file_tool.read_whole_file,
+    tools.skill_tool.learn_skill,
+    tools.grep_search_tool.grep_search,
+    tools.walk_files_tool.walk_files,
+    tools.system_info_tool.system_info,
+    tools.memory_tool.list_items,
+    tools.memory_tool.find_str,
+    tools.read_file_tool.read_file_outline_cs,
+    tools.read_file_tool.read_file_outline_md,
+    tools.read_file_tool.read_file_outline_py,
+    tools.read_file_tool.read_lines,
+    tools.read_file_tool.read_whole_file,
 )
 
 DEV_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
-    skill_tool.run_skill_script,
-    file_edit_tool.create_file,
-    file_edit_tool.apply_patch,
-    file_edit_tool.delete_file,
-    memory_tool.add_item,
-    memory_tool.remove_item,
-    memory_tool.update_item,
-    fuck_tool.fuck,
+    tools.skill_tool.run_skill_script,
+    tools.file_edit_tool.create_file,
+    tools.file_edit_tool.apply_patch,
+    tools.file_edit_tool.delete_file,
+    tools.memory_tool.add_item,
+    tools.memory_tool.remove_item,
+    tools.memory_tool.update_item,
+    tools.fuck_tool.fuck,
 )
 
 ADMIN_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
-    shell_tool.exec_command,
-    shell_tool.bg_exec,
-    shell_tool.bg_status,
-    shell_tool.wait,
+    tools.shell_tool.exec_command,
+    tools.shell_tool.bg_exec,
+    tools.shell_tool.bg_status,
+    tools.shell_tool.wait,
 )
 
 GAME_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
-    launch_game_tool.launch_game,
+    tools.launch_game_tool.launch_game,
 )
 
 ALL_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
