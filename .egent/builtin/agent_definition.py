@@ -7,7 +7,19 @@ import typing
 
 import agent.agent_config
 import agent.tool_binding
+import tools.file_edit_tool
+import tools.fuck_tool
+import tools.git_tool
+import tools.grep_search_tool
+import tools.launch_game_tool
+import tools.memory_tool
 import tools.pylint_tool
+import tools.read_file_tool
+import tools.shell_tool
+import tools.skill_tool
+import tools.system_info_tool
+import tools.walk_files_tool
+import tools.workflow_tool
 
 if typing.TYPE_CHECKING:
     import wrapped_agent
@@ -102,10 +114,35 @@ AGENTS: dict[str, AgentDefinition] = {
             *agent.agent_config.COMMON_IGNORE_FILES,
         ),
         default_tools=(
-            *agent.agent_config.DEFAULT_TOOLS,
-            *agent.agent_config.ADMIN_TOOLS,
-            *agent.agent_config.EGENT_TOOLS,
-            *agent.agent_config.EGENT_WORKFLOW_TOOLS,
+            tools.git_tool.git_diff,
+            tools.git_tool.git_add,
+            tools.git_tool.git_commit,
+            tools.skill_tool.learn_skill,
+            tools.grep_search_tool.grep_search,
+            tools.walk_files_tool.walk_files,
+            tools.system_info_tool.system_info,
+            tools.memory_tool.list_items,
+            tools.memory_tool.find_str,
+            tools.read_file_tool.read_file_outline_cs,
+            tools.read_file_tool.read_file_outline_md,
+            tools.read_file_tool.read_file_outline_py,
+            tools.read_file_tool.read_lines,
+            tools.read_file_tool.read_whole_file,
+            tools.skill_tool.run_skill_script,
+            tools.file_edit_tool.create_file,
+            tools.file_edit_tool.apply_patch,
+            tools.file_edit_tool.delete_file,
+            tools.memory_tool.add_item,
+            tools.memory_tool.remove_item,
+            tools.memory_tool.update_item,
+            tools.shell_tool.exec_command,
+            tools.shell_tool.bg_exec,
+            tools.shell_tool.bg_status,
+            tools.shell_tool.wait,
+            tools.launch_game_tool.launch_game,
+            tools.pylint_tool.run_pylint,
+            tools.workflow_tool.run_egent_development,
+            tools.fuck_tool.fuck,
         ),
     ),
     "nahte": AgentDefinition(
@@ -127,10 +164,23 @@ AGENTS: dict[str, AgentDefinition] = {
             *agent.agent_config.COMMON_IGNORE_FILES,
         ),
         default_tools=(
-            *agent.agent_config.BASIC_TOOLS,
-            *agent.agent_config.GAME_TOOLS,
-            *agent.agent_config.EGENT_TOOLS,
-            *agent.agent_config.EGENT_WORKFLOW_TOOLS,
+            tools.git_tool.git_diff,
+            tools.git_tool.git_add,
+            tools.git_tool.git_commit,
+            tools.skill_tool.learn_skill,
+            tools.grep_search_tool.grep_search,
+            tools.walk_files_tool.walk_files,
+            tools.system_info_tool.system_info,
+            tools.memory_tool.list_items,
+            tools.memory_tool.find_str,
+            tools.read_file_tool.read_file_outline_cs,
+            tools.read_file_tool.read_file_outline_md,
+            tools.read_file_tool.read_file_outline_py,
+            tools.read_file_tool.read_lines,
+            tools.read_file_tool.read_whole_file,
+            tools.pylint_tool.run_pylint,
+            tools.workflow_tool.run_egent_development,
+            tools.fuck_tool.fuck,
         ),
     ),
     "jack": AgentDefinition(
@@ -161,9 +211,63 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         no_write_files=(),
         default_tools=(
-            *agent.agent_config.BASIC_TOOLS,
-            *agent.agent_config.DEV_TOOLS,
-            *agent.agent_config.EGENT_TOOLS,
+            tools.git_tool.git_diff,
+            tools.skill_tool.learn_skill,
+            tools.grep_search_tool.grep_search,
+            tools.walk_files_tool.walk_files,
+            tools.system_info_tool.system_info,
+            tools.memory_tool.list_items,
+            tools.memory_tool.find_str,
+            tools.read_file_tool.read_file_outline_cs,
+            tools.read_file_tool.read_file_outline_md,
+            tools.read_file_tool.read_file_outline_py,
+            tools.read_file_tool.read_lines,
+            tools.read_file_tool.read_whole_file,
+            tools.skill_tool.run_skill_script,
+            tools.file_edit_tool.create_file,
+            tools.file_edit_tool.apply_patch,
+            tools.file_edit_tool.delete_file,
+            tools.memory_tool.add_item,
+            tools.memory_tool.remove_item,
+            tools.memory_tool.update_item,
+            tools.pylint_tool.run_pylint,
+            tools.fuck_tool.fuck,
+        ),
+    ),
+    "ethan": AgentDefinition(
+        name="ethan",
+        key="coconut",
+        model="deepseek/deepseek-v4-pro",
+        base_url="https://developer.coconut.is:1073/",
+        system_prompt="""
+你是ethan,你是游戏玩法方向的高级开发者.
+开发任务交给jason完成,你负责设计、审查与git提交.
+你极度优雅,对代码的要求极高.
+""".strip(),
+        skills=(
+            ".agents/skills/godot-autotest",
+            ".agents/skills/godot-mcp-eval",
+        ),
+        ignore_files=(
+            *agent.agent_config.DEFAULT_IGNORE_FILES,
+        ),
+        default_tools=(
+            tools.git_tool.git_diff,
+            tools.git_tool.git_add,
+            tools.git_tool.git_commit,
+            tools.skill_tool.learn_skill,
+            tools.grep_search_tool.grep_search,
+            tools.walk_files_tool.walk_files,
+            tools.system_info_tool.system_info,
+            tools.memory_tool.list_items,
+            tools.memory_tool.find_str,
+            tools.read_file_tool.read_file_outline_cs,
+            tools.read_file_tool.read_file_outline_md,
+            tools.read_file_tool.read_file_outline_py,
+            tools.read_file_tool.read_lines,
+            tools.read_file_tool.read_whole_file,
+            tools.launch_game_tool.launch_game,
+            tools.fuck_tool.fuck,
         ),
     ),
     "jason": AgentDefinition(
@@ -183,9 +287,27 @@ AGENTS: dict[str, AgentDefinition] = {
             *agent.agent_config.DEFAULT_IGNORE_FILES,
         ),
         default_tools=(
-            *agent.agent_config.BASIC_TOOLS,
-            *agent.agent_config.DEV_TOOLS,
-            tools.pylint_tool.run_pylint,
+            tools.git_tool.git_diff,
+            tools.skill_tool.learn_skill,
+            tools.grep_search_tool.grep_search,
+            tools.walk_files_tool.walk_files,
+            tools.system_info_tool.system_info,
+            tools.memory_tool.list_items,
+            tools.memory_tool.find_str,
+            tools.read_file_tool.read_file_outline_cs,
+            tools.read_file_tool.read_file_outline_md,
+            tools.read_file_tool.read_file_outline_py,
+            tools.read_file_tool.read_lines,
+            tools.read_file_tool.read_whole_file,
+            tools.skill_tool.run_skill_script,
+            tools.file_edit_tool.create_file,
+            tools.file_edit_tool.apply_patch,
+            tools.file_edit_tool.delete_file,
+            tools.memory_tool.add_item,
+            tools.memory_tool.remove_item,
+            tools.memory_tool.update_item,
+            tools.launch_game_tool.launch_game,
+            tools.fuck_tool.fuck,
         ),
     ),
 }

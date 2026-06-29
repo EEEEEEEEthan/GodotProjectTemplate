@@ -16,12 +16,13 @@ import agent.agent_config
 import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
-import agent.data_loader
-import agent.mcp_bridge
-import agent.skill_index
 import agent.tool_binding
 
 import agent_definition
+
+import agent.data_loader
+import agent.mcp_bridge
+import agent.skill_index
 
 if typing.TYPE_CHECKING:
     import wrapped_agent
