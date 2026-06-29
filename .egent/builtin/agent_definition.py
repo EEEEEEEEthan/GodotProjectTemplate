@@ -94,6 +94,7 @@ AGENTS: dict[str, AgentDefinition] = {
             ".agents/skills/godot-mcp-eval",
             ".agents/skills/workflow-delegation",
             ".egent/builtin/skills/code-optimize",
+            ".egent/builtin/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -116,8 +117,9 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 """.strip(),
         skills=(
-            ".egent/builtin/skills/test",
+            ".egent/builtin/skills/egent-test",
             ".egent/builtin/skills/code-optimize",
+            ".egent/builtin/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -148,8 +150,9 @@ AGENTS: dict[str, AgentDefinition] = {
 你做出任何修改之后一定要进行测试.
 """.strip(),
         skills=(
-            ".egent/builtin/skills/test",
+            ".egent/builtin/skills/egent-test",
             ".egent/builtin/skills/code-optimize",
+            ".egent/builtin/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,

@@ -1,5 +1,5 @@
 ---
-name: test
+name: egent-test
 description: 运行 .egent/builtin/test/ 下的自动化测试套件，验证 .egent 核心功能。
 ---
 
@@ -12,7 +12,7 @@ description: 运行 .egent/builtin/test/ 下的自动化测试套件，验证 .e
 调用 `run.py` 脚本即可运行全部测试：
 
 ```
-python .egent/builtin/skills/test/run.py
+python .egent/builtin/skills/egent-test/run.py
 ```
 
 ## 测试内容
@@ -24,6 +24,7 @@ python .egent/builtin/skills/test/run.py
 - workflow_tool 工作流工具
 - context_trim 上下文裁剪
 - jason_analyze 分析功能
+- mcp_bridge MCP 桥接生命周期与关闭容错
 
 ## 注意事项
 - 测试从项目根目录运行

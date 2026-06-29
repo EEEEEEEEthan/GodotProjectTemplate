@@ -7,8 +7,11 @@ func on_receive(command: String, data: Dictionary, response: Callable) -> void:
 	match command:
 		&"ping":
 			response.call({&"pong": true})
+			return
 		&"eval":
 			response.call(_eval_gdscript(data))
+			return
+	response.call({&"error": &"不支持的命令: %s" % command})
 
 func _eval_gdscript(data: Dictionary) -> Dictionary:
 	var source := str(data.get(&"source", ""))
