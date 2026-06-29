@@ -44,7 +44,7 @@ async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
                         "写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
                         override_tools=(),
                     )
-                    return "\n".join(lst_report) + "任务完成。"
+                    return "\n".join(lst_report) + "\n\n任务完成。代码已审查，可以等待用户验收。"
                 await jack.send(
                     f"你的需求是:{task_prompt}\n，很遗憾审查未通过：\n{lst_review[-1]}\n请修复"
                 )
