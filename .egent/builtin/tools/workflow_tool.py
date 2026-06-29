@@ -16,8 +16,16 @@ _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
 _run_all_tests_spec.loader.exec_module(_run_all_tests)
 
 
-async def _run_self_upgrade_workflow(task_prompt: str) -> str:
-    """执行自升级工作流：委派任务给 jack，轮询测试直至通过。最后由nahte验收"""
+async def run_self_upgrade(agent_client: typing.Any, prompt: str) -> str:
+    """执行自升级工作流：委派任务给 jack，轮询测试直至通过，最后由 nahte 验收。
+
+    @param prompt: 升级任务描述
+    """
+    del agent_client
+    task_prompt = prompt.strip()
+    if not task_prompt:
+        return "错误：prompt 不能为空。"
+
     import agent_definition
 
     nahte = await agent_definition.get_definition("nahte").instantiate()
@@ -54,16 +62,3 @@ async def _run_self_upgrade_workflow(task_prompt: str) -> str:
             return "\n".join(lst_report)
     finally:
         await jack.aclose()
-
-
-async def run_self_upgrade(agent_client: typing.Any, prompt: str) -> str:
-    """启动自升级工作流：委派任务给 nahte agent，轮询测试直至通过并返回工作报告。
-
-    @param prompt: 升级任务描述
-    """
-    del agent_client
-    task_prompt = prompt.strip()
-    if not task_prompt:
-        return "错误：prompt 不能为空。"
-
-    return await _run_self_upgrade_workflow(task_prompt)
