@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
+import asyncio
 import dataclasses
 import os
 import pathlib
@@ -20,6 +20,16 @@ import tools._output_util as output_util
 
 
 MCP_TOOL_PREFIX = "mcp__"
+
+
+@dataclasses.dataclass(frozen=True)
+class _McpServerConnection:
+    """单个 MCP 服务的 stdio 与会话上下文（手动管理生命周期）。"""
+
+    server_id: str
+    stdio_context: typing.Any
+    session_context: mcp.client.session.ClientSession
+    session: mcp.client.session.ClientSession
 
 
 @dataclasses.dataclass(frozen=True)
@@ -47,7 +57,7 @@ class McpBridge:
 
     def __init__(self, servers: dict[str, McpServerConfig]) -> None:
         self.__servers = dict(servers)
-        self.__exit_stack = contextlib.AsyncExitStack()
+        self.__connections: list[_McpServerConnection] = []
         self.__sessions: dict[str, mcp.client.session.ClientSession] = {}
         self.__bindings: dict[str, McpToolBinding] = {}
         self.__started = False
@@ -68,7 +78,9 @@ class McpBridge:
 
     async def close(self) -> None:
         """关闭全部 MCP 连接。"""
-        await self.__exit_stack.aclose()
+        while self.__connections:
+            connection = self.__connections.pop()
+            await _close_server_connection(connection)
         self.__sessions.clear()
         self.__bindings.clear()
         self.__started = False
@@ -116,13 +128,19 @@ class McpBridge:
             project_root,
             server_config,
         )
-        read_stream, write_stream = await self.__exit_stack.enter_async_context(
-            mcp.client.stdio.stdio_client(server_parameters),
-        )
-        session = await self.__exit_stack.enter_async_context(
-            mcp.client.session.ClientSession(read_stream, write_stream),
-        )
+        stdio_context = mcp.client.stdio.stdio_client(server_parameters)
+        read_stream, write_stream = await stdio_context.__aenter__()
+        session_context = mcp.client.session.ClientSession(read_stream, write_stream)
+        session = await session_context.__aenter__()
         await session.initialize()
+        self.__connections.append(
+            _McpServerConnection(
+                server_id=server_id,
+                stdio_context=stdio_context,
+                session_context=session_context,
+                session=session,
+            )
+        )
         self.__sessions[server_id] = session
 
         tools_result = await session.list_tools()
@@ -272,3 +290,31 @@ def resolve_project_path(project_root: pathlib.Path, value: str) -> str:
     if path.is_absolute():
         return os.fspath(path)
     return os.fspath((project_root / path).resolve())
+
+
+async def _close_server_connection(connection: _McpServerConnection) -> None:
+    """按 LIFO 顺序关闭单个 MCP 连接，吞掉关闭期的 cancel scope 竞态。"""
+    await _safe_async_context_exit(connection.session_context)
+    await _safe_async_context_exit(connection.stdio_context)
+
+
+async def _safe_async_context_exit(context: typing.Any) -> None:
+    """安全退出 async 上下文，避免 AsyncExitStack 级联 athrow 触发跨 task 错误。"""
+    try:
+        await context.__aexit__(None, None, None)
+    except* BaseException as error:
+        if not _is_mcp_shutdown_error(error):
+            raise
+
+
+def _is_mcp_shutdown_error(error: BaseException) -> bool:
+    """判断是否为 MCP/anyio 关闭时的预期错误。"""
+    if isinstance(error, RuntimeError):
+        message = str(error)
+        return (
+            "cancel scope" in message
+            or "different task" in message
+        )
+    if isinstance(error, BaseExceptionGroup):
+        return all(_is_mcp_shutdown_error(nested) for nested in error.exceptions)
+    return isinstance(error, (asyncio.CancelledError, GeneratorExit))
