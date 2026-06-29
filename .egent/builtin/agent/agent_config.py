@@ -27,22 +27,23 @@ DEFAULT_SKILLS = [
     ".egent/builtin-skills/create-file",
 ]
 
-DEFAULT_IGNORE_FILES: tuple[str, ...] = (
+COMMON_IGNORE_FILES: tuple[str, ...] = (
     ".git",
     ".idea",
     ".vs",
     "__pycache__",
     "node_modules",
-    "bin",
-    "obj",
     "*.pyc",
     ".agents",
     ".cursor",
     ".claude",
-    ".egent",
     ".venv",
     ".temp",
 )
+
+EGENT_IGNORE_FILES: tuple[str, ...] = (".egent",)
+
+DEFAULT_IGNORE_FILES: tuple[str, ...] = (*COMMON_IGNORE_FILES, *EGENT_IGNORE_FILES)
 
 BASIC_TOOLS: tuple[agent.tool_binding.ToolHandler, ...] = (
     tools.skill_tool.learn_skill,

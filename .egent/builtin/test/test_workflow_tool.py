@@ -29,7 +29,7 @@ def test_workflow_tool_schema() -> None:
     )
     assert binding.name == "workflow_tool_run_egent_development"
     function = binding.schema["function"]
-    assert "自升级" in function["description"]
+    assert "委派任务" in function["description"]
     properties = function["parameters"]["properties"]
     assert properties["prompt"]["type"] == "string"
     assert "prompt" in function["parameters"]["required"]
