@@ -12,7 +12,7 @@ description: 运行 .egent/builtin/test/ 下的自动化测试套件，验证 .e
 调用 `run.py` 脚本即可运行全部测试：
 
 ```
-python .egent/builtin/workflow/skills/test/run.py
+python .egent/builtin/skills/test/run.py
 ```
 
 ## 测试内容
