@@ -124,10 +124,11 @@ class WrappedAgent:
             sys.stdout.flush()
         elif isinstance(event, agent.agent_events.ToolInvoking):
             try:
-                if sys.stdout.isatty():
-                    sys.stdout.write("\n")
+                is_tty = sys.stdout.isatty()
             except OSError:
-                pass
+                is_tty = False
+            if is_tty:
+                sys.stdout.write("\n")
             write_line_colored(format_tool_header(event, debug=self.__debug))
         elif isinstance(event, agent.agent_events.ToolInvoked):
             if self.__debug and event.result:
