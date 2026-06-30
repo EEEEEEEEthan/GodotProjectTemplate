@@ -11,6 +11,28 @@ from . import _output_util as output_util
 from . import _path_util as path_util
 
 
+def _run_git(cmd: list[str], default_message: str) -> str:
+    """执行 git 子命令并统一处理输出/错误。"""
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=os.getcwd(), check=False)
+    except FileNotFoundError:
+        return "错误：未找到 git 命令，请确认 git 已安装并在 PATH 中。"
+    except OSError as error:
+        return f"错误：执行 git {' '.join(cmd[:2])} 失败：{error}"
+
+    parts: list[str] = []
+    if result.stdout:
+        parts.append(result.stdout.strip())
+    if result.stderr:
+        parts.append(f"[stderr]\n{result.stderr.strip()}")
+
+    output = "\n\n".join(parts) if parts else default_message
+    output = output_util.truncate_output(output)
+    if result.returncode != 0:
+        output += f"\n\n[exit code: {result.returncode}]"
+    return output
+
+
 def git_diff(
     agent_client: typing.Any,
     *,
@@ -47,32 +69,7 @@ def git_diff(
         cmd.append("--")
         cmd.append(os.fspath(resolved))
 
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=os.getcwd(),
-            check=False,
-        )
-    except FileNotFoundError:
-        return "错误：未找到 git 命令，请确认 git 已安装并在 PATH 中。"
-    except OSError as error:
-        return f"错误：执行 git diff 失败：{error}"
-
-    parts: list[str] = []
-    if result.stdout:
-        parts.append(result.stdout.strip())
-    if result.stderr:
-        parts.append(f"[stderr]\n{result.stderr.strip()}")
-
-    output = "\n\n".join(parts) if parts else "(无差异)"
-    output = output_util.truncate_output(output)
-
-    if result.returncode != 0:
-        output += f"\n\n[exit code: {result.returncode}]"
-
-    return output
+    return _run_git(cmd, "(无差异)")
 
 
 def git_add(
@@ -103,32 +100,7 @@ def git_add(
 
     cmd = ["git", "add", "--", *resolved_list]
 
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=os.getcwd(),
-            check=False,
-        )
-    except FileNotFoundError:
-        return "错误：未找到 git 命令，请确认 git 已安装并在 PATH 中。"
-    except OSError as error:
-        return f"错误：执行 git add 失败：{error}"
-
-    parts: list[str] = []
-    if result.stdout:
-        parts.append(result.stdout.strip())
-    if result.stderr:
-        parts.append(f"[stderr]\n{result.stderr.strip()}")
-
-    output = "\n\n".join(parts) if parts else "(已暂存)"
-    output = output_util.truncate_output(output)
-
-    if result.returncode != 0:
-        output += f"\n\n[exit code: {result.returncode}]"
-
-    return output
+    return _run_git(cmd, "(已暂存)")
 
 
 def git_commit(
@@ -147,29 +119,4 @@ def git_commit(
 
     cmd = ["git", "commit", "-m", message.strip()]
 
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=os.getcwd(),
-            check=False,
-        )
-    except FileNotFoundError:
-        return "错误：未找到 git 命令，请确认 git 已安装并在 PATH 中。"
-    except OSError as error:
-        return f"错误：执行 git commit 失败：{error}"
-
-    parts: list[str] = []
-    if result.stdout:
-        parts.append(result.stdout.strip())
-    if result.stderr:
-        parts.append(f"[stderr]\n{result.stderr.strip()}")
-
-    output = "\n\n".join(parts) if parts else "(已提交)"
-    output = output_util.truncate_output(output)
-
-    if result.returncode != 0:
-        output += f"\n\n[exit code: {result.returncode}]"
-
-    return output
+    return _run_git(cmd, "(已提交)")
