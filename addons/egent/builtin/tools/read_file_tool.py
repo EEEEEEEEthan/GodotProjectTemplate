@@ -134,20 +134,99 @@ def _resolve_file(file_path: str) -> tuple[pathlib.Path | None, str | None]:
     return absolute_path, None
 
 
+class _PyOutlineState:
+    """Python 大纲生成的可变状态。"""
+
+    def __init__(self) -> None:
+        self.output_lines: list[str] = ["行尾的尖括号表示行号"]
+        self.scope_stack: list[tuple[int, str, str, int]] = []
+        self.pending_decorators: list[str] = []
+        self.indent_unit: int = 4
+
+    def peek_column(self) -> int:
+        """返回当前作用域栈顶的缩进列号，栈空返回 0。"""
+        return self.scope_stack[-1][0] if self.scope_stack else 0
+
+    def pop_to(self, column: int) -> None:
+        """弹出所有缩进列号 >= column 的作用域。"""
+        while self.scope_stack and self.scope_stack[-1][0] >= column:
+            self.scope_stack.pop()
+
+    def emit(self, column: int, label: str, line_no: int) -> None:
+        """输出一行（含前置装饰器），然后清空装饰器缓冲。"""
+        indent_prefix = "\t" * (column // self.indent_unit)
+        for decorator in self.pending_decorators:
+            self.output_lines.append(f"{indent_prefix}{decorator} <{line_no}>")
+        self.pending_decorators.clear()
+        self.output_lines.append(f"{indent_prefix}{label} <{line_no}>")
+
+    def push_scope(self, column: int, kind: str, name: str, line_no: int) -> None:
+        """压入新的缩进作用域。"""
+        self.scope_stack.append((column, kind, name, line_no))
+
+
+def _try_decorator(state: _PyOutlineState, content: str) -> bool:
+    """匹配装饰器行，匹配成功则加入待定缓冲。"""
+    match = _PY_DECORATOR_RE.match(content)
+    if match:
+        state.pending_decorators.append(f"@{match.group(1)}")
+    return match is not None
+
+
+def _try_class(
+    state: _PyOutlineState, column: int, content: str, line_no: int
+) -> bool:
+    """匹配类定义行。"""
+    match = _PY_CLASS_RE.match(content)
+    if not match:
+        return False
+    state.pop_to(column)
+    name = match.group(1)
+    bases = match.group(2)
+    label = f"class {name}({bases})" if bases else f"class {name}"
+    state.emit(column, label, line_no)
+    state.push_scope(column, "class", name, line_no)
+    return True
+
+
+def _try_function(
+    state: _PyOutlineState, column: int, content: str, line_no: int
+) -> bool:
+    """匹配函数定义行（含 async def）。"""
+    match = _PY_FUNC_RE.match(content)
+    if not match:
+        return False
+    state.pop_to(column)
+    is_async = match.group(1)
+    name = match.group(2)
+    params = match.group(3)
+    return_type = match.group(4)
+    prefix = "async " if is_async else ""
+    label = f"{prefix}def {name}({params})"
+    if return_type:
+        label += f" -> {return_type}"
+    state.emit(column, label, line_no)
+    state.push_scope(column, "function", name, line_no)
+    return True
+
+
+def _try_module_level(
+    state: _PyOutlineState, column: int, content: str, line_no: int
+) -> None:
+    """匹配模块级别（column==0）的 import 或变量赋值。"""
+    if column != 0:
+        return
+    match = _PY_IMPORT_RE.match(content)
+    if match:
+        state.output_lines.append(f"    import {match.group(1)} <{line_no}>")
+        return
+    match = _PY_MODULE_VAR_RE.match(content)
+    if match:
+        state.output_lines.append(f"    {match.group(1)} = ... <{line_no}>")
+
+
 def _py_outline_text(lines: list[str]) -> str:
-    output_lines: list[str] = []
-    output_lines.append("行尾的尖括号表示行号")
-    scope_stack: list[tuple[int, str, str, int]] = []
-    indent_unit = 4
-
-    def peek_scope_indent() -> int:
-        return scope_stack[-1][0] if scope_stack else 0
-
-    def pop_to_indent(column: int) -> None:
-        while scope_stack and scope_stack[-1][0] >= column:
-            scope_stack.pop()
-
-    pending_decorators: list[str] = []
+    state = _PyOutlineState()
 
     for line_no, raw_line in enumerate(lines, start=1):
         stripped_raw = raw_line.rstrip("\n\r")
@@ -155,69 +234,25 @@ def _py_outline_text(lines: list[str]) -> str:
             continue
 
         stripped = stripped_raw.expandtabs(4)
-        leading_space = len(stripped) - len(stripped.lstrip())
-        column = leading_space
-
+        column = len(stripped) - len(stripped.lstrip())
         content = stripped.strip()
         if not content or content.startswith("#"):
             continue
 
-        if column <= peek_scope_indent() and scope_stack:
-            pop_to_indent(column)
+        if column <= state.peek_column() and state.scope_stack:
+            state.pop_to(column)
 
-        decorator_match = _PY_DECORATOR_RE.match(content)
-        if decorator_match:
-            pending_decorators.append(f"@{decorator_match.group(1)}")
+        if _try_decorator(state, content):
+            continue
+        if _try_class(state, column, content, line_no):
+            continue
+        if _try_function(state, column, content, line_no):
             continue
 
-        class_match = _PY_CLASS_RE.match(content)
-        if class_match:
-            pop_to_indent(column)
-            name = class_match.group(1)
-            bases = class_match.group(2)
-            label = f"class {name}({bases})" if bases else f"class {name}"
-            indent_prefix = "\t" * (column // indent_unit)
-            for decorator in pending_decorators:
-                output_lines.append(indent_prefix + f"{decorator} <{line_no}>")
-            pending_decorators.clear()
-            output_lines.append(indent_prefix + f"{label} <{line_no}>")
-            scope_stack.append((column, "class", name, line_no))
-            continue
+        state.pending_decorators.clear()
+        _try_module_level(state, column, content, line_no)
 
-        function_match = _PY_FUNC_RE.match(content)
-        if function_match:
-            pop_to_indent(column)
-            is_async = function_match.group(1)
-            name = function_match.group(2)
-            params = function_match.group(3)
-            return_type = function_match.group(4)
-            prefix = "async " if is_async else ""
-            label = f"{prefix}def {name}({params})"
-            if return_type:
-                label += f" -> {return_type}"
-            indent_prefix = "\t" * (column // indent_unit)
-            for decorator in pending_decorators:
-                output_lines.append(indent_prefix + f"{decorator} <{line_no}>")
-            pending_decorators.clear()
-            output_lines.append(indent_prefix + f"{label} <{line_no}>")
-            scope_stack.append((column, "function", name, line_no))
-            continue
-
-        pending_decorators.clear()
-
-        if column == 0:
-            import_match = _PY_IMPORT_RE.match(content)
-            if import_match:
-                output_lines.append(f"    import {import_match.group(1)} <{line_no}>")
-                continue
-
-        if column == 0:
-            variable_match = _PY_MODULE_VAR_RE.match(content)
-            if variable_match:
-                output_lines.append(f"    {variable_match.group(1)} = ... <{line_no}>")
-                continue
-
-    return "\n".join(output_lines)
+    return "\n".join(state.output_lines)
 
 
 def _md_outline_text(lines: list[str]) -> str:
