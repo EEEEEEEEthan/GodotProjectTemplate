@@ -4,8 +4,8 @@
 
 # 自动化测试
 
-`.engine-test.ps1`单项测试
-`.engine-test-full.bat`全量测试
+`egent.bat --test <脚本路径>` 单项测试
+`egent.bat --test-folder <目录>` 全量测试（自动发现目录下全部 .gd）
 
 # Game MCP
 

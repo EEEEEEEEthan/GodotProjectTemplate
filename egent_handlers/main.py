@@ -8,6 +8,8 @@
     egent.bat ethan --debug
     egent.bat --test egent_handlers/tests/hello_test.gd
     egent.bat --test egent_handlers/tests/hello_test.gd --headless
+    egent.bat --test-folder egent_handlers/tests
+    egent.bat --test-folder egent_handlers/tests --headless
 """
 
 from __future__ import annotations
@@ -199,6 +201,11 @@ def parse_args() -> argparse.Namespace:
         help="运行 Godot 自动化测试（GD 脚本路径）",
     )
     parser.add_argument(
+        "--test-folder",
+        metavar="FOLDER",
+        help="并发运行文件夹下全部 .gd 测试",
+    )
+    parser.add_argument(
         "--headless",
         action="store_true",
         help="无头模式运行 Godot 测试",
@@ -220,6 +227,13 @@ async def main() -> None:
         )
         print(message)
         sys.exit(0 if message.startswith("[PASS]") else 1)
+
+    if args.test_folder is not None:
+        tests_passed, message = await asyncio.to_thread(
+            run_folder, args.test_folder, headless=args.headless
+        )
+        print(message)
+        sys.exit(0 if tests_passed else 1)
 
     agent_name = args.agent or "ethan"
     definition = AGENTS.get(agent_name)
