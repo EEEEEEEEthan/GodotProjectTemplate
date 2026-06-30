@@ -10,7 +10,7 @@ _EGENT_ROOT = pathlib.Path(__file__).resolve().parents[2]
 if str(_EGENT_ROOT) not in sys.path:
     sys.path.append(str(_EGENT_ROOT))
 
-from godot_test import run_file  # noqa: E402
+from godot_test import format_exit_output, run_file  # noqa: E402
 
 
 def run_godot_test(agent_client: typing.Any, script_path: str) -> str:
@@ -19,4 +19,5 @@ def run_godot_test(agent_client: typing.Any, script_path: str) -> str:
     @param script_path: GD 脚本路径（相对项目根或 res://）
     """
     del agent_client
-    return run_file(script_path.strip())
+    exit_code, output = run_file(script_path.strip())
+    return format_exit_output(exit_code, output)

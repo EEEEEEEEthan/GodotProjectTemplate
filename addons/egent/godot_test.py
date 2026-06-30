@@ -176,14 +176,26 @@ def _run_single(
     return display_name, exit_code, detail
 
 
-def run_file(script_path: str, *, headless: bool = False) -> str:
-    """运行指定 GD 脚本的 run()，返回汇总信息。"""
+def format_exit_output(exit_code: int, output: str) -> str:
+    """将完整输出与退出码格式化为单行结尾的文本。"""
+    body = output.rstrip("\n")
+    if body:
+        return f"{body}\n(exit code: {exit_code})"
+    return f"(exit code: {exit_code})"
+
+
+def run_file(script_path: str, *, headless: bool = False) -> tuple[int, str]:
+    """运行指定 GD 脚本的 run()，返回 (退出码, 完整输出)。"""
     exit_code = prepare_engine()
     if exit_code != 0:
-        return f"引擎准备失败 (exit code: {exit_code})"
+        return exit_code, "引擎准备失败"
 
-    display_name, test_exit_code, detail = _run_single(script_path, headless=headless)
-    return _format_result(display_name, test_exit_code, detail)
+    try:
+        res_path = resolve_script_res_path(script_path)
+    except (ValueError, FileNotFoundError) as error:
+        return 1, str(error)
+
+    return _execute_test(res_path, headless=headless)
 
 
 def run_folder(folder_path: str, *, headless: bool = True) -> tuple[bool, str]:

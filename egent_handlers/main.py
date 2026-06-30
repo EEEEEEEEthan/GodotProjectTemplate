@@ -33,7 +33,7 @@ from builtin import tools, wrapped_agent
 from builtin.agent import agent_config, mcp_bridge
 from builtin.agent_definition import AgentDefinition
 from builtin._console import read_prompt
-from godot_test import run_file, run_folder
+from godot_test import format_exit_output, run_file, run_folder
 # pylint: enable=import-error,wrong-import-position
 
 TESTS_FOLDER = "egent_handlers/tests"
@@ -203,11 +203,11 @@ async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
     if args.test is not None:
-        message = await asyncio.to_thread(
+        exit_code, output = await asyncio.to_thread(
             run_file, args.test, headless=args.headless
         )
-        print(message)
-        sys.exit(0 if message.startswith("[PASS]") else 1)
+        print(format_exit_output(exit_code, output))
+        sys.exit(exit_code)
 
     if args.test_folder is not None:
         tests_passed, message = await asyncio.to_thread(
