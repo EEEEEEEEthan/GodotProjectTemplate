@@ -3,6 +3,7 @@
 from . import file_edit_tool
 from . import fuck_tool
 from . import git_tool
+from . import godot_test_tool
 from . import grep_search_tool
 from . import launch_game_tool
 from . import memory_tool
@@ -17,6 +18,7 @@ from . import workflow_tool
 __all__ = [
     "file_edit_tool",
     "git_tool",
+    "godot_test_tool",
     "grep_search_tool",
     "launch_game_tool",
     "memory_tool",

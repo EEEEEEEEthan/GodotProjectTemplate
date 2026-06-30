@@ -165,6 +165,30 @@ def run_tests(script_path: str, *, headless: bool = False) -> int:
     return run_test(script_path, headless=headless)
 
 
+def run_test_report(
+    script_path: str,
+    *,
+    headless: bool = False,
+) -> tuple[bool, str]:
+    """运行单个测试，返回 (是否通过, 汇总信息)。"""
+    try:
+        res_path = resolve_script_res_path(script_path)
+    except (ValueError, FileNotFoundError) as error:
+        return False, str(error)
+
+    exit_code = prepare_engine()
+    if exit_code != 0:
+        return False, f"引擎准备失败 (exit code: {exit_code})"
+
+    exit_code, combined_output = _execute_test(res_path, headless=headless)
+    display_name = res_path.removeprefix("res://")
+    status = "PASS" if exit_code == 0 else "FAIL"
+    lines = [f"[{status}] {display_name} (exit code: {exit_code})"]
+    if exit_code != 0 and combined_output.strip():
+        lines.append(combined_output.strip())
+    return exit_code == 0, "\n".join(lines)
+
+
 def run_all(*, headless: bool = True, verbose: bool = False) -> tuple[bool, str]:
     """运行 egent_handlers/tests/ 下全部测试，返回 (是否全部通过, 汇总信息)。"""
     test_files = discover_test_scripts()
