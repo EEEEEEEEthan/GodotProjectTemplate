@@ -15,5 +15,23 @@ goto :parse_args
 
 :args_done
 
-call "%~dp0egent.bat" --test all %headlessFlag%
-exit /b %errorlevel%
+set "anyFailed=0"
+for %%t in (
+    egent_handlers/tests/hello_test.gd
+) do (
+    echo === Running test: %%t ===
+    call "%~dp0egent.bat" --test %%t %headlessFlag%
+    if errorlevel 1 (
+        echo [FAILED] %%t
+        set "anyFailed=1"
+    ) else (
+        echo [PASSED] %%t
+    )
+)
+
+if "!anyFailed!"=="1" (
+    echo Some tests failed
+    exit /b 1
+)
+echo All tests passed
+exit /b 0

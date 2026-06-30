@@ -8,11 +8,10 @@
 
 ## 添加测试
 
-1. 在 `egent_handlers/tests/` 下创建 `xxx_test.gd`（必须以 `_test.gd` 结尾）
+1. 在 `egent_handlers/tests/` 下创建 `xxx_test.gd`（建议以 `_test.gd` 结尾）
 2. 定义 `class_name`，实现 `static func run(scene_tree: SceneTree) -> void`
 3. 通过时 `scene_tree.quit(0)`，失败时 `scene_tree.quit(1)` 或 `push_error(...)`
-
-无需注册，框架按文件名自动发现。
+4. 全量列表：在 `.engine-test-full.bat` 的 `for %%t in (...)` 中追加脚本路径
 
 ## 示例
 
@@ -26,20 +25,14 @@ static func run(scene_tree: SceneTree) -> void:
 	scene_tree.quit(0)
 ```
 
-测试名由文件名推导：`hello_test.gd` → `hello`。
-
 ## 运行
 
 ```bash
-# 全部回归测试
-egent.bat --test all
-
-# 单个回归测试
-egent.bat --test hello
+# 单个回归测试（相对路径或 res:// 均可）
+egent.bat --test egent_handlers/tests/hello_test.gd
 
 # 无头模式（CI / 无 GPU 环境）
-egent.bat --test all --headless
-egent.bat --test hello --headless
+egent.bat --test egent_handlers/tests/hello_test.gd --headless
 ```
 
 兼容旧入口（内部均委托 `egent.bat --test`）：
@@ -47,6 +40,6 @@ egent.bat --test hello --headless
 ```bash
 .engine-test-full.bat
 .engine-test-full.bat --headless
-powershell -File .engine-test.ps1 hello
-powershell -File .engine-test.ps1 hello -Headless
+powershell -File .engine-test.ps1 egent_handlers/tests/hello_test.gd
+powershell -File .engine-test.ps1 egent_handlers/tests/hello_test.gd -Headless
 ```

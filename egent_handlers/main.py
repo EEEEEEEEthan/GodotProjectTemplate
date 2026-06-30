@@ -6,16 +6,14 @@
     egent.bat ethan
     egent.bat jason
     egent.bat ethan --debug
-    egent.bat --test hello
-    egent.bat --test all
-    egent.bat --test all --headless
+    egent.bat --test egent_handlers/tests/hello_test.gd
+    egent.bat --test egent_handlers/tests/hello_test.gd --headless
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import importlib.util
 import pathlib
 import sys
 import typing
@@ -35,7 +33,7 @@ from builtin import tools, wrapped_agent
 from builtin.agent import agent_config, mcp_bridge
 from builtin.agent_definition import AgentDefinition
 from builtin._console import read_prompt
-from godot_test import run_tests
+from godot_test import run_all, run_tests
 # pylint: enable=wrong-import-position
 
 async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
@@ -48,21 +46,13 @@ async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
     if not task_prompt:
         return "错误：prompt 不能为空。"
 
-    _run_all_tests_spec = importlib.util.spec_from_file_location(
-        "run_all_tests", _BUILTIN_ROOT / "test" / "run_all_tests.py"
-    )
-    if _run_all_tests_spec is None or _run_all_tests_spec.loader is None:
-        return "错误：无法加载 run_all_tests 模块。"
-    _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
-    _run_all_tests_spec.loader.exec_module(_run_all_tests)
-
     jason = None
     try:
         jason = await AGENTS["jason"].instantiate()
         await jason.send(task_prompt)
 
         for attempt in range(10):
-            tests_passed, tests_info = await asyncio.to_thread(_run_all_tests.run_all)
+            tests_passed, tests_info = await asyncio.to_thread(run_all)
             if tests_passed:
                 break
             await jason.send(
@@ -199,8 +189,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--test",
-        metavar="TEST_NAME",
-        help="运行 Godot 自动化测试（all 表示全部）",
+        metavar="SCRIPT",
+        help="运行 Godot 自动化测试（GD 脚本路径）",
     )
     parser.add_argument(
         "--headless",
