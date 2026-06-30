@@ -21,9 +21,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "agent",
         nargs="?",
-        default="ethan",
+        default="egent",
         metavar="AGENT",
-        help="要加载的 agent 名称（默认：ethan）",
+        help="要加载的 agent 名称（默认：egent）",
     )
     parser.add_argument(
         "--debug",
