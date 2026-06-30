@@ -9,8 +9,6 @@ import pathlib
 import sys
 import typing
 
-import anyio
-
 import mcp.types
 import mcp.client.stdio
 import mcp.client.session
@@ -21,29 +19,40 @@ import tools._output_util as output_util
 
 MCP_TOOL_PREFIX = "mcp__"
 
-_shared_bridge: McpBridge | None = None
-_shared_lock = asyncio.Lock()
+class _SharedBridge:
+    """进程内共享的 MCP 桥接单例。"""
+
+    def __init__(self) -> None:
+        self._bridge: McpBridge | None = None
+        self._lock = asyncio.Lock()
+
+    async def get(self, servers: dict[str, McpServerConfig]) -> McpBridge:
+        if not servers:
+            raise ValueError("servers 不能为空")
+        async with self._lock:
+            if self._bridge is None:
+                self._bridge = McpBridge(servers)
+                await self._bridge.start()
+            return self._bridge
+
+    async def close(self) -> None:
+        async with self._lock:
+            if self._bridge is not None:
+                await self._bridge.close()
+                self._bridge = None
+
+
+_shared = _SharedBridge()
 
 
 async def get_shared_bridge(servers: dict[str, McpServerConfig]) -> McpBridge:
     """获取进程内唯一的共享 MCP 桥接。"""
-    global _shared_bridge
-    if not servers:
-        raise ValueError("servers 不能为空")
-    async with _shared_lock:
-        if _shared_bridge is None:
-            _shared_bridge = McpBridge(servers)
-            await _shared_bridge.start()
-        return _shared_bridge
+    return await _shared.get(servers)
 
 
 async def close_shared_bridge() -> None:
     """关闭共享 MCP 桥接（进程退出时调用）。"""
-    global _shared_bridge
-    async with _shared_lock:
-        if _shared_bridge is not None:
-            await _shared_bridge.close()
-            _shared_bridge = None
+    await _shared.close()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -152,8 +161,10 @@ class McpBridge:
             server_config,
         )
         stdio_context = mcp.client.stdio.stdio_client(server_parameters)
+        # 手动 __aenter__：需要按 LIFO 顺序关闭，不能使用 async with
         read_stream, write_stream = await stdio_context.__aenter__()
         session_context = mcp.client.session.ClientSession(read_stream, write_stream)
+        # 手动 __aenter__：需要按 LIFO 顺序关闭，不能使用 async with
         session = await session_context.__aenter__()
         await session.initialize()
         self.__connections.append(
@@ -325,12 +336,12 @@ async def _safe_async_context_exit(context: typing.Any) -> None:
     """安全退出 async 上下文，避免 AsyncExitStack 级联 athrow 触发跨 task 错误。"""
     try:
         await context.__aexit__(None, None, None)
-    except* BaseException as error:
+    except* Exception as error:
         if not _is_mcp_shutdown_error(error):
             raise
 
 
-def _is_mcp_shutdown_error(error: BaseException) -> bool:
+def _is_mcp_shutdown_error(error: Exception) -> bool:
     """判断是否为 MCP/anyio 关闭时的预期错误。"""
     if isinstance(error, RuntimeError):
         message = str(error)
@@ -340,4 +351,4 @@ def _is_mcp_shutdown_error(error: BaseException) -> bool:
         )
     if isinstance(error, BaseExceptionGroup):
         return all(_is_mcp_shutdown_error(nested) for nested in error.exceptions)
-    return isinstance(error, (asyncio.CancelledError, GeneratorExit))
+    return False

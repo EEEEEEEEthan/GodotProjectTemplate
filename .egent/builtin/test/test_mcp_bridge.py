@@ -109,7 +109,7 @@ async def _run_shared_bridge_singleton():
   finally:
     mcp_bridge_module.mcp.client.stdio.stdio_client = original_stdio_client
     mcp_bridge_module.mcp.client.session.ClientSession = original_client_session
-    mcp_bridge_module._shared_bridge = None
+    mcp_bridge_module._shared = mcp_bridge_module._SharedBridge()
 
 
 def test_shared_bridge_is_singleton():
