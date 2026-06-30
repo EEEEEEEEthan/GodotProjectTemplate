@@ -19,9 +19,8 @@ __RESET = "\033[0m"
 def write_line_colored(value: str, *, dim: bool = True) -> None:
     """向 stdout 输出一行，可选灰色。"""
     if dim:
-        sys.stdout.write(f"{__DIM}{value}{__RESET}\n")
-    else:
-        sys.stdout.write(f"{value}\n")
+        value = f"{__DIM}{value}{__RESET}"
+    sys.stdout.write(f"{value}\n")
 
 
 def format_tool_header(
