@@ -167,6 +167,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
+            "model.toml",
         ),
         default_tools=(
             tools.git_tool.git_diff,
@@ -213,6 +214,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
+            "model.toml",
         ),
         no_write_files=("agent_definition.py",),
         default_tools=(
