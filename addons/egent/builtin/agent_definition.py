@@ -19,7 +19,6 @@ import tools.read_file_tool
 import tools.shell_tool
 import tools.skill_tool
 import tools.system_info_tool
-import tools.todo_tool
 import tools.walk_files_tool
 import tools.workflow_tool
 
@@ -148,13 +147,12 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.launch_game_tool.launch_game,
             tools.pylint_tool.run_pylint,
             tools.workflow_tool.run_egent_development,
-            tools.todo_tool.add_item,
-            tools.todo_tool.remove_item,
-            tools.todo_tool.update_item,
-            tools.todo_tool.list_items,
-            tools.todo_tool.get_item,
-            tools.todo_tool.search_items,
             tools.fuck_tool.fuck,
+            tools.fuck_tool.remove,
+            tools.fuck_tool.update,
+            tools.fuck_tool.list_items,
+            tools.fuck_tool.get,
+            tools.fuck_tool.search,
         ),
     ),
     "nahte": AgentDefinition(
@@ -193,13 +191,12 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.read_file_tool.read_whole_file,
             tools.pylint_tool.run_pylint,
             tools.workflow_tool.run_egent_development,
-            tools.todo_tool.add_item,
-            tools.todo_tool.remove_item,
-            tools.todo_tool.update_item,
-            tools.todo_tool.list_items,
-            tools.todo_tool.get_item,
-            tools.todo_tool.search_items,
             tools.fuck_tool.fuck,
+            tools.fuck_tool.remove,
+            tools.fuck_tool.update,
+            tools.fuck_tool.list_items,
+            tools.fuck_tool.get,
+            tools.fuck_tool.search,
         ),
     ),
     "jack": AgentDefinition(
