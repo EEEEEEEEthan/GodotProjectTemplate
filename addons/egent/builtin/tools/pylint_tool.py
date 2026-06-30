@@ -31,6 +31,20 @@ def run_pylint(
     if isinstance(targets, str):
         return targets
 
+    error = _validate_params(timeout)
+    if error:
+        return error
+
+    timeout_seconds = timeout if timeout is not None else _DEFAULT_TIMEOUT_SECONDS
+    result = _execute_pylint(targets, timeout_seconds)
+    if isinstance(result, str):
+        return result
+
+    return _format_result(result, targets)
+
+
+def _validate_params(timeout: int | None) -> str | None:
+    """校验 pylint 运行参数，通过返回 None，失败返回错误消息。"""
     timeout_seconds = timeout if timeout is not None else _DEFAULT_TIMEOUT_SECONDS
     if timeout_seconds <= 0:
         return "错误：timeout 必须为正整数。"
@@ -38,6 +52,13 @@ def run_pylint(
     if not _PYLINTRC.is_file():
         return f"错误：未找到 pylint 配置：{_PYLINTRC}"
 
+    return None
+
+
+def _execute_pylint(
+    targets: tuple[str, ...], timeout_seconds: int
+) -> subprocess.CompletedProcess[str] | str:
+    """执行 pylint 子进程，返回 CompletedProcess 或错误消息。"""
     command = [
         sys.executable,
         "-m",
@@ -65,6 +86,13 @@ def run_pylint(
     if "No module named pylint" in result.stderr:
         return "错误：未安装 pylint。请执行：pip install pylint"
 
+    return result
+
+
+def _format_result(
+    result: subprocess.CompletedProcess[str], targets: tuple[str, ...]
+) -> str:
+    """将 pylint 执行结果格式化为报告文本。"""
     output = result.stdout.strip()
     if result.stderr.strip():
         stderr_text = result.stderr.strip()
