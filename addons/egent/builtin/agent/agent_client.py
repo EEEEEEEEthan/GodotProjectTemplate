@@ -508,9 +508,6 @@ class AgentClient:
         self.__tooling.mcp_ready = False
         self.__tooling.mcp_bridge = None
 
-    def close(self) -> None:
-        """日志由 log_manager 的 atexit 自动关闭，本方法仅保留兼容接口。"""
-
     def __get_or_create_client(self) -> openai.AsyncOpenAI:
         conversation = self.__conversation
         if conversation.openai_client is None:
@@ -533,4 +530,5 @@ class AgentClient:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        self.close()
+        """日志由 log_manager 的 atexit 自动关闭。"""
+        return None
