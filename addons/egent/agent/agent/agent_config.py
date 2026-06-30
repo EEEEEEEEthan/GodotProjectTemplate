@@ -24,12 +24,12 @@ COMMON_IGNORE_FILES: tuple[str, ...] = (
     ".temp",
 )
 
-EGENT_IGNORE_FILES: tuple[str, ...] = (".egent",)
+EGENT_IGNORE_FILES: tuple[str, ...] = ("addons/egent",)
 
 DEFAULT_IGNORE_FILES: tuple[str, ...] = (*COMMON_IGNORE_FILES, *EGENT_IGNORE_FILES)
 
 DEFAULT_NO_WRITE_FILES: tuple[str, ...] = (
-    ".egent",
+    "addons/egent",
     "*.pyc",
 )
 

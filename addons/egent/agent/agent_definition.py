@@ -105,14 +105,14 @@ AGENTS: dict[str, AgentDefinition] = {
 
 你尽量用workflow_tool*工具完成工作，而不是亲自动手
 做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
-测试包括自动化测试(.egent/builtin/test)和白盒测试(用shell工具跑你即时写的测试代码)
+测试包括自动化测试(addons/egent/agent/test)和白盒测试(用shell工具跑你即时写的测试代码)
 """.strip(),
         skills=(
             ".agents/skills/godot-autotest",
             ".agents/skills/godot-mcp-eval",
             ".agents/skills/workflow-delegation",
-            ".egent/builtin/skills/code-optimize",
-            ".egent/builtin/skills/egent-mcp",
+            "addons/egent/agent/skills/code-optimize",
+            "addons/egent/agent/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -156,14 +156,14 @@ AGENTS: dict[str, AgentDefinition] = {
         model="deepseek/deepseek-v4-pro",
         base_url="https://developer.coconut.is:1073/",
         system_prompt="""
-你是nahte,你是.egent系统的核心设计师和审查员.
+你是nahte,你是 egent 系统的核心设计师和审查员.
 开发任务都交给jack完成,你只需要设计和审查.
 你极度优雅,对代码的要求极高.
 """.strip(),
         skills=(
-            ".egent/builtin/skills/egent-test",
-            ".egent/builtin/skills/code-optimize",
-            ".egent/builtin/skills/egent-mcp",
+            "addons/egent/agent/skills/egent-test",
+            "addons/egent/agent/skills/code-optimize",
+            "addons/egent/agent/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -196,21 +196,21 @@ AGENTS: dict[str, AgentDefinition] = {
         base_url="https://developer.coconut.is:1073/",
         system_prompt="""
 你是jack,你是nahte的手下程序员.
-你只负责.egent/目录的开发和维护,绝不触碰.egent/以外的任何文件.
+你只负责 addons/egent/ 目录的开发和维护,绝不触碰 addons/egent/ 以外的任何文件.
 
 **文件创建约束：**
-- 所有测试文件必须放在 .egent/builtin/test/ 目录下
-- 禁止在 .egent/ 根目录下创建临时测试文件（如 test_*.py, quick_test.py, final_test.py 等）
-- 禁止在 .egent/ 根目录下创建 .bat, .sh 等脚本文件
-- 只允许在 .egent/ 根目录下创建必要的配置文件和文档
+- 所有测试文件必须放在 addons/egent/agent/test/ 目录下
+- 禁止在 addons/egent/ 根目录下创建临时测试文件（如 test_*.py, quick_test.py, final_test.py 等）
+- 禁止在 addons/egent/ 根目录下创建 .bat, .sh 等脚本文件
+- 只允许在 addons/egent/ 根目录下创建必要的配置文件和文档
 
 你极度优雅,对代码的要求极高.
 你做出任何修改之后一定要进行测试.
 """.strip(),
         skills=(
-            ".egent/builtin/skills/egent-test",
-            ".egent/builtin/skills/code-optimize",
-            ".egent/builtin/skills/egent-mcp",
+            "addons/egent/agent/skills/egent-test",
+            "addons/egent/agent/skills/code-optimize",
+            "addons/egent/agent/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -293,7 +293,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ignore_files=(
             *agent.agent_config.DEFAULT_IGNORE_FILES,
         ),
-        no_write_files=("/.egent/*"),
+        no_write_files=("/addons/egent/*"),
         default_tools=(
             tools.git_tool.git_diff,
             tools.skill_tool.learn_skill,

@@ -52,18 +52,18 @@ def test_l1_absolute_path():
 # ── L2: 写黑名单 ────────────────────────────────────────────────
 
 def test_l2_no_write_egent():
-    """禁止写 .egent 目录下的文件。"""
-    agent = MockAgent(no_write_files=[".egent"])
+    """禁止写 addons/egent 目录下的文件。"""
+    agent = MockAgent(no_write_files=["addons/egent"])
     create = _wrap(agent, tools.file_edit_tool.create_file)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         original_cwd = os.getcwd()
         try:
             os.chdir(tmpdir)
-            os.makedirs(".egent")
-            result = create(file_path=".egent/something.py", content="bad")
+            os.makedirs("addons/egent", exist_ok=True)
+            result = create(file_path="addons/egent/something.py", content="bad")
             assert "被写保护" in result
-            assert ".egent" in result
+            assert "addons/egent" in result
         finally:
             os.chdir(original_cwd)
 
@@ -86,16 +86,15 @@ def test_l2_no_write_pyc():
 
 def test_l2_no_write_in_subdir():
     """写黑名单检查路径的每个段。"""
-    agent = MockAgent(no_write_files=[".egent"])
+    agent = MockAgent(no_write_files=["addons/egent"])
     create = _wrap(agent, tools.file_edit_tool.create_file)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         original_cwd = os.getcwd()
         try:
             os.chdir(tmpdir)
-            os.makedirs("foo/.egent/bar", exist_ok=True)
-            # foo/.egent/bar/test.py — '.egent' 是中间段
-            result = create(file_path="foo/.egent/bar/test.py")
+            os.makedirs("foo/addons/egent/bar", exist_ok=True)
+            result = create(file_path="foo/addons/egent/bar/test.py")
             assert "被写保护" in result
         finally:
             os.chdir(original_cwd)

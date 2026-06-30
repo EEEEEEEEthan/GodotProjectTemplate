@@ -30,7 +30,7 @@ def test_grep_search_uses_config():
                 "normal_dir",
                 ".git",
                 ".godot",
-                ".egent",
+                os.path.join("addons", "egent"),
                 "node_modules",
                 "__pycache__",
             ]
@@ -55,7 +55,7 @@ def test_grep_search_uses_config():
             assert "normal_dir/test.txt" in result, "应该包含 normal_dir/test.txt"
             assert ".git/test.txt" not in result, "不应该包含 .git/test.txt"
             assert ".godot/test.txt" in result, "应该包含 .godot/test.txt（不在默认配置中）"
-            assert ".egent/test.txt" not in result, "不应该包含 .egent/test.txt"
+            assert "addons/egent/test.txt" not in result, "不应该包含 addons/egent/test.txt"
             assert "node_modules/test.txt" not in result, "不应该包含 node_modules/test.txt"
             assert "__pycache__/test.txt" not in result, "不应该包含 __pycache__/test.txt"
             
@@ -74,7 +74,7 @@ def test_grep_search_uses_config():
             assert "normal_dir/test.txt" in result2, "应该包含 normal_dir/test.txt"
             assert ".git/test.txt" in result2, "应该包含 .git/test.txt"
             assert ".godot/test.txt" in result2, "应该包含 .godot/test.txt"
-            assert ".egent/test.txt" in result2, "应该包含 .egent/test.txt"
+            assert "addons/egent/test.txt" in result2, "应该包含 addons/egent/test.txt"
             assert "node_modules/test.txt" in result2, "应该包含 node_modules/test.txt"
             assert "__pycache__/test.txt" in result2, "应该包含 __pycache__/test.txt"
             
@@ -93,7 +93,7 @@ def test_grep_search_uses_config():
             assert "normal_dir/test.txt" in result3, "应该包含 normal_dir/test.txt"
             assert ".git/test.txt" not in result3, "不应该包含 .git/test.txt"
             assert ".godot/test.txt" in result3, "应该包含 .godot/test.txt"
-            assert ".egent/test.txt" in result3, "应该包含 .egent/test.txt"
+            assert "addons/egent/test.txt" in result3, "应该包含 addons/egent/test.txt"
             assert "node_modules/test.txt" in result3, "应该包含 node_modules/test.txt"
             assert "__pycache__/test.txt" in result3, "应该包含 __pycache__/test.txt"
             

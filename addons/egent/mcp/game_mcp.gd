@@ -2,7 +2,7 @@ extends Node
 class_name GodotMcp
 ## Game MCP 单例：启动 HTTP 服务并分发已注册协议回调。
 
-const PLUGIN_CONFIG_PATH := "res://addons/godot_mcp/plugin.cfg"
+const PLUGIN_CONFIG_PATH := "res://addons/egent/mcp/plugin.cfg"
 const DEFAULT_PORT := 8765
 const MAX_PORT_ATTEMPTS := 100
 const ROUTE_PATH := "/mcp"

@@ -40,21 +40,21 @@ def walk_files(
         ignore_patterns,
         max_depth,
         output_lines,
+        walk_root=str(root),
     )
     if not output_lines:
         return "(空目录)"
     return "\n".join(output_lines)
 
 
-def _is_ignored(name: str, ignore_patterns: tuple[str, ...]) -> bool:
-    return any(
-        fnmatch.fnmatch(name, pattern) for pattern in ignore_patterns
-    )
+def _is_ignored(rel_path: str, ignore_patterns: tuple[str, ...]) -> bool:
+    return path_util.is_ignored_relative_path(rel_path, ignore_patterns)
 
 
 @functools.lru_cache(maxsize=None)
 def _has_matching_descendants(
     path: str,
+    walk_root: str,
     filter_pattern: str,
     ignore_patterns: tuple[str, ...],
 ) -> bool:
@@ -62,14 +62,15 @@ def _has_matching_descendants(
         return True
     try:
         for entry in os.scandir(path):
-            if any(fnmatch.fnmatch(entry.name, pattern) for pattern in ignore_patterns):
+            rel_path = os.path.relpath(entry.path, walk_root).replace("\\", "/")
+            if path_util.is_ignored_relative_path(rel_path, ignore_patterns):
                 continue
             if entry.is_file(follow_symlinks=False) and fnmatch.fnmatch(
                 entry.name, filter_pattern
             ):
                 return True
             if entry.is_dir(follow_symlinks=False) and _has_matching_descendants(
-                entry.path, filter_pattern, ignore_patterns
+                entry.path, walk_root, filter_pattern, ignore_patterns
             ):
                 return True
     except OSError:
@@ -79,6 +80,7 @@ def _has_matching_descendants(
 
 def _should_show(
     entry: os.DirEntry[str],
+    walk_root: str,
     filter_pattern: str,
     ignore_patterns: tuple[str, ...],
 ) -> bool:
@@ -88,13 +90,14 @@ def _should_show(
         entry.is_dir(follow_symlinks=False)
         and filter_pattern != "*"
         and _has_matching_descendants(
-            entry.path, filter_pattern, ignore_patterns
+            entry.path, walk_root, filter_pattern, ignore_patterns
         )
     )
 
 
 def _should_recurse(
     entry: os.DirEntry[str],
+    walk_root: str,
     filter_pattern: str,
     ignore_patterns: tuple[str, ...],
 ) -> bool:
@@ -105,7 +108,7 @@ def _should_recurse(
     if fnmatch.fnmatch(entry.name, filter_pattern):
         return True
     return _has_matching_descendants(
-        entry.path, filter_pattern, ignore_patterns
+        entry.path, walk_root, filter_pattern, ignore_patterns
     )
 
 
@@ -119,6 +122,7 @@ def _walk_files(
     ignore_patterns: tuple[str, ...],
     max_depth: int,
     output_lines: list[str],
+    walk_root: str,
     prefixes: list[bool] | None = None,
 ) -> None:
     if prefixes is None:
@@ -136,19 +140,22 @@ def _walk_files(
     entries = [
         entry
         for entry in entries
-        if not _is_ignored(entry.name, ignore_patterns)
+        if not _is_ignored(
+            os.path.relpath(entry.path, walk_root).replace("\\", "/"),
+            ignore_patterns,
+        )
         and (entry.is_dir(follow_symlinks=False) or entry.is_file(follow_symlinks=False))
     ]
     entries = [
         entry
         for entry in entries
-        if _should_show(entry, filter_pattern, ignore_patterns)
-        or _should_recurse(entry, filter_pattern, ignore_patterns)
+        if _should_show(entry, walk_root, filter_pattern, ignore_patterns)
+        or _should_recurse(entry, walk_root, filter_pattern, ignore_patterns)
     ]
 
     for index, entry in enumerate(entries):
         is_last = index == len(entries) - 1
-        show = _should_show(entry, filter_pattern, ignore_patterns)
+        show = _should_show(entry, walk_root, filter_pattern, ignore_patterns)
 
         if show:
             connector = "└ " if is_last else "├ "
@@ -157,12 +164,13 @@ def _walk_files(
                 _format_prefix(prefixes) + connector + name
             )
 
-        if _should_recurse(entry, filter_pattern, ignore_patterns):
+        if _should_recurse(entry, walk_root, filter_pattern, ignore_patterns):
             _walk_files(
                 entry.path,
                 filter_pattern,
                 ignore_patterns,
                 max_depth,
                 output_lines,
+                walk_root,
                 prefixes + [is_last],
             )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fnmatch
 import pathlib
 import typing
 
@@ -19,7 +18,7 @@ def _resolve_writable_file(
 
     三层检查：
     L1 - 路径合法性：复用 path_util.resolve_relative_path（不可读则不可写）
-    L2 - 写黑名单：fnmatch 匹配 no_write_files 的各路径段
+    L2 - 写黑名单：支持单段与多段路径模式
     L3 - 存在性：根据 must_exist 检查文件是否存在
     """
     # L1: 复用路径校验（拒绝空路径、绝对路径）
@@ -27,17 +26,15 @@ def _resolve_writable_file(
     if l1_error is not None:
         return None, l1_error
 
-    # L2: 写黑名单 — 对路径的每个段做 fnmatch
+    # L2: 写黑名单 — 支持单段与多段路径模式
     no_write_patterns: list[str] = getattr(
         agent_client.config, "no_write_files", []
     )
-    for segment in relative_path.parts:
-        for pattern in no_write_patterns:
-            if fnmatch.fnmatch(segment, pattern):
-                return None, (
-                    f"错误：文件 {relative_path} 被写保护"
-                    f"（路径段 '{segment}' 匹配禁止写模式 '{pattern}'）"
-                )
+    if _path_util.is_ignored_relative_path(relative_path, no_write_patterns):
+        return None, (
+            f"错误：文件 {relative_path} 被写保护"
+            f"（匹配禁止写模式：{', '.join(no_write_patterns)}）"
+        )
 
     # L3: 存在性检查
     full_path = (pathlib.Path.cwd() / relative_path).resolve()

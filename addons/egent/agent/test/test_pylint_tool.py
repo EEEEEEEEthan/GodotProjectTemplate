@@ -41,7 +41,7 @@ def test_pylint_tool_invalid_path() -> None:
         tools.pylint_tool.run_pylint,
     )
     result = wrapped(paths="../outside")
-    assert "必须在 .egent 内" in result
+    assert "必须在 addons/egent 内" in result
 
 
 def test_pylint_tool_runs() -> None:
@@ -49,7 +49,7 @@ def test_pylint_tool_runs() -> None:
         MockAgent(),
         tools.pylint_tool.run_pylint,
     )
-    result = wrapped(paths="builtin/tools")
+    result = wrapped(paths="agent/tools")
     assert "检查范围" in result
 
 

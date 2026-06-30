@@ -1,5 +1,5 @@
 """
-运行 .egent/builtin/test/ 下所有 test_*.py 测试脚本
+运行 addons/egent/agent/test/ 下所有 test_*.py 测试脚本
 通过条件：所有测试的退出码都是 0
 """
 
@@ -8,7 +8,8 @@ import subprocess
 import sys
 
 TESTS_DIR = pathlib.Path(__file__).resolve().parent
-PROJECT_ROOT = TESTS_DIR.parent.parent.parent  # builtin/test -> builtin -> .egent -> 根目录
+EGENT_ROOT = TESTS_DIR.parent.parent.parent
+PROJECT_ROOT = EGENT_ROOT.parent.parent
 
 
 def run_all(*, verbose: bool = False) -> tuple[bool, str]:

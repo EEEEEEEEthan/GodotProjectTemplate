@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-pip install -r .egent\requirements.txt -q
-python .egent\builtin\main.py %*
+pip install -r addons\egent\requirements.txt -q
+python addons\egent\agent\main.py %*

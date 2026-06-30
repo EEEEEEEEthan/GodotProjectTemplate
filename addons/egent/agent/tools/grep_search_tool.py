@@ -91,11 +91,21 @@ def _iter_matching_files(
 ):
     root = os.path.abspath(root)
     for dirpath, dirnames, filenames in os.walk(root):
+        rel_dir = os.path.relpath(dirpath, root).replace("\\", "/")
+        if rel_dir == ".":
+            rel_dir = ""
         dirnames[:] = sorted(
-            name for name in dirnames
-            if not any(fnmatch.fnmatch(name, pattern) for pattern in ignore_patterns)
+            name
+            for name in dirnames
+            if not path_util.is_ignored_relative_path(
+                f"{rel_dir}/{name}" if rel_dir else name,
+                ignore_patterns,
+            )
         )
         for name in sorted(filenames, key=str.lower):
+            rel_file = f"{rel_dir}/{name}" if rel_dir else name
+            if path_util.is_ignored_relative_path(rel_file, ignore_patterns):
+                continue
             if fnmatch.fnmatch(name, filter_pattern):
                 yield os.path.join(dirpath, name)
 

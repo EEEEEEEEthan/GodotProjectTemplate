@@ -2,7 +2,7 @@
   "mcpServers": {
     "godot-game": {
       "command": "python",
-      "args": ["-m", "godot_mcp.server"],
+      "args": ["-m", "egent.mcp.server"],
       "cwd": "addons"
     }
   }
