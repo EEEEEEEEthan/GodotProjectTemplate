@@ -3,9 +3,9 @@
 开发者可根据项目需求自由修改或扩展，也可以作为一键生成模板的蓝图。
 
 使用方式：
-    python egent.py ethan
-    python egent.py jason
-    python egent.py ethan --debug
+    egent.bat ethan
+    egent.bat jason
+    egent.bat ethan --debug
 """
 
 from __future__ import annotations
@@ -18,7 +18,8 @@ import sys
 import typing
 
 # builtin 置顶供内部扁平 import；egent 根目录 append 到末尾，避免遮蔽 PyPI 的 mcp 包
-_EGENT_ROOT = pathlib.Path(__file__).resolve().parent / "addons" / "egent"
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+_EGENT_ROOT = _PROJECT_ROOT / "addons" / "egent"
 _BUILTIN_ROOT = _EGENT_ROOT / "builtin"
 if str(_BUILTIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_BUILTIN_ROOT))
