@@ -20,7 +20,6 @@ import pathlib
 import sys
 import typing
 
-# builtin 置顶供内部扁平 import；egent 根目录 append 到末尾，避免遮蔽 PyPI 的 mcp 包
 _PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 _EGENT_ROOT = _PROJECT_ROOT / "addons" / "egent"
 _BUILTIN_ROOT = _EGENT_ROOT / "builtin"
@@ -29,8 +28,6 @@ if str(_BUILTIN_ROOT) not in sys.path:
 if str(_EGENT_ROOT) not in sys.path:
     sys.path.append(str(_EGENT_ROOT))
 
-# 以下模块依赖 sys.path 注入，须在路径就绪后导入
-# pylint: disable=wrong-import-position
 from builtin import tools, wrapped_agent
 from builtin.agent import agent_config, mcp_bridge
 from builtin.agent_definition import AgentDefinition
