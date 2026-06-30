@@ -57,11 +57,10 @@ async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
             )
             if lst_review and "<<<通过>>>" in lst_review[-1]:
                 lst_report = await jack.send(
-                    "写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
+                    "写一份报告，包括但不限于本次工作的简报。本次工作的槽点，使用fuck工具记录。",
                     override_tools=(),
                 )
                 report = "\n".join(lst_report)
-                await nahte.send(f"{report}\n\n以上是jack的报告。对工作流的改进意见(如果有的话)，如果你觉得有价值，可以使用todo工具加入列表。")
                 return report + "\n\n任务完成。代码已审查，可以等待用户验收。"
 
             # review 不通过 → 修复后回到外层 while，内层 attempt 自然归零
