@@ -7,10 +7,10 @@ import importlib.util
 import pathlib
 import typing
 
-_AGENT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 _run_all_tests_spec = importlib.util.spec_from_file_location(
-    "run_all_tests", _AGENT_ROOT / "test" / "run_all_tests.py"
+    "run_all_tests", _BUILTIN_ROOT / "test" / "run_all_tests.py"
 )
 _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
 _run_all_tests_spec.loader.exec_module(_run_all_tests)

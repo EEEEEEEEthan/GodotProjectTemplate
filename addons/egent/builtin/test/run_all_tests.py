@@ -1,5 +1,5 @@
 """
-运行 addons/egent/agent/test/ 下所有 test_*.py 测试脚本
+运行 addons/egent/builtin/test/ 下所有 test_*.py 测试脚本
 通过条件：所有测试的退出码都是 0
 """
 

@@ -105,14 +105,14 @@ AGENTS: dict[str, AgentDefinition] = {
 
 你尽量用workflow_tool*工具完成工作，而不是亲自动手
 做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
-测试包括自动化测试(addons/egent/agent/test)和白盒测试(用shell工具跑你即时写的测试代码)
+测试包括自动化测试(addons/egent/builtin/test)和白盒测试(用shell工具跑你即时写的测试代码)
 """.strip(),
         skills=(
             ".agents/skills/godot-autotest",
             ".agents/skills/godot-mcp-eval",
             ".agents/skills/workflow-delegation",
-            "addons/egent/agent/skills/code-optimize",
-            "addons/egent/agent/skills/egent-mcp",
+            "addons/egent/builtin/skills/code-optimize",
+            "addons/egent/builtin/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -161,9 +161,9 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 """.strip(),
         skills=(
-            "addons/egent/agent/skills/egent-test",
-            "addons/egent/agent/skills/code-optimize",
-            "addons/egent/agent/skills/egent-mcp",
+            "addons/egent/builtin/skills/egent-test",
+            "addons/egent/builtin/skills/code-optimize",
+            "addons/egent/builtin/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
@@ -199,7 +199,7 @@ AGENTS: dict[str, AgentDefinition] = {
 你只负责 addons/egent/ 目录的开发和维护,绝不触碰 addons/egent/ 以外的任何文件.
 
 **文件创建约束：**
-- 所有测试文件必须放在 addons/egent/agent/test/ 目录下
+- 所有测试文件必须放在 addons/egent/builtin/test/ 目录下
 - 禁止在 addons/egent/ 根目录下创建临时测试文件（如 test_*.py, quick_test.py, final_test.py 等）
 - 禁止在 addons/egent/ 根目录下创建 .bat, .sh 等脚本文件
 - 只允许在 addons/egent/ 根目录下创建必要的配置文件和文档
@@ -208,9 +208,9 @@ AGENTS: dict[str, AgentDefinition] = {
 你做出任何修改之后一定要进行测试.
 """.strip(),
         skills=(
-            "addons/egent/agent/skills/egent-test",
-            "addons/egent/agent/skills/code-optimize",
-            "addons/egent/agent/skills/egent-mcp",
+            "addons/egent/builtin/skills/egent-test",
+            "addons/egent/builtin/skills/code-optimize",
+            "addons/egent/builtin/skills/egent-mcp",
         ),
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,

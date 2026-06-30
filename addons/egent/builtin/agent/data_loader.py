@@ -8,8 +8,8 @@ import pathlib
 import tomllib
 
 _PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
-AGENT_ROOT = _PACKAGE_DIR.parent
-EGENT_ROOT = AGENT_ROOT.parent
+BUILTIN_ROOT = _PACKAGE_DIR.parent
+EGENT_ROOT = BUILTIN_ROOT.parent
 PROJECT_ROOT = EGENT_ROOT.parent.parent
 AGENTS_ROOT = PROJECT_ROOT / ".agents"
 MCP_ROOT = EGENT_ROOT / "mcp"

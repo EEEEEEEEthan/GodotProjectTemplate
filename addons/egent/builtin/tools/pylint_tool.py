@@ -9,7 +9,7 @@ import typing
 
 import tools._output_util as output_util
 
-_DEFAULT_PATHS = ("agent/agent", "agent/tools")
+_DEFAULT_PATHS = ("builtin/agent", "builtin/tools")
 _EGENT_ROOT = pathlib.Path(__file__).resolve().parents[2]
 _PYLINTRC = _EGENT_ROOT / "pylintrc"
 _DEFAULT_TIMEOUT_SECONDS = 120
@@ -22,7 +22,7 @@ def run_pylint(
 ) -> str:
     """对 addons/egent 目录运行 pylint，返回文本诊断报告。用于修改 egent 代码后自查 lint 问题。
 
-    @param paths: 要检查的路径（相对 addons/egent），多个用逗号分隔，缺省 `agent/agent,agent/tools`
+    @param paths: 要检查的路径（相对 addons/egent），多个用逗号分隔，缺省 `builtin/agent,builtin/tools`
     @param timeout: 超时秒数，缺省 120
     """
     del agent_client

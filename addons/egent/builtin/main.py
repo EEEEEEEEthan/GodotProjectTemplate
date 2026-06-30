@@ -5,9 +5,9 @@ import asyncio
 import pathlib
 import sys
 
-_AGENT_ROOT = pathlib.Path(__file__).resolve().parent
-if str(_AGENT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_AGENT_ROOT))
+_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent
+if str(_BUILTIN_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BUILTIN_ROOT))
 
 import agent_definition
 import agent.mcp_bridge

@@ -1,16 +1,16 @@
 ---
 name: egent-test
-description: 运行 addons/egent/agent/test/ 下的自动化测试套件，验证 egent 核心功能。
+description: 运行 addons/egent/builtin/test/ 下的自动化测试套件，验证 egent 核心功能。
 ---
 
 # Egent 测试
 
-运行 `addons/egent/agent/test/` 目录下的所有 `test_*.py` 测试脚本。
+运行 `addons/egent/builtin/test/` 目录下的所有 `test_*.py` 测试脚本。
 
 ## 运行
 
 ```bash
-python addons/egent/agent/skills/egent-test/run.py
+python addons/egent/builtin/skills/egent-test/run.py
 ```
 
 测试覆盖 egent 核心模块：
