@@ -53,7 +53,13 @@ async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
 
             # 测试通过 → review
             lst_review = await nahte.send(
-                f"jack完成了需求:\n```\n{task_prompt}\n```\n测试通过了。现在你需要根据git diff审查代码.请按照项目约定,技能等进行审查.额外注意测试代码是否正确覆盖了需求。如果审查通过，直接输出`<<<通过>>>`（三个尖括号包裹的通过），不要有任何多余的输出。否则，输出修改意见"
+                f"jack完成了需求:\n```\n{task_prompt}\n```\n"
+                "测试通过了。现在你需要根据git diff审查代码."
+                "请按照项目约定,技能等进行审查."
+                "额外注意测试代码是否正确覆盖了需求。"
+                "如果审查通过，直接输出`<<<通过>>>`"
+                "（三个尖括号包裹的通过），不要有任何多余的输出。"
+                "否则，输出修改意见"
             )
             if lst_review and "<<<通过>>>" in lst_review[-1]:
                 lst_report = await jack.send(
