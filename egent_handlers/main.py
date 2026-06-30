@@ -28,21 +28,44 @@ if str(_BUILTIN_ROOT) not in sys.path:
 if str(_EGENT_ROOT) not in sys.path:
     sys.path.append(str(_EGENT_ROOT))
 
+# pylint: disable=import-error,wrong-import-position
 from builtin import tools, wrapped_agent
 from builtin.agent import agent_config, mcp_bridge
 from builtin.agent_definition import AgentDefinition
 from builtin._console import read_prompt
 from godot_test import run_file, run_folder
+# pylint: enable=import-error,wrong-import-position
 
 TESTS_FOLDER = "egent_handlers/tests"
-# pylint: enable=wrong-import-position
 
-async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
+_BASE_AGENT_TOOLS = (
+    tools.fuck_tool.fuck,
+    tools.git_tool.git_diff,
+    tools.godot_test_tool.run_godot_test,
+    tools.grep_search_tool.grep_search,
+    tools.launch_game_tool.launch_game,
+    tools.memory_tool.add_item,
+    tools.memory_tool.find_str,
+    tools.memory_tool.list_items,
+    tools.memory_tool.remove_item,
+    tools.memory_tool.update_item,
+    tools.read_file_tool.read_file_outline_cs,
+    tools.read_file_tool.read_file_outline_md,
+    tools.read_file_tool.read_file_outline_py,
+    tools.read_file_tool.read_lines,
+    tools.read_file_tool.read_whole_file,
+    tools.skill_tool.learn_skill,
+    tools.skill_tool.run_skill_script,
+    tools.system_info_tool.system_info,
+    tools.walk_files_tool.walk_files,
+)
+
+
+async def _run_game_development(_agent_client: typing.Any, prompt: str) -> str:
     """执行游戏开发工作流：委派任务给 jason
 
     @param prompt: 任务描述.需要包括任务原因,任务细节,关键代码位置
     """
-    del agent_client
     task_prompt = prompt.strip()
     if not task_prompt:
         return "错误：prompt 不能为空。"
@@ -110,32 +133,11 @@ AGENTS: dict[str, AgentDefinition] = {
             *agent_config.DEFAULT_IGNORE_FILES,
         ),
         default_tools=(
-            tools.file_edit_tool.apply_patch,
-            tools.file_edit_tool.create_file,
-            tools.file_edit_tool.delete_file,
-            tools.fuck_tool.fuck,
+            *_BASE_AGENT_TOOLS,
             tools.git_tool.git_add,
             tools.git_tool.git_commit,
-            tools.git_tool.git_diff,
-            tools.godot_test_tool.run_godot_test,
-            tools.grep_search_tool.grep_search,
-            tools.launch_game_tool.launch_game,
-            tools.memory_tool.add_item,
-            tools.memory_tool.find_str,
-            tools.memory_tool.list_items,
-            tools.memory_tool.remove_item,
-            tools.memory_tool.update_item,
-            tools.read_file_tool.read_file_outline_cs,
-            tools.read_file_tool.read_file_outline_md,
-            tools.read_file_tool.read_file_outline_py,
-            tools.read_file_tool.read_lines,
-            tools.read_file_tool.read_whole_file,
-            tools.skill_tool.learn_skill,
-            tools.skill_tool.run_skill_script,
-            tools.system_info_tool.system_info,
-            tools.walk_files_tool.walk_files,
             _run_game_development,
-        )
+        ),
     ),
     "jason": AgentDefinition(
         name="jason",
@@ -155,28 +157,10 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         no_write_files=("/addons/egent/*",),
         default_tools=(
+            *_BASE_AGENT_TOOLS,
             tools.file_edit_tool.apply_patch,
             tools.file_edit_tool.create_file,
             tools.file_edit_tool.delete_file,
-            tools.fuck_tool.fuck,
-            tools.git_tool.git_diff,
-            tools.godot_test_tool.run_godot_test,
-            tools.grep_search_tool.grep_search,
-            tools.launch_game_tool.launch_game,
-            tools.memory_tool.add_item,
-            tools.memory_tool.find_str,
-            tools.memory_tool.list_items,
-            tools.memory_tool.remove_item,
-            tools.memory_tool.update_item,
-            tools.read_file_tool.read_file_outline_cs,
-            tools.read_file_tool.read_file_outline_md,
-            tools.read_file_tool.read_file_outline_py,
-            tools.read_file_tool.read_lines,
-            tools.read_file_tool.read_whole_file,
-            tools.skill_tool.learn_skill,
-            tools.skill_tool.run_skill_script,
-            tools.system_info_tool.system_info,
-            tools.walk_files_tool.walk_files,
         ),
     ),
 }
