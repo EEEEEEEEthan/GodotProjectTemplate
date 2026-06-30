@@ -28,14 +28,13 @@ KEEP_RECENT_TOOL_MESSAGES = 8
 MAX_STREAM_RETRIES = 3
 _STREAM_RETRY_BACKOFF_SECONDS = 1.5
 _TOOL_RESULT_OMITTED = "\n[较早的工具结果已省略以控制上下文大小]"
-_STREAM_RETRYABLE_ERRORS = (
+STREAM_RETRYABLE_ERRORS = (
     httpx.RemoteProtocolError,
     httpx.ReadTimeout,
     httpx.ConnectError,
     httpx.WriteError,
     openai.APIConnectionError,
 )
-STREAM_RETRYABLE_ERRORS = _STREAM_RETRYABLE_ERRORS
 
 
 @dataclasses.dataclass
@@ -323,7 +322,7 @@ class AgentClient:
                                     tool_call,
                                 )
                     break
-                except _STREAM_RETRYABLE_ERRORS:
+                except STREAM_RETRYABLE_ERRORS:
                     if attempt + 1 >= MAX_STREAM_RETRIES:
                         raise
                     await asyncio.sleep(_STREAM_RETRY_BACKOFF_SECONDS * (attempt + 1))
