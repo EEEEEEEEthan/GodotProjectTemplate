@@ -12,6 +12,7 @@ from . import read_file_tool
 from . import shell_tool
 from . import skill_tool
 from . import system_info_tool
+from . import todo_tool
 from . import walk_files_tool
 from . import workflow_tool
 
@@ -28,6 +29,7 @@ __all__ = [
     "skill_tool",
     "system_info_tool",
     "fuck_tool",
+    "todo_tool",
     "walk_files_tool",
     "workflow_tool",
 ]
