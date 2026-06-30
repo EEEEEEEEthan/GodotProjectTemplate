@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.util
 import pathlib
 import sys
+import typing
 
 # ---------- 将 builtin 加入 sys.path ----------
 
@@ -38,6 +40,53 @@ from agent_definition import AgentDefinition
 from _console import read_prompt
 import wrapped_agent
 
+async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
+    """执行游戏开发工作流：委派任务给 jason
+
+    @param prompt: 任务描述.需要包括任务原因,任务细节,关键代码位置
+    """
+    del agent_client
+    task_prompt = prompt.strip()
+    if not task_prompt:
+        return "错误：prompt 不能为空。"
+
+    _run_all_tests_spec = importlib.util.spec_from_file_location(
+        "run_all_tests", _BUILTIN_ROOT / "test" / "run_all_tests.py"
+    )
+    _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
+    _run_all_tests_spec.loader.exec_module(_run_all_tests)
+
+    jason = None
+    try:
+        jason = await AGENTS["jason"].instantiate()
+        await jason.send(task_prompt)
+
+        for attempt in range(10):
+            tests_passed, tests_info = await asyncio.to_thread(_run_all_tests.run_all)
+            if tests_passed:
+                break
+            await jason.send(
+                f"你的需求是:{task_prompt}\n，很遗憾测试未通过（第{attempt+1}次）：\n{tests_info}\n请修复"
+            )
+        else:
+            lst_report = await jason.send(
+                "测试未通过，我们决定取消本次工作。写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
+                override_tools=(),
+            )
+            return "\n".join(lst_report)
+
+        lst_report = await jason.send(
+            "写一份报告，包括但不限于本次工作的简报以及遇到的问题，还有工作流上可以改进的地方(如果有的话)",
+            override_tools=(),
+        )
+        return "\n".join(lst_report) + "\n\n任务完成。请审查 git diff 后决定是否提交。"
+    except Exception as error:
+        return f"错误：游戏开发工作流执行失败：{error}"
+    finally:
+        if jason is not None:
+            await jason.aclose()
+
+
 AGENTS: dict[str, AgentDefinition] = {
     "ethan": AgentDefinition(
         name="ethan",
@@ -48,6 +97,17 @@ AGENTS: dict[str, AgentDefinition] = {
 你是ethan,你是游戏玩法方向的高级开发者.
 开发任务交给jason完成,你负责设计、审查与git提交.
 你极度优雅,对代码的要求极高.
+
+【重要】职责分离原则：
+- Leader（你）负责：分析问题、做出决策、委派具体任务
+- Workflow（jason）负责：执行具体任务、完整测试
+
+委派任务时，必须给 workflow 明确的、具体的指令。
+❌ 错误示例："运行 pylint 检查代码质量，选择一个值得优化的问题进行修复"
+✅ 正确示例："修复 agent_client.py 中未使用的 pathlib 导入问题"
+
+你尽量用 _run_game_development 工具完成工作，而不是亲自动手
+做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
 """.strip(),
         skills=(
             ".agents/skills/godot-autotest",
@@ -80,6 +140,7 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.memory_tool.update_item,
             tools.launch_game_tool.launch_game,
             tools.fuck_tool.fuck,
+            _run_game_development,
         )
     ),
     "jason": AgentDefinition(
