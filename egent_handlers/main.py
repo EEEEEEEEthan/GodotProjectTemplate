@@ -6,6 +6,9 @@
     egent.bat ethan
     egent.bat jason
     egent.bat ethan --debug
+    egent.bat --test hello
+    egent.bat --test all
+    egent.bat --test all --headless
 """
 
 from __future__ import annotations
@@ -32,6 +35,7 @@ from builtin import tools, wrapped_agent
 from builtin.agent import agent_config, mcp_bridge
 from builtin.agent_definition import AgentDefinition
 from builtin._console import read_prompt
+from godot_test import run_tests
 # pylint: enable=wrong-import-position
 
 async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
@@ -189,9 +193,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "agent",
         nargs="?",
-        default="ethan",
+        default=None,
         metavar="AGENT",
         help="要加载的 agent 名称（默认：ethan）",
+    )
+    parser.add_argument(
+        "--test",
+        metavar="TEST_NAME",
+        help="运行 Godot 自动化测试（all 表示全部）",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="无头模式运行 Godot 测试",
     )
     parser.add_argument(
         "--debug",
@@ -204,11 +218,15 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
-    definition = AGENTS.get(args.agent)
+    if args.test is not None:
+        sys.exit(run_tests(args.test, headless=args.headless))
+
+    agent_name = args.agent or "ethan"
+    definition = AGENTS.get(agent_name)
     if definition is None:
         known = ", ".join(sorted(AGENTS))
         wrapped_agent.write_line_colored(
-            f"未知 Agent：{args.agent}（可用：{known}）",
+            f"未知 Agent：{agent_name}（可用：{known}）",
             dim=False,
         )
         return

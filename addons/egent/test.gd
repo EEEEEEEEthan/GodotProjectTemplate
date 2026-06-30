@@ -23,7 +23,7 @@ func _init() -> void:
 	run_named(test_name)
 
 func run_named(test_name: String) -> void:
-	const TESTS_DIR := "res://tests/"
+	const TESTS_DIR := "res://egent_handlers/tests/"
 	var dir := DirAccess.open(TESTS_DIR)
 	if dir == null:
 		push_error("Failed to open tests directory: " + TESTS_DIR)
@@ -34,7 +34,6 @@ func run_named(test_name: String) -> void:
 	var file_name := dir.get_next()
 	while file_name != "":
 		if not dir.current_is_dir() and file_name.ends_with("_test.gd"):
-			# Derive test name: "hello_test.gd" -> "hello"
 			var derived_name := file_name.trim_suffix(".gd").trim_suffix("_test")
 			if derived_name == test_name:
 				var script_path := TESTS_DIR + file_name
