@@ -117,6 +117,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
         ),
+        no_write_files=(),
         default_tools=(
             tools.git_tool.git_diff,
             tools.git_tool.git_add,
@@ -213,7 +214,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ignore_files=(
             *agent.agent_config.COMMON_IGNORE_FILES,
         ),
-        no_write_files=(),
+        no_write_files=("agent_definition.py",),
         default_tools=(
             tools.git_tool.git_diff,
             tools.skill_tool.learn_skill,
@@ -290,6 +291,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ignore_files=(
             *agent.agent_config.DEFAULT_IGNORE_FILES,
         ),
+        no_write_files=("/.egent/*"),
         default_tools=(
             tools.git_tool.git_diff,
             tools.skill_tool.learn_skill,
