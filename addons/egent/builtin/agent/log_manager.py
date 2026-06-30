@@ -1,0 +1,59 @@
+"""模块级单例日志管理器。
+
+日志文件路径：data_loader.LOG_DIR / YYYYMMDD_HHMMSS.log
+使用 atexit 确保进程退出时自动关闭。
+"""
+
+from __future__ import annotations
+
+import atexit
+import datetime
+import typing
+
+import agent.data_loader
+
+_LOG_FILE: typing.TextIO | None = None
+
+
+def write(text: str) -> None:
+    """写入日志（首次调用时自动创建日志文件）。"""
+    global _LOG_FILE  # pylint: disable=global-statement
+    if _LOG_FILE is None:
+        log_dir = agent.data_loader.LOG_DIR
+        log_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        _LOG_FILE = open(  # pylint: disable=consider-using-with
+            log_dir / f"{timestamp}.log",
+            "a",
+            encoding="utf-8",
+            buffering=1,
+        )
+        atexit.register(_close)
+    _LOG_FILE.write(text)
+
+
+def flush() -> None:
+    """刷新缓冲区。"""
+    if _LOG_FILE is not None:
+        _LOG_FILE.flush()
+
+
+def close() -> None:
+    """关闭日志文件（idempotent）。"""
+    global _LOG_FILE  # pylint: disable=global-statement
+    if _LOG_FILE is not None:
+        try:
+            _LOG_FILE.close()
+        finally:
+            _LOG_FILE = None
+
+
+def _close() -> None:
+    """atexit 回调，关闭日志文件。"""
+    global _LOG_FILE  # pylint: disable=global-statement
+    if _LOG_FILE is not None:
+        try:
+            _LOG_FILE.close()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        _LOG_FILE = None

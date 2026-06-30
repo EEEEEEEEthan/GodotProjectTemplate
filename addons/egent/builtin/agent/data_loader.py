@@ -14,6 +14,7 @@ PROJECT_ROOT = EGENT_ROOT.parent.parent
 AGENTS_ROOT = PROJECT_ROOT / ".agents"
 MCP_ROOT = EGENT_ROOT / "mcp"
 EGENT_TEMP_DIR = EGENT_ROOT / ".temp"
+LOG_DIR = EGENT_ROOT / ".logs"
 DATA_ROOT = EGENT_ROOT / ".data"
 GLOBAL_EGENT_ROOT = pathlib.Path(os.environ.get("LOCALAPPDATA", "")) / "Egent"
 GLOBAL_MODEL_KEYS_FILE = GLOBAL_EGENT_ROOT / "model.toml"

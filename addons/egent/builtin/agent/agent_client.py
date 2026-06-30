@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import collections.abc
-import contextlib
 import dataclasses
-import datetime
 import typing
 
 import httpx
@@ -17,6 +15,7 @@ import agent.agent_events
 import agent.agent_model
 import agent.agent_tools
 import agent.data_loader
+import agent.log_manager
 import agent.mcp_bridge
 import agent.skill_index
 import agent.tool_binding
@@ -41,8 +40,6 @@ STREAM_RETRYABLE_ERRORS = _STREAM_RETRYABLE_ERRORS
 
 @dataclasses.dataclass
 class _ConversationState:
-    resources: contextlib.ExitStack
-    log: typing.TextIO
     history: list[dict[str, typing.Any]]
     openai_client: openai.AsyncOpenAI | None = None
 
@@ -104,23 +101,7 @@ class AgentClient:
         )
 
     def __open_conversation(self) -> _ConversationState:
-        log_directory = agent.data_loader.EGENT_TEMP_DIR
-        log_directory.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        resources = contextlib.ExitStack()
-        log_file = resources.enter_context(
-            open(
-                log_directory / f"{self.name}_{timestamp}.log",
-                "a",
-                encoding="utf-8",
-                buffering=1,
-            )
-        )
-        return _ConversationState(
-            resources=resources,
-            log=log_file,
-            history=[],
-        )
+        return _ConversationState(history=[])
 
     def __compose_system_prompt(self, base_prompt: str) -> str:
         parts: list[str] = []
@@ -248,7 +229,7 @@ class AgentClient:
                 role = message.get("role", "")
                 content = message.get("content")
                 if content:
-                    conversation.log.write(f"[{role}]\n{content}\n\n")
+                    agent.log_manager.write(f"[{role}]\n{content}\n\n")
 
         active_bindings = self.__resolve_active_bindings(override_tools)
         include_mcp = self.__uses_default_tools(override_tools)
@@ -270,9 +251,9 @@ class AgentClient:
         ):
             if add_to_history:
                 if isinstance(event, agent.agent_events.TextDelta):
-                    conversation.log.write(event.text)
+                    agent.log_manager.write(event.text)
                 elif isinstance(event, agent.agent_events.ToolInvoking):
-                    conversation.log.write("\n")
+                    agent.log_manager.write("\n")
                     tool_header = (
                         f"[{event.name}]"
                         if not event.arguments
@@ -281,10 +262,10 @@ class AgentClient:
                             f"{agent.agent_tools.format_tool_arguments(event.arguments)}"
                         )
                     )
-                    conversation.log.write(f"{tool_header}\n")
+                    agent.log_manager.write(f"{tool_header}\n")
                 elif isinstance(event, agent.agent_events.ToolInvoked):
                     if event.result:
-                        conversation.log.write(f"{event.result}\n")
+                        agent.log_manager.write(f"{event.result}\n")
             yield event
 
         if add_to_history:
@@ -295,8 +276,8 @@ class AgentClient:
                 and conversation.history[-1].get("content") == reply
             ):
                 conversation.history.append({"role": "assistant", "content": reply})
-            conversation.log.write("\n")
-            conversation.log.flush()
+            agent.log_manager.write("\n")
+            agent.log_manager.flush()
 
     async def __run_turn(
         self,
@@ -523,14 +504,12 @@ class AgentClient:
         return self.__model.base_url.strip() or "https://api.openai.com/v1"
 
     async def aclose(self) -> None:
-        """关闭会话日志（MCP 由进程级共享桥接管理）。"""
+        """清理 MCP 状态（日志由 log_manager 的 atexit 自动关闭）。"""
         self.__tooling.mcp_ready = False
         self.__tooling.mcp_bridge = None
-        self.__conversation.resources.close()
 
     def close(self) -> None:
-        """关闭会话日志文件。"""
-        self.__conversation.resources.close()
+        """日志由 log_manager 的 atexit 自动关闭，本方法仅保留兼容接口。"""
 
     def __get_or_create_client(self) -> openai.AsyncOpenAI:
         conversation = self.__conversation
