@@ -1,4 +1,4 @@
-class_name Test
+class_name GodotTestRunner
 extends SceneTree
 
 static func has_autotest_argument() -> bool:
@@ -15,7 +15,7 @@ static func read_autotest_script_from_command_line() -> String:
 func _init() -> void:
 	if not has_autotest_argument():
 		return
-	var script_path: String = Test.read_autotest_script_from_command_line()
+	var script_path: String = GodotTestRunner.read_autotest_script_from_command_line()
 	if script_path.is_empty():
 		push_error("Missing test script path after --autotest")
 		quit(1)

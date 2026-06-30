@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 ENGINE_EXE = PROJECT_ROOT / ".engine" / ".engine.exe"
 PREPARE_BAT = PROJECT_ROOT / ".engine-prepare.bat"
-TEST_SCRIPT = "res://addons/egent/test.gd"
+TEST_SCRIPT = "res://addons/egent/godot_test_runner.gd"
 ERROR_PATTERN = re.compile(r"SCRIPT ERROR:|Parse Error:|ERROR: Failed")
 
 

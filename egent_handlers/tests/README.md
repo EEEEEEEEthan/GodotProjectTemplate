@@ -3,7 +3,7 @@
 项目级回归测试，通过 Godot 引擎 headless/有窗口运行，验证游戏逻辑与场景行为。
 
 - 测试用例：`egent_handlers/tests/*_test.gd`
-- 分发入口：`addons/egent/test.gd`
+- 分发入口：`addons/egent/godot_test_runner.gd`
 - 运行器：`addons/egent/godot_test.py`（由 `egent.bat --test` 调用）
 
 ## 添加测试
