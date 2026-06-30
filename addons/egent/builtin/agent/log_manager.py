@@ -28,7 +28,7 @@ def write(text: str) -> None:
             encoding="utf-8",
             buffering=1,
         )
-        atexit.register(_close)
+        atexit.register(close)
     _LOG_FILE.write(text)
 
 
@@ -46,14 +46,3 @@ def close() -> None:
             _LOG_FILE.close()
         finally:
             _LOG_FILE = None
-
-
-def _close() -> None:
-    """atexit 回调，关闭日志文件。"""
-    global _LOG_FILE  # pylint: disable=global-statement
-    if _LOG_FILE is not None:
-        try:
-            _LOG_FILE.close()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
-        _LOG_FILE = None
