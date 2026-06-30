@@ -116,7 +116,10 @@ class McpBridge:
         """关闭全部 MCP 连接。"""
         while self.__connections:
             connection = self.__connections.pop()
-            await connection.exit_stack.aclose()
+            try:
+                await connection.exit_stack.aclose()
+            except Exception as exc:
+                print(f"[McpBridge] 关闭连接异常: {exc}", file=sys.stderr)
         self.__sessions.clear()
         self.__bindings.clear()
         self.__started = False
