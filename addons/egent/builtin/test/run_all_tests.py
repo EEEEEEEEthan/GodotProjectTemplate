@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 TESTS_DIR = pathlib.Path(__file__).resolve().parent
-EGENT_ROOT = TESTS_DIR.parent.parent.parent
+EGENT_ROOT = TESTS_DIR.parent.parent
 PROJECT_ROOT = EGENT_ROOT.parent.parent
 
 

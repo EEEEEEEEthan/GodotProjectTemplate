@@ -8,7 +8,7 @@ import sys
 
 
 def main() -> int:
-    project_root = pathlib.Path(__file__).resolve().parents[4]
+    project_root = pathlib.Path(__file__).resolve().parents[5]
     run_all = project_root / "addons" / "egent" / "builtin" / "test" / "run_all_tests.py"
     result = subprocess.run([sys.executable, str(run_all)], cwd=project_root)
     return result.returncode

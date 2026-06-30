@@ -27,20 +27,7 @@ def read_file_outline_cs(agent_client: typing.Any, file_path: str) -> str:
     @param file_path: C# 源文件路径（相对工作目录）
     """
     del agent_client
-    absolute_path, resolve_error = _resolve_file(file_path)
-    if resolve_error is not None:
-        return resolve_error
-
-    warning = ""
-    if absolute_path.suffix.lower() != ".cs":
-        warning = f"警告：文件扩展名不是 .cs：{file_path}\n"
-
-    try:
-        lines = absolute_path.read_text(encoding="utf-8").splitlines(keepends=True)
-    except OSError as error:
-        return f"错误：无法读取文件：{error}"
-
-    return warning + cs_outline.outline_cs_text(lines)
+    return _read_outline_file(file_path, (".cs",), cs_outline.outline_cs_text)
 
 
 def read_file_outline_md(agent_client: typing.Any, file_path: str) -> str:
@@ -49,29 +36,7 @@ def read_file_outline_md(agent_client: typing.Any, file_path: str) -> str:
     @param file_path: Markdown 文件路径（相对工作目录）
     """
     del agent_client
-    absolute_path, resolve_error = _resolve_file(file_path)
-    if resolve_error is not None:
-        return resolve_error
-
-    warning = ""
-    if absolute_path.suffix.lower() != ".md":
-        warning = f"警告：文件扩展名不是 .md：{file_path}\n"
-
-    try:
-        with absolute_path.open(encoding="utf-8") as handle:
-            lines = handle.readlines()
-    except OSError as error:
-        return f"错误：无法读取文件：{error}"
-
-    output_lines = ["行尾的尖括号表示行号"]
-    for line_no, raw_line in enumerate(lines, start=1):
-        match = HEADING_RE.match(raw_line.rstrip("\n\r"))
-        if not match:
-            continue
-        level = len(match.group(1))
-        title = match.group(2).strip()
-        output_lines.append("\t" * (level - 1) + f"{title} <{line_no}>")
-    return warning + "\n".join(output_lines)
+    return _read_outline_file(file_path, (".md",), _md_outline_text)
 
 
 def read_file_outline_py(agent_client: typing.Any, file_path: str) -> str:
@@ -80,21 +45,7 @@ def read_file_outline_py(agent_client: typing.Any, file_path: str) -> str:
     @param file_path: Python 文件路径（相对工作目录）
     """
     del agent_client
-    absolute_path, resolve_error = _resolve_file(file_path)
-    if resolve_error is not None:
-        return resolve_error
-
-    warning = ""
-    if absolute_path.suffix.lower() not in (".py", ".pyi", ".pyx"):
-        warning = f"警告：文件扩展名不是 .py：{file_path}\n"
-
-    try:
-        with absolute_path.open(encoding="utf-8") as handle:
-            lines = handle.readlines()
-    except OSError as error:
-        return f"错误：无法读取文件：{error}"
-
-    return warning + _py_outline_text(lines)
+    return _read_outline_file(file_path, (".py", ".pyi", ".pyx"), _py_outline_text)
 
 
 def read_lines(
@@ -146,6 +97,28 @@ def read_whole_file(agent_client: typing.Any, file_path: str) -> str:
     except OSError as error:
         return f"错误：无法读取文件：{error}"
     return output_util.truncate_output(content)
+
+
+def _read_outline_file(
+    file_path: str,
+    expected_suffixes: tuple[str, ...],
+    formatter: typing.Callable[[list[str]], str],
+) -> str:
+    """共享辅助函数：路径解析、后缀检查、文件读取、格式化输出。"""
+    absolute_path, resolve_error = _resolve_file(file_path)
+    if resolve_error is not None:
+        return resolve_error
+
+    warning = ""
+    if absolute_path.suffix.lower() not in expected_suffixes:
+        warning = f"警告：文件扩展名不是 {expected_suffixes[0]}：{file_path}\n"
+
+    try:
+        lines = absolute_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    except OSError as error:
+        return f"错误：无法读取文件：{error}"
+
+    return warning + formatter(lines)
 
 
 def _resolve_file(file_path: str) -> tuple[pathlib.Path | None, str | None]:
@@ -244,4 +217,17 @@ def _py_outline_text(lines: list[str]) -> str:
                 output_lines.append(f"    {variable_match.group(1)} = ... <{line_no}>")
                 continue
 
+    return "\n".join(output_lines)
+
+
+def _md_outline_text(lines: list[str]) -> str:
+    """从 Markdown 行列表中提取标题大纲。"""
+    output_lines = ["行尾的尖括号表示行号"]
+    for line_no, raw_line in enumerate(lines, start=1):
+        match = HEADING_RE.match(raw_line.rstrip("\n\r"))
+        if not match:
+            continue
+        level = len(match.group(1))
+        title = match.group(2).strip()
+        output_lines.append("\t" * (level - 1) + f"{title} <{line_no}>")
     return "\n".join(output_lines)

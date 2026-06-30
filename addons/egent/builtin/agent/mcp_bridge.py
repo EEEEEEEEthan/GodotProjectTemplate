@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import dataclasses
 import os
 import pathlib
 import sys
 import typing
 
+import tools._output_util as output_util
+
 import mcp.types
 import mcp.client.stdio
 import mcp.client.session
 import mcp.shared.exceptions
-
-import tools._output_util as output_util
 
 
 MCP_TOOL_PREFIX = "mcp__"
@@ -27,6 +28,7 @@ class _SharedBridge:
         self._lock = asyncio.Lock()
 
     async def get(self, servers: dict[str, McpServerConfig]) -> McpBridge:
+        """获取或创建共享的 McpBridge 实例。"""
         if not servers:
             raise ValueError("servers 不能为空")
         async with self._lock:
@@ -36,6 +38,7 @@ class _SharedBridge:
             return self._bridge
 
     async def close(self) -> None:
+        """关闭共享的 McpBridge 实例。"""
         async with self._lock:
             if self._bridge is not None:
                 await self._bridge.close()
@@ -57,11 +60,10 @@ async def close_shared_bridge() -> None:
 
 @dataclasses.dataclass(frozen=True)
 class _McpServerConnection:
-    """单个 MCP 服务的 stdio 与会话上下文（手动管理生命周期）。"""
+    """单个 MCP 服务的连接（使用 AsyncExitStack 管理生命周期）。"""
 
     server_id: str
-    stdio_context: typing.Any
-    session_context: mcp.client.session.ClientSession
+    exit_stack: contextlib.AsyncExitStack
     session: mcp.client.session.ClientSession
 
 
@@ -114,7 +116,7 @@ class McpBridge:
         """关闭全部 MCP 连接。"""
         while self.__connections:
             connection = self.__connections.pop()
-            await _close_server_connection(connection)
+            await connection.exit_stack.aclose()
         self.__sessions.clear()
         self.__bindings.clear()
         self.__started = False
@@ -145,7 +147,7 @@ class McpBridge:
                     binding.tool_name,
                     arguments=arguments,
                 )
-        except Exception as error:
+        except (mcp.shared.exceptions.McpError, asyncio.TimeoutError, OSError) as error:
             return f"错误：MCP 调用失败（{openai_name}）：{error}"
 
         return output_util.truncate_output(format_call_tool_result(result))
@@ -160,18 +162,16 @@ class McpBridge:
             project_root,
             server_config,
         )
+        exit_stack = contextlib.AsyncExitStack()
         stdio_context = mcp.client.stdio.stdio_client(server_parameters)
-        # 手动 __aenter__：需要按 LIFO 顺序关闭，不能使用 async with
-        read_stream, write_stream = await stdio_context.__aenter__()
+        read_stream, write_stream = await exit_stack.enter_async_context(stdio_context)
         session_context = mcp.client.session.ClientSession(read_stream, write_stream)
-        # 手动 __aenter__：需要按 LIFO 顺序关闭，不能使用 async with
-        session = await session_context.__aenter__()
+        session = await exit_stack.enter_async_context(session_context)
         await session.initialize()
         self.__connections.append(
             _McpServerConnection(
                 server_id=server_id,
-                stdio_context=stdio_context,
-                session_context=session_context,
+                exit_stack=exit_stack,
                 session=session,
             )
         )
@@ -324,31 +324,3 @@ def resolve_project_path(project_root: pathlib.Path, value: str) -> str:
     if path.is_absolute():
         return os.fspath(path)
     return os.fspath((project_root / path).resolve())
-
-
-async def _close_server_connection(connection: _McpServerConnection) -> None:
-    """按 LIFO 顺序关闭单个 MCP 连接，吞掉关闭期的 cancel scope 竞态。"""
-    await _safe_async_context_exit(connection.session_context)
-    await _safe_async_context_exit(connection.stdio_context)
-
-
-async def _safe_async_context_exit(context: typing.Any) -> None:
-    """安全退出 async 上下文，避免 AsyncExitStack 级联 athrow 触发跨 task 错误。"""
-    try:
-        await context.__aexit__(None, None, None)
-    except* Exception as error:
-        if not _is_mcp_shutdown_error(error):
-            raise
-
-
-def _is_mcp_shutdown_error(error: Exception) -> bool:
-    """判断是否为 MCP/anyio 关闭时的预期错误。"""
-    if isinstance(error, RuntimeError):
-        message = str(error)
-        return (
-            "cancel scope" in message
-            or "different task" in message
-        )
-    if isinstance(error, BaseExceptionGroup):
-        return all(_is_mcp_shutdown_error(nested) for nested in error.exceptions)
-    return False

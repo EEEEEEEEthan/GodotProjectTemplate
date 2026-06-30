@@ -36,18 +36,6 @@ async def _raising_stdio_client(_parameters):
     )
 
 
-def test_is_mcp_shutdown_error_matches_cancel_scope_runtime_error():
-  error = RuntimeError(
-    "Attempted to exit cancel scope in a different task than it was entered in"
-  )
-  assert mcp_bridge_module._is_mcp_shutdown_error(error)
-
-
-def test_is_mcp_shutdown_error_rejects_unrelated_runtime_error():
-  error = RuntimeError("connection refused")
-  assert not mcp_bridge_module._is_mcp_shutdown_error(error)
-
-
 async def _run_close_with_fake_stdio(stdio_factory):
   original_stdio_client = mcp_bridge_module.mcp.client.stdio.stdio_client
   original_client_session = mcp_bridge_module.mcp.client.session.ClientSession
