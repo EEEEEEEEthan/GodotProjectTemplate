@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import collections.abc
 import dataclasses
 import functools
@@ -18,6 +19,14 @@ _WRAPPED_TOOL_ATTR = "__wrapped_tool__"
 _PARAM_LINE = re.compile(r"^@param\s+(\w+)\s*:\s*(.+)$")
 _TOOL_NAME_LINE = re.compile(r"^@tool_name\s+(\S+)\s*$")
 _ENUM_LINE = re.compile(r"^@enum\s+(\w+)\s*:\s*(.+)$")
+
+_TYPE_SCHEMA_MAP: dict[type, dict[str, str]] = {
+    str: {"type": "string"},
+    typing.Text: {"type": "string"},
+    int: {"type": "integer"},
+    float: {"type": "number"},
+    bool: {"type": "boolean"},
+}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -159,12 +168,12 @@ async def invoke_handler(handler: ToolHandler, arguments: dict[str, typing.Any])
         result = handler(**arguments)
     except TypeError as exception:
         return f"错误：工具参数无效（{tool_name}）：{exception}"
-    except Exception as exception:
+    except (ValueError, OSError, RuntimeError, LookupError) as exception:
         return f"错误：工具执行失败（{tool_name}）：{exception}"
     try:
         if inspect.isawaitable(result):
             result = await result
-    except Exception as exception:
+    except (ValueError, OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError) as exception:
         return f"错误：工具执行失败（{tool_name}）：{exception}"
     return str(result)
 
@@ -342,12 +351,5 @@ def _hint_to_json_schema(hint: typing.Any) -> dict[str, typing.Any]:
         literal_values = typing.get_args(hint)
         if literal_values and all(isinstance(value, str) for value in literal_values):
             return {"type": "string", "enum": list(literal_values)}
-    if hint in (str, typing.Text):
-        return {"type": "string"}
-    if hint is int:
-        return {"type": "integer"}
-    if hint is float:
-        return {"type": "number"}
-    if hint is bool:
-        return {"type": "boolean"}
-    return {"type": "string"}
+    schema = _TYPE_SCHEMA_MAP.get(hint)
+    return schema if schema is not None else {"type": "string"}
