@@ -1,4 +1,7 @@
-"""各 Agent 硬编码定义。"""  # pylint: disable=cyclic-import
+"""各 Agent 硬编码定义。
+agent定义暂时就硬编码在这里,将py文件当作配置文件.
+因为工具序列化需要写额外的代码.而且目前开发阶段agent_definition的结构可能还会变
+"""
 
 from __future__ import annotations
 
