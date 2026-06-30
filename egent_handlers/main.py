@@ -33,7 +33,9 @@ from builtin import tools, wrapped_agent
 from builtin.agent import agent_config, mcp_bridge
 from builtin.agent_definition import AgentDefinition
 from builtin._console import read_prompt
-from godot_test import run_all, run_tests
+from godot_test import run_file, run_folder
+
+TESTS_FOLDER = "egent_handlers/tests"
 # pylint: enable=wrong-import-position
 
 async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
@@ -52,7 +54,9 @@ async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
         await jason.send(task_prompt)
 
         for attempt in range(10):
-            tests_passed, tests_info = await asyncio.to_thread(run_all)
+            tests_passed, tests_info = await asyncio.to_thread(
+                run_folder, TESTS_FOLDER, headless=True
+            )
             if tests_passed:
                 break
             await jason.send(
@@ -114,10 +118,9 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.git_tool.git_add,
             tools.git_tool.git_commit,
             tools.git_tool.git_diff,
-            tools.godot_test_tool.run_godot_tests,
+            tools.godot_test_tool.run_godot_test,
             tools.grep_search_tool.grep_search,
             tools.launch_game_tool.launch_game,
-            _run_game_development,
             tools.memory_tool.add_item,
             tools.memory_tool.find_str,
             tools.memory_tool.list_items,
@@ -132,6 +135,7 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.skill_tool.run_skill_script,
             tools.system_info_tool.system_info,
             tools.walk_files_tool.walk_files,
+            _run_game_development,
         )
     ),
     "jason": AgentDefinition(
@@ -157,7 +161,7 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.file_edit_tool.delete_file,
             tools.fuck_tool.fuck,
             tools.git_tool.git_diff,
-            tools.godot_test_tool.run_godot_tests,
+            tools.godot_test_tool.run_godot_test,
             tools.grep_search_tool.grep_search,
             tools.launch_game_tool.launch_game,
             tools.memory_tool.add_item,
@@ -211,7 +215,11 @@ async def main() -> None:
     """加载 agent 并循环处理用户消息与流式事件。"""
     args = parse_args()
     if args.test is not None:
-        sys.exit(run_tests(args.test, headless=args.headless))
+        message = await asyncio.to_thread(
+            run_file, args.test, headless=args.headless
+        )
+        print(message)
+        sys.exit(0 if message.startswith("[PASS]") else 1)
 
     agent_name = args.agent or "ethan"
     definition = AGENTS.get(agent_name)

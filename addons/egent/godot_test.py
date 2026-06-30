@@ -8,18 +8,13 @@ import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-TESTS_DIR = PROJECT_ROOT / "egent_handlers" / "tests"
 ENGINE_EXE = PROJECT_ROOT / ".engine" / ".engine.exe"
 PREPARE_BAT = PROJECT_ROOT / ".engine-prepare.bat"
 TEST_SCRIPT = "res://addons/egent/test.gd"
 ERROR_PATTERN = re.compile(r"SCRIPT ERROR:|Parse Error:|ERROR: Failed")
-
-
-def discover_test_scripts() -> list[pathlib.Path]:
-    """从 egent_handlers/tests/*_test.gd 自动发现测试脚本。"""
-    return sorted(TESTS_DIR.glob("*_test.gd"))
 
 
 def resolve_script_res_path(script_path: str) -> str:
@@ -44,6 +39,29 @@ def resolve_script_res_path(script_path: str) -> str:
         raise FileNotFoundError(f"脚本不存在: {script_path}")
 
     return "res://" + relative.as_posix()
+
+
+def resolve_folder_path(folder_path: str) -> pathlib.Path:
+    """将项目内文件夹路径规范为绝对路径。"""
+    path = pathlib.Path(folder_path)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    path = path.resolve()
+
+    try:
+        path.relative_to(PROJECT_ROOT.resolve())
+    except ValueError as error:
+        raise ValueError(f"文件夹路径不在项目内: {folder_path}") from error
+
+    if not path.is_dir():
+        raise NotADirectoryError(f"文件夹不存在: {folder_path}")
+
+    return path
+
+
+def discover_gd_scripts(folder_path: str) -> list[pathlib.Path]:
+    """发现文件夹下所有 .gd 文件。"""
+    return sorted(resolve_folder_path(folder_path).glob("*.gd"))
 
 
 def prepare_engine() -> int:
@@ -132,120 +150,78 @@ def _execute_test(
         return exit_code, combined_output
 
 
-def run_test(
+def _format_result(display_name: str, exit_code: int, detail: str = "") -> str:
+    status = "PASS" if exit_code == 0 else "FAIL"
+    line = f"[{status}] {display_name} (exit code: {exit_code})"
+    if exit_code != 0 and detail.strip():
+        return f"{line}\n{detail.strip()}"
+    return line
+
+
+def _run_single(
     script_path: str,
     *,
     headless: bool = False,
-    ignore_prepare: bool = False,
-    timeout_seconds: int = 120,
-) -> int:
-    """运行指定 GD 脚本自动化测试，返回进程退出码。"""
+) -> tuple[str, int, str]:
+    """运行单个脚本，返回 (显示名, 退出码, 详情)。"""
     try:
         res_path = resolve_script_res_path(script_path)
     except (ValueError, FileNotFoundError) as error:
-        print(str(error), file=sys.stderr)
-        return 1
+        display_name = script_path
+        return display_name, 1, str(error)
 
-    if not ignore_prepare:
-        exit_code = prepare_engine()
-        if exit_code != 0:
-            return exit_code
-
-    exit_code, combined_output = _execute_test(
-        res_path,
-        headless=headless,
-        timeout_seconds=timeout_seconds,
-    )
-    sys.stdout.write(combined_output)
-    return exit_code
+    exit_code, combined_output = _execute_test(res_path, headless=headless)
+    display_name = res_path.removeprefix("res://")
+    detail = combined_output.strip() if exit_code != 0 else ""
+    return display_name, exit_code, detail
 
 
-def run_tests(script_path: str, *, headless: bool = False) -> int:
-    """运行指定 GD 脚本自动化测试。"""
-    return run_test(script_path, headless=headless)
+def run_file(script_path: str, *, headless: bool = False) -> str:
+    """运行指定 GD 脚本的 run()，返回汇总信息。"""
+    exit_code = prepare_engine()
+    if exit_code != 0:
+        return f"引擎准备失败 (exit code: {exit_code})"
+
+    display_name, test_exit_code, detail = _run_single(script_path, headless=headless)
+    return _format_result(display_name, test_exit_code, detail)
 
 
-def run_test_report(
-    script_path: str,
-    *,
-    headless: bool = False,
-) -> tuple[bool, str]:
-    """运行单个测试，返回 (是否通过, 汇总信息)。"""
+def run_folder(folder_path: str, *, headless: bool = True) -> tuple[bool, str]:
+    """并发运行文件夹下全部 .gd 脚本的 run()，返回 (是否全部通过, 汇总信息)。"""
     try:
-        res_path = resolve_script_res_path(script_path)
-    except (ValueError, FileNotFoundError) as error:
+        script_files = discover_gd_scripts(folder_path)
+    except (ValueError, NotADirectoryError) as error:
         return False, str(error)
+
+    if not script_files:
+        return True, f"未找到任何 .gd 文件: {folder_path}"
 
     exit_code = prepare_engine()
     if exit_code != 0:
         return False, f"引擎准备失败 (exit code: {exit_code})"
 
-    exit_code, combined_output = _execute_test(res_path, headless=headless)
-    display_name = res_path.removeprefix("res://")
-    status = "PASS" if exit_code == 0 else "FAIL"
-    lines = [f"[{status}] {display_name} (exit code: {exit_code})"]
-    if exit_code != 0 and combined_output.strip():
-        lines.append(combined_output.strip())
-    return exit_code == 0, "\n".join(lines)
-
-
-def run_all(*, headless: bool = True, verbose: bool = False) -> tuple[bool, str]:
-    """运行 egent_handlers/tests/ 下全部测试，返回 (是否全部通过, 汇总信息)。"""
-    test_files = discover_test_scripts()
-    if not test_files:
-        message = "未找到任何 *_test.gd 测试文件"
-        if verbose:
-            print(message)
-        return True, message
-
-    exit_code = prepare_engine()
-    if exit_code != 0:
-        message = f"引擎准备失败 (exit code: {exit_code})"
-        if verbose:
-            print(message)
-        return False, message
-
     results: list[tuple[str, int, str]] = []
-    for test_file in test_files:
-        test_name = test_file.relative_to(PROJECT_ROOT).as_posix()
-        if verbose:
-            print(f"[RUN] {test_name}")
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(
+                _run_single,
+                script_file.relative_to(PROJECT_ROOT).as_posix(),
+                headless=headless,
+            ): script_file
+            for script_file in script_files
+        }
+        for future in as_completed(futures):
+            results.append(future.result())
 
-        try:
-            res_path = resolve_script_res_path(test_name)
-            exit_code, combined_output = _execute_test(res_path, headless=headless)
-            detail = combined_output.strip() if exit_code != 0 else ""
-            results.append((test_name, exit_code, detail))
-            if verbose:
-                status = "PASS" if exit_code == 0 else "FAIL"
-                sys.stdout.write(combined_output)
-                print(f"[{status}] {test_name} (exit code: {exit_code})")
-                print()
-        except (ValueError, FileNotFoundError) as error:
-            detail = str(error)
-            results.append((test_name, 1, detail))
-            if verbose:
-                print(f"[FAIL] {test_name} ({detail})")
-                print()
+    results.sort(key=lambda item: item[0])
 
-    all_pass = all(code == 0 for _, code, _ in results)
     lines: list[str] = []
-    if verbose:
-        print("=== 汇总 ===")
-    for name, code, detail in results:
-        status = "PASS" if code == 0 else "FAIL"
-        line = f"[{status}] {name} (exit code: {code})"
-        lines.append(line)
-        if verbose:
-            print(f"  {line}")
-        if code != 0 and detail:
-            lines.append(detail)
+    for display_name, test_exit_code, detail in results:
+        lines.append(_format_result(display_name, test_exit_code, detail))
 
     total = len(results)
-    passed = sum(1 for _, code, _ in results if code == 0)
-    summary = f"总计: {total} 测试, {passed} 通过, {total - passed} 失败"
-    lines.append(summary)
-    if verbose:
-        print(f"\n{summary}")
+    passed = sum(1 for _, test_exit_code, _ in results if test_exit_code == 0)
+    lines.append(f"总计: {total} 测试, {passed} 通过, {total - passed} 失败")
 
-    return all_pass, "\n".join(lines)
+    all_passed = passed == total
+    return all_passed, "\n".join(lines)
