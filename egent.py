@@ -17,28 +17,21 @@ import pathlib
 import sys
 import typing
 
-# ---------- 将 builtin 加入 sys.path ----------
-
-_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent / "addons" / "egent" / "builtin"
+# builtin 置顶供内部扁平 import；egent 根目录 append 到末尾，避免遮蔽 PyPI 的 mcp 包
+_EGENT_ROOT = pathlib.Path(__file__).resolve().parent / "addons" / "egent"
+_BUILTIN_ROOT = _EGENT_ROOT / "builtin"
 if str(_BUILTIN_ROOT) not in sys.path:
     sys.path.insert(0, str(_BUILTIN_ROOT))
+if str(_EGENT_ROOT) not in sys.path:
+    sys.path.append(str(_EGENT_ROOT))
 
-import tools.file_edit_tool
-import tools.fuck_tool
-import tools.git_tool
-import tools.grep_search_tool
-import tools.launch_game_tool
-import tools.memory_tool
-import tools.read_file_tool
-import tools.shell_tool
-import tools.skill_tool
-import tools.system_info_tool
-import tools.walk_files_tool
-
-import agent.agent_config
-from agent_definition import AgentDefinition
-from _console import read_prompt
-import wrapped_agent
+# 以下模块依赖 sys.path 注入，须在路径就绪后导入
+# pylint: disable=wrong-import-position
+from builtin import tools, wrapped_agent
+from builtin.agent import agent_config, mcp_bridge
+from builtin.agent_definition import AgentDefinition
+from builtin._console import read_prompt
+# pylint: enable=wrong-import-position
 
 async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
     """执行游戏开发工作流：委派任务给 jason
@@ -53,6 +46,8 @@ async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
     _run_all_tests_spec = importlib.util.spec_from_file_location(
         "run_all_tests", _BUILTIN_ROOT / "test" / "run_all_tests.py"
     )
+    if _run_all_tests_spec is None or _run_all_tests_spec.loader is None:
+        return "错误：无法加载 run_all_tests 模块。"
     _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
     _run_all_tests_spec.loader.exec_module(_run_all_tests)
 
@@ -80,7 +75,7 @@ async def _run_game_development(agent_client: typing.Any, prompt: str) -> str:
             override_tools=(),
         )
         return "\n".join(lst_report) + "\n\n任务完成。请审查 git diff 后决定是否提交。"
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-exception-caught
         return f"错误：游戏开发工作流执行失败：{error}"
     finally:
         if jason is not None:
@@ -114,7 +109,7 @@ AGENTS: dict[str, AgentDefinition] = {
             ".agents/skills/godot-mcp-eval",
         ),
         ignore_files=(
-            *agent.agent_config.DEFAULT_IGNORE_FILES,
+            *agent_config.DEFAULT_IGNORE_FILES,
         ),
         default_tools=(
             tools.git_tool.git_diff,
@@ -157,9 +152,9 @@ AGENTS: dict[str, AgentDefinition] = {
             ".agents/skills/godot-mcp-eval",
         ),
         ignore_files=(
-            *agent.agent_config.DEFAULT_IGNORE_FILES,
+            *agent_config.DEFAULT_IGNORE_FILES,
         ),
-        no_write_files=("/addons/egent/*"),
+        no_write_files=("/addons/egent/*",),
         default_tools=(
             tools.git_tool.git_diff,
             tools.skill_tool.learn_skill,
@@ -185,6 +180,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
     ),
 }
+
 
 def parse_args() -> argparse.Namespace:
     """解析命令行参数。"""
@@ -215,26 +211,26 @@ async def main() -> None:
             dim=False,
         )
         return
-    agent = await definition.instantiate(debug=args.debug)
+    repl_agent = await definition.instantiate(debug=args.debug)
     try:
         wrapped_agent.write_line_colored(
-            f"@{agent.name}, {agent.model}, {agent.base_url}"
+            f"@{repl_agent.name}, {repl_agent.model}, {repl_agent.base_url}"
         )
         tool_lines = ["loading tools..."] + [
-            f"  - {tool}" for tool in agent.tool_names
+            f"  - {tool}" for tool in repl_agent.tool_names
         ]
         wrapped_agent.write_line_colored("\n".join(tool_lines))
-        wrapped_agent.write_line_colored(f"{agent.system_prompt}")
+        wrapped_agent.write_line_colored(f"{repl_agent.system_prompt}")
         while True:
             line = read_prompt()
             if line is None:
                 break
             if not line.strip():
                 continue
-            await agent.send(line)
+            await repl_agent.send(line)
     finally:
-        await agent.aclose()
-        await agent.mcp_bridge.close_shared_bridge()
+        await repl_agent.aclose()
+        await mcp_bridge.close_shared_bridge()
 
 
 if __name__ == "__main__":
