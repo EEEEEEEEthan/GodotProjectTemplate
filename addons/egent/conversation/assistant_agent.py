@@ -25,6 +25,6 @@ def create_assistant_agent(
     return Agent(
         name=name,
         instructions=resolved_instructions,
-        model=model_runtime.model_name,
+        model=model_runtime.config.model,
         tools=tools or [],
     )

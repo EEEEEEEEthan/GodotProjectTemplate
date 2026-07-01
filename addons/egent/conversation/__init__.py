@@ -2,13 +2,10 @@
 
 from agents import function_tool
 
-from egent.conversation.assistant_agent import (
-    DEFAULT_ASSISTANT_INSTRUCTIONS,
-    create_assistant_agent,
-)
-from egent.conversation.conversation import Conversation
-from egent.conversation.model_config import ModelConfig
-from egent.conversation.model_runtime import ModelRuntime
+from .assistant_agent import DEFAULT_ASSISTANT_INSTRUCTIONS, create_assistant_agent
+from .conversation import Conversation
+from .model_config import ModelConfig
+from .model_runtime import ModelRuntime
 
 __all__ = [
     "Conversation",

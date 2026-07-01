@@ -69,11 +69,19 @@ class ModelConfig:
             profiles = tomllib.load(config_file)
         profile = profiles.get(profile_name)
         if not isinstance(profile, dict):
-            available_profiles = list_profile_names(profiles)
+            available_profiles = [
+                name
+                for name, data in profiles.items()
+                if isinstance(data, dict)
+            ]
             raise ValueError(
                 f"未知配置节 {profile_name!r}，可选: {available_profiles}",
             )
-        tier_names = list_tier_names(profile)
+        tier_names = [
+            field_name
+            for field_name in profile
+            if field_name not in RESERVED_PROFILE_KEYS
+        ]
         if tier_name not in tier_names:
             raise ValueError(
                 f"配置节 [{profile_name}] 不存在档位 {tier_name!r}，"
@@ -108,18 +116,3 @@ def ensure_model_config_file(path: pathlib.Path) -> None:
         f"已创建配置模板 {path}，请填写后重新运行",
     )
 
-
-def list_profile_names(profiles: dict[str, object]) -> list[str]:
-    return [
-        profile_name
-        for profile_name, profile_data in profiles.items()
-        if isinstance(profile_data, dict)
-    ]
-
-
-def list_tier_names(profile: dict[str, object]) -> list[str]:
-    return [
-        field_name
-        for field_name in profile
-        if field_name not in RESERVED_PROFILE_KEYS
-    ]

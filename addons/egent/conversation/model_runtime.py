@@ -18,10 +18,6 @@ class ModelRuntime:
     config: ModelConfig
     run_config: RunConfig
 
-    @property
-    def model_name(self) -> str:
-        return self.config.model
-
     @classmethod
     def from_config(cls, config: ModelConfig) -> ModelRuntime:
         client = AsyncOpenAI(

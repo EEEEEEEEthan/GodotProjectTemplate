@@ -30,7 +30,7 @@ class Conversation:
         return self._session
 
     async def send(self, message: str, *, max_turns: int | None = None) -> str:
-        run_kwargs: dict = {
+        run_kwargs: dict[str, object] = {
             "run_config": self._model_runtime.run_config,
             "session": self._session,
         }
@@ -38,10 +38,3 @@ class Conversation:
             run_kwargs["max_turns"] = max_turns
         result = await Runner.run(self._agent, message, **run_kwargs)
         return result.final_output or ""
-
-    def clone(self, *, agent: Agent | None = None) -> Conversation:
-        return Conversation(
-            agent=agent or self._agent,
-            model_runtime=self._model_runtime,
-            session=self._session,
-        )
