@@ -8,12 +8,12 @@ func on_receive(command: String, data: Dictionary, response: Callable) -> void:
 		&"ping":
 			response.call({&"pong": true})
 			return
-		&"eval":
-			response.call(_eval_gdscript(data))
+		&"execute":
+			response.call(_execute_gdscript(data))
 			return
 	response.call({&"error": &"不支持的命令: %s" % command})
 
-func _eval_gdscript(data: Dictionary) -> Dictionary:
+func _execute_gdscript(data: Dictionary) -> Dictionary:
 	var source := str(data.get(&"source", ""))
 	var file_path := str(data.get(&"file", ""))
 	if not file_path.is_empty():
