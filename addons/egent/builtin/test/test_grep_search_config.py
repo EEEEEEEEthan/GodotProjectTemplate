@@ -1,10 +1,11 @@
 """测试 grep_search_tool 是否正确使用配置文件中的 ignore_files"""
 
+from __future__ import annotations
+
 import os
-import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from _test_setup import *  # noqa: F401
 
 from agent.agent_config import AgentConfig
 import tools.grep_search_tool as grep_search_tool_module

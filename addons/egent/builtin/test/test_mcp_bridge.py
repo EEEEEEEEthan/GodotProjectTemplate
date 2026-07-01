@@ -1,11 +1,12 @@
 """测试 MCP 桥接生命周期与关闭容错。"""
 
+from __future__ import annotations
+
 import asyncio
-import os
 import sys
 from contextlib import asynccontextmanager
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from _test_setup import *  # noqa: F401
 
 import agent.mcp_bridge as mcp_bridge_module
 

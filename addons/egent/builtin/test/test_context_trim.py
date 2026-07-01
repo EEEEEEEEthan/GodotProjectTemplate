@@ -1,10 +1,10 @@
 """测试当轮上下文裁剪逻辑。"""
 
-import pathlib
+from __future__ import annotations
+
 import sys
 
-EGENT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(EGENT_ROOT))
+from _test_setup import *  # noqa: F401
 
 import agent.agent_client
 

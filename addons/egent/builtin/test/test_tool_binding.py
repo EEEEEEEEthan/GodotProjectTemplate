@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import json
-import os
 import pathlib
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from _test_setup import *  # noqa: F401
 
 import agent.tool_binding
 import tools.grep_search_tool

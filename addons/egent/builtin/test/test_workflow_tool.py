@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from _test_setup import *  # noqa: F401
 
 import agent.tool_binding
 import agent_definition

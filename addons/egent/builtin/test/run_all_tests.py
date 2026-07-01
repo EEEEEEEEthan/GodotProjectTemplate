@@ -11,16 +11,26 @@ import sys
 TESTS_DIR = pathlib.Path(__file__).resolve().parent
 EGENT_ROOT = TESTS_DIR.parent.parent
 PROJECT_ROOT = EGENT_ROOT.parent.parent
+BUILTIN_DIR = EGENT_ROOT / "builtin"
+
+
+def _env_with_pythonpath() -> dict[str, str]:
+    """返回追加了 PYTHONPATH 的环境变量副本。"""
+    env = dict(os.environ)
+    existing = env.get("PYTHONPATH", "")
+    paths = [p for p in existing.split(os.pathsep) if p] if existing else []
+    builtin_str = str(BUILTIN_DIR)
+    if builtin_str not in paths:
+        paths.insert(0, builtin_str)
+    env["PYTHONPATH"] = os.pathsep.join(paths)
+    return env
 
 
 def run_all(*, verbose: bool = False) -> tuple[bool, str]:
     """运行全部测试，返回 (是否全部通过, 汇总信息)。"""
     test_files = sorted(TESTS_DIR.glob("test_*.py"))
     if not test_files:
-        message = "未找到任何 test_*.py 测试文件"
-        if verbose:
-            print(message)
-        return True, message
+        return True, "⚠️ 未找到测试文件"
 
     results: list[tuple[str, int, str]] = []
     for test_file in test_files:
@@ -29,8 +39,6 @@ def run_all(*, verbose: bool = False) -> tuple[bool, str]:
             print(f"[RUN] {test_name}")
         detail = ""
         try:
-            env = os.environ.copy()
-            env["EGENT_TEST_NESTED"] = "1"
             result = subprocess.run(
                 [sys.executable, str(test_file)],
                 cwd=PROJECT_ROOT,
@@ -38,65 +46,44 @@ def run_all(*, verbose: bool = False) -> tuple[bool, str]:
                 text=True,
                 timeout=180,
                 encoding="utf-8",
-                env=env,
+                env=_env_with_pythonpath(),
             )
             if verbose:
-                print(result.stdout)
-                if result.stderr:
-                    print(f"--- {test_name} stderr ---\n{result.stderr}")
-            if result.returncode != 0:
-                detail = result.stdout.strip()
-                if result.stderr.strip():
-                    stderr_text = result.stderr.strip()
-                    detail = f"{detail}\n{stderr_text}".strip() if detail else stderr_text
+                stdout = result.stdout.strip()
+                stderr = result.stderr.strip()
+                if stdout or stderr:
+                    print(stdout)
+                    if stderr:
+                        print(stderr)
+            summary_lines = []
+            if result.stdout.strip():
+                summary_lines.append(result.stdout.strip())
+            if result.stderr.strip():
+                summary_lines.append(result.stderr.strip())
+            detail = "\n".join(summary_lines)
             results.append((test_name, result.returncode, detail))
-            if verbose:
-                status = "PASS" if result.returncode == 0 else "FAIL"
-                print(f"[{status}] {test_name} (exit code: {result.returncode})")
-                print()
         except subprocess.TimeoutExpired:
-            detail = "超时 180 秒"
-            results.append((test_name, -1, detail))
-            if verbose:
-                print(f"[FAIL] {test_name} ({detail})")
-                print()
-        except Exception as error:
-            detail = f"异常: {error}"
-            results.append((test_name, -2, detail))
-            if verbose:
-                print(f"[FAIL] {test_name} ({detail})")
-                print()
+            results.append((test_name, -1, "[timeout]"))
 
-    all_pass = all(code == 0 for _, code, _ in results)
+    passed = [n for n, c, _ in results if c == 0]
+    failed = [(n, c, d) for n, c, d in results if c != 0]
+
     lines: list[str] = []
-    if verbose:
-        print("=== 汇总 ===")
     for name, code, detail in results:
-        status = "PASS" if code == 0 else "FAIL"
-        line = f"[{status}] {name} (exit code: {code})"
-        lines.append(line)
-        if verbose:
-            print(f"  {line}")
-        if code != 0 and detail:
-            lines.append(detail)
+        if code == 0:
+            lines.append(f"[PASS] {name} (exit code: 0)")
+        else:
+            lines.append(f"[FAIL] {name} (exit code: {code})")
+            if detail:
+                lines.append(detail)
 
+    summary = "\n".join(lines)
     total = len(results)
-    passed = sum(1 for _, code, _ in results if code == 0)
-    summary = f"总计: {total} 测试, {passed} 通过, {total - passed} 失败"
-    lines.append(summary)
-    if verbose:
-        print(f"\n{summary}")
-
-    return all_pass, "\n".join(lines)
-
-
-def main() -> int:
-    print("=== run_all_tests ===")
-    print(f"Tests directory: {TESTS_DIR}")
-    print()
-    all_pass, _ = run_all(verbose=True)
-    return 0 if all_pass else 1
+    summary += f"\n总计: {total} 测试, {len(passed)} 通过, {len(failed)} 失败"
+    return len(failed) == 0, summary
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    all_pass, summary = run_all(verbose=True)
+    print(summary)
+    sys.exit(0 if all_pass else 1)

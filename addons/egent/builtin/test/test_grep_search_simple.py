@@ -1,10 +1,11 @@
 """简单测试 grep_search 工具"""
 
+from __future__ import annotations
+
 import os
-import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from _test_setup import *  # noqa: F401
 
 from agent.agent_config import AgentConfig
 import tools.grep_search_tool as grep_search_tool_module

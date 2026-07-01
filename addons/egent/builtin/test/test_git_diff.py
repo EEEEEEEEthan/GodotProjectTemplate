@@ -1,11 +1,12 @@
 """测试 git_diff 工具"""
 
+from __future__ import annotations
+
 import os
 import subprocess
-import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from _test_setup import *  # noqa: F401
 
 from agent.agent_config import AgentConfig
 import tools.git_tool as git_tool_module
