@@ -134,7 +134,7 @@ def build_binding(handler: ToolHandler) -> ToolBinding:
 
 def to_openai_tools(bindings: dict[str, ToolBinding]) -> list[dict[str, typing.Any]]:
     """按工具名排序输出 OpenAI tools 列表。"""
-    return [bindings[name].schema for name in sorted(bindings)]
+    return merge_advertised_tools(bindings)
 
 
 
