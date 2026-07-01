@@ -1,5 +1,5 @@
 extends Node
-class_name GodotMcpServer
+class_name McpServer
 
 const PLUGIN_CONFIG_PATH := "res://addons/egent/mcp/plugin.cfg"
 const DEFAULT_PORT := 8765
