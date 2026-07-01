@@ -1,0 +1,5 @@
+# 复制为 model.toml 后填写（model.toml 已 gitignore）
+api_key = "sk-..."
+model = "gpt-4o-mini"
+base_url = "https://api.openai.com/v1"
+instructions = "你是游戏开发助手，熟悉 Godot。"
