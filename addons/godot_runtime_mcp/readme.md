@@ -28,9 +28,7 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 }
 ```
 
-需要 Python 3.10+。`ide_mcp.bat` 会自动安装依赖。
-
-完成以上两步即可，无需在场景里注册 handler。
+需要 Python 3.10+。
 
 ### 3. 获取端口号
 
