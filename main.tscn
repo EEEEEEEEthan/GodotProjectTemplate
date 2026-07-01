@@ -1,5 +1,18 @@
 [gd_scene format=3 uid="uid://deunuw8hi83nq"]
 
+[sub_resource type="GDScript" id="GDScript_7dm0k"]
+script/source = "extends Control
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	GameMcp.handler = on_command_received
+
+func on_command_received(data: Dictionary) -> String:
+	await get_tree().create_timer(10.0).timeout
+	return \"asdf\"
+"
+
 [node name="Main" type="Control" unique_id=837875434]
 layout_mode = 3
 anchors_preset = 15
@@ -7,3 +20,4 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = SubResource("GDScript_7dm0k")
