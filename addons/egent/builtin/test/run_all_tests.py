@@ -3,6 +3,7 @@
 通过条件：所有测试的退出码都是 0
 """
 
+import os
 import pathlib
 import subprocess
 import sys
@@ -28,6 +29,8 @@ def run_all(*, verbose: bool = False) -> tuple[bool, str]:
             print(f"[RUN] {test_name}")
         detail = ""
         try:
+            env = os.environ.copy()
+            env["EGENT_TEST_NESTED"] = "1"
             result = subprocess.run(
                 [sys.executable, str(test_file)],
                 cwd=PROJECT_ROOT,
@@ -35,6 +38,7 @@ def run_all(*, verbose: bool = False) -> tuple[bool, str]:
                 text=True,
                 timeout=180,
                 encoding="utf-8",
+                env=env,
             )
             if verbose:
                 print(result.stdout)

@@ -34,6 +34,8 @@ def test_egent_test_tool_schema() -> None:
 
 
 def test_egent_test_tool_runs() -> None:
+    if os.environ.get("EGENT_TEST_NESTED"):
+        return  # 避免递归：嵌套子进程无需再跑 run_egent_test
     wrapped = agent.tool_binding.wrap_tool(
         MockAgent(),
         tools.egent_test_tool.run_egent_test,
