@@ -29,7 +29,7 @@ import agent.tool_binding
 if typing.TYPE_CHECKING:
     import wrapped_agent
 
-TOOL_SET_EGENT_READ: tuple[agent.tool_binding.ToolHandler, ...] = (
+TOOL_SET_BASIC: tuple[agent.tool_binding.ToolHandler, ...] = (
     tools.git_tool.git_diff,
     tools.skill_tool.learn_skill,
     tools.skill_tool.run_skill_script,
@@ -132,7 +132,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         no_write_files=(),
         default_tools=(
-            *TOOL_SET_EGENT_READ,
+            *TOOL_SET_BASIC,
             tools.git_tool.git_add,
             tools.git_tool.git_commit,
             tools.file_edit_tool.create_file,
@@ -171,7 +171,7 @@ AGENTS: dict[str, AgentDefinition] = {
             "model.toml",
         ),
         default_tools=(
-            *TOOL_SET_EGENT_READ,
+            *TOOL_SET_BASIC,
             tools.git_tool.git_add,
             tools.git_tool.git_commit,
             tools.workflow_tool.run_egent_development,
@@ -209,7 +209,7 @@ AGENTS: dict[str, AgentDefinition] = {
         ),
         no_write_files=("agent_definition.py",),
         default_tools=(
-            *TOOL_SET_EGENT_READ,
+            *TOOL_SET_BASIC,
             tools.file_edit_tool.create_file,
             tools.file_edit_tool.apply_patch,
             tools.file_edit_tool.delete_file,
