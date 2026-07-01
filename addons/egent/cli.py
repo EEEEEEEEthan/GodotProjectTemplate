@@ -13,7 +13,6 @@ from agents import (
     Agent,
     RunConfig,
     Runner,
-    SQLiteSession,
     set_default_openai_api,
     set_default_openai_client,
     set_trace_processors,
@@ -24,7 +23,6 @@ from openai import AsyncOpenAI
 
 PACKAGE_ROOT = pathlib.Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PACKAGE_ROOT / ".model.toml"
-DEFAULT_SESSION_DATABASE = PACKAGE_ROOT / ".data" / "conversations.db"
 DEFAULT_PROFILE = "coconut"
 DEFAULT_MODEL = "low"
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
@@ -133,7 +131,6 @@ async def async_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="egent 单 agent 聊天")
     parser.add_argument("--profile", default=DEFAULT_PROFILE)
     parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--session-id", default="default")
     arguments = parser.parse_args(argv)
     try:
         api_key, base_url, resolved_model, profile_name, model_alias = (
@@ -150,8 +147,6 @@ async def async_main(argv: list[str] | None = None) -> int:
     )
     print(f"使用 [{profile_name}] / {model_alias} → {resolved_model}\n")
     print("输入消息开始对话，输入 exit / quit 退出。\n")
-    DEFAULT_SESSION_DATABASE.parent.mkdir(parents=True, exist_ok=True)
-    session = SQLiteSession(arguments.session_id, DEFAULT_SESSION_DATABASE)
     while True:
         try:
             user_message = input("你: ").strip()
@@ -166,7 +161,6 @@ async def async_main(argv: list[str] | None = None) -> int:
             agent,
             user_message,
             run_config=run_config,
-            session=session,
         )
         print(f"\n助手: {result.final_output or ''}\n")
     return 0
