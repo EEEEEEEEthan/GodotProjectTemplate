@@ -32,21 +32,6 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 
 完成以上两步即可，无需在场景里注册 handler。
 
-## 脚本格式
-
-POST body 即 GDScript 全文，须 `extends RefCounted` 并定义：
-
-```gdscript
-extends RefCounted
-
-func run(scene_tree: SceneTree) -> Variant:
-    print("debug info")
-    var player = scene_tree.current_scene.get_node("Player")
-    return {"hp": player.hp, "pos": str(player.global_position)}
-```
-
-响应 `data` 固定为 `{"value": <run 返回值>, "stdout": "<执行期间 print 输出>"}`。
-
 ## 获取端口号
 
 游戏启动后日志会打印：
