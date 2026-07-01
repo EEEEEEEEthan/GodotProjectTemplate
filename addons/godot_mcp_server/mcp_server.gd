@@ -1,6 +1,5 @@
 extends Node
-class_name GodotMcp
-## Game MCP 单例：启动 HTTP 服务并分发已注册协议回调。
+class_name GodotMcpServer
 
 const PLUGIN_CONFIG_PATH := "res://addons/egent/mcp/plugin.cfg"
 const DEFAULT_PORT := 8765
@@ -9,38 +8,27 @@ const ROUTE_PATH := "/mcp"
 const READY_LOG_TEMPLATE := "<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=%d>>>"
 const BIND_FAILED_LOG_LINE := "<<<EGENT::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
 
-var _handler = func(command: String, data: Dictionary, respond: Callable) -> void: pass
+@export var port: int
+@export var auto_port: bool = true
+signal command_received(data: Dictionary, respond: Callable)
 var _tcp_server := TCPServer.new()
 var _connections: Array[Dictionary] = []
-var _listening_port: int = -1
 
+func _ready() -> void:
+	while not _start(port) and auto_port:
+		port = port + 1
 
-func _init(handler: Callable) -> void:
-	_handler = handler
-	var port: int = start()
-	if port > 0:
-		print(READY_LOG_TEMPLATE % port)
-
-func get_listening_port() -> int:
-	return _listening_port
-
-
-func start(preferred_port: int = 0) -> int:
-	var port := preferred_port if preferred_port > 0 else DEFAULT_PORT
-	for _attempt in MAX_PORT_ATTEMPTS:
-		if _tcp_server.listen(port) == OK:
-			_listening_port = port
-			set_process(true)
-			return port
-		port += 1
+func _start(port: int) -> bool:
+	if _tcp_server.listen(port) == OK:
+		self.port = port
+		set_process(true)
+		return true
 	push_error(BIND_FAILED_LOG_LINE)
 	print(BIND_FAILED_LOG_LINE)
-	return -1
+	return false
 
-
-func _on_command_received(command: String, data: Dictionary, respond: Callable) -> void:
-	_handler.call(
-		command,
+func _on_command_received(data: Dictionary, respond: Callable) -> void:
+	command_received.emit(
 		data,
 		func(result: Dictionary) -> void:
 			if typeof(result) != TYPE_DICTIONARY:
@@ -127,21 +115,13 @@ func _dispatch_request(connection: Dictionary) -> void:
 	if json.parse(body_text) != OK:
 		_send_json_response(connection, 400, {"ok": false, "error": "JSON 解析失败"})
 		return
-	var payload: Variant = json.data
-	if typeof(payload) != TYPE_DICTIONARY:
+	var data: Variant = json.data
+	if typeof(data) != TYPE_DICTIONARY:
 		_send_json_response(connection, 400, {"ok": false, "error": "请求体必须是 JSON 对象"})
 		return
-	var command: String = str(payload.get("command", ""))
-	if command.is_empty():
-		_send_json_response(connection, 400, {"ok": false, "error": "缺少 command 字段"})
-		return
-	var data: Dictionary = payload.get("data", {})
-	if typeof(data) != TYPE_DICTIONARY:
-		data = {}
-	print("Game MCP: 收到 command=%s data=%s" % [command, JSON.stringify(data)])
+	print("Game MCP: 收到 data=%s" % body_text)
 	connection.state = "dispatched"
 	_on_command_received(
-		command,
 		data,
 		func(response_body: Dictionary) -> void:
 			_send_json_response(connection, 200, response_body)
