@@ -62,9 +62,10 @@ async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
                 "否则，输出修改意见"
             )
             if lst_review and "<<<通过>>>" in lst_review[-1]:
+                import tools
                 lst_report = await jack.send(
                     "写一份报告，包括但不限于本次工作的简报。本次工作的槽点，使用fuck工具吐槽.如果有多条可以分条吐槽.越详细越容易被优化",
-                    override_tools=(),
+                    override_tools=(tools.fuck_tool.fuck,),
                 )
                 report = "\n".join(lst_report)
                 return report + "\n\n任务完成。代码已审查，可以等待用户验收。"
