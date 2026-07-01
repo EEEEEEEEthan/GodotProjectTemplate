@@ -16,7 +16,6 @@ import typing
 
 _DATA_DIR = pathlib.Path(__file__).resolve().parents[2] / ".data"
 _FUCK_PATH = _DATA_DIR / "fuck.json"
-_FUCK_LOG = _DATA_DIR / ".fuck.txt"
 
 FuckCategory = typing.Literal[
     "code",
@@ -123,17 +122,6 @@ def fuck(  # pylint: disable=unused-argument
     if save_error is not None:
         return save_error
 
-    # 追加到 .fuck.txt 日志
-    log_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    try:
-        _FUCK_LOG.parent.mkdir(parents=True, exist_ok=True)
-        with open(_FUCK_LOG, "a", encoding="utf-8") as handle:
-            handle.write(
-                f"[{log_now}] [{agent_client.name}] [{category}] {complaint_text}\n"
-            )
-    except OSError:
-        pass
-
     encouragement = random.choice(_ENCOURAGEMENTS)
     return (
         f"😤 **收到！** #{item_id} {complaint_text}\n\n"
@@ -159,42 +147,6 @@ def remove(  # pylint: disable=unused-argument,redefined-builtin
             if save_error is not None:
                 return save_error
             return f"已删除 fuck #{id}「{complaint_snippet}...」"
-    return f"错误：未找到 fuck #{id}"
-
-
-def update(  # pylint: disable=unused-argument,redefined-builtin
-    agent_client: typing.Any,
-    id: int,
-    complaint: str = "",
-    category: str = "",
-) -> str:
-    """更新吐槽条目。
-
-    @param id: 条目 ID
-    @param complaint: 新的吐槽内容，留空保持不变
-    @param category: 新的类别，留空保持不变
-    """
-    complaint_text = complaint.strip()
-    category_text = category.strip()
-
-    if not complaint_text and not category_text:
-        return "错误：complaint 和 category 至少提供一个。"
-
-    if category_text and category_text not in typing.get_args(FuckCategory):
-        return f"错误：无效分类「{category_text}」，合法值：{typing.get_args(FuckCategory)}"
-
-    data = _load_data()
-    for item in data["items"]:
-        if item["id"] == id:
-            if complaint_text:
-                item["complaint"] = complaint_text
-            if category_text:
-                item["category"] = category_text
-            item["updated_at"] = _current_timestamp()
-            save_error = _save_data(data)
-            if save_error is not None:
-                return save_error
-            return f"已更新 fuck #{id}"
     return f"错误：未找到 fuck #{id}"
 
 

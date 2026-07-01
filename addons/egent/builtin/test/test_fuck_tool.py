@@ -85,46 +85,6 @@ class TestFuckTool(unittest.TestCase):
         result = fuck_tool.remove(self.client, 999)
         self.assertEqual(result, "错误：未找到 fuck #999")
 
-    # ── update ────────────────────────────────────────────
-
-    def test_update_normal(self):
-        fuck_tool.fuck(self.client, "Old complaint", "code")
-        result = fuck_tool.update(self.client, 1, "New complaint", "stuck")
-        self.assertEqual(result, "已更新 fuck #1")
-        data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(data["items"][0]["complaint"], "New complaint")
-        self.assertEqual(data["items"][0]["category"], "stuck")
-
-    def test_update_complaint_only(self):
-        fuck_tool.fuck(self.client, "Old", "code")
-        result = fuck_tool.update(self.client, 1, "New", "")
-        self.assertEqual(result, "已更新 fuck #1")
-        data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(data["items"][0]["complaint"], "New")
-        self.assertEqual(data["items"][0]["category"], "code")  # unchanged
-
-    def test_update_category_only(self):
-        fuck_tool.fuck(self.client, "Same", "code")
-        result = fuck_tool.update(self.client, 1, "", "life")
-        self.assertEqual(result, "已更新 fuck #1")
-        data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(data["items"][0]["complaint"], "Same")  # unchanged
-        self.assertEqual(data["items"][0]["category"], "life")
-
-    def test_update_nothing_provided(self):
-        fuck_tool.fuck(self.client, "Same", "code")
-        result = fuck_tool.update(self.client, 1, "", "")
-        self.assertEqual(result, "错误：complaint 和 category 至少提供一个。")
-
-    def test_update_invalid_category(self):
-        fuck_tool.fuck(self.client, "Same", "code")
-        result = fuck_tool.update(self.client, 1, "", "invalid_cat")
-        self.assertIn("错误：无效分类", result)
-
-    def test_update_not_found(self):
-        result = fuck_tool.update(self.client, 999, "Title", "code")
-        self.assertEqual(result, "错误：未找到 fuck #999")
-
     # ── list_items ────────────────────────────────────────
 
     def test_list_items_empty(self):
@@ -203,13 +163,10 @@ class TestFuckTool(unittest.TestCase):
         fuck_tool.fuck(self.client, "B", "stuck")
         fuck_tool.fuck(self.client, "C", "life")
         fuck_tool.remove(self.client, 2)
-        fuck_tool.update(self.client, 1, "A Updated", "requirement")
 
         data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
         ids = [item["id"] for item in data["items"]]
         self.assertEqual(ids, [1, 3])
-        self.assertEqual(data["items"][0]["complaint"], "A Updated")
-        self.assertEqual(data["items"][0]["category"], "requirement")
 
 
 if __name__ == "__main__":
