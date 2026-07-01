@@ -8,6 +8,7 @@ from __future__ import annotations
 import dataclasses
 import typing
 
+import tools.egent_test_tool
 import tools.file_edit_tool
 import tools.fuck_tool
 import tools.git_tool
@@ -44,6 +45,7 @@ TOOL_SET_EGENT_READ: tuple[agent.tool_binding.ToolHandler, ...] = (
     tools.read_file_tool.read_whole_file,
     tools.launch_game_tool.launch_game,
     tools.pylint_tool.run_pylint,
+    tools.egent_test_tool.run_egent_test,
     tools.fuck_tool.fuck,
 )
 
@@ -161,7 +163,6 @@ AGENTS: dict[str, AgentDefinition] = {
 你极度优雅,对代码的要求极高.
 """.strip(),
         skills=(
-            "addons/egent/builtin/skills/egent-test",
             "addons/egent/builtin/skills/code-optimize",
             "addons/egent/builtin/skills/egent-mcp",
         ),
@@ -199,7 +200,6 @@ AGENTS: dict[str, AgentDefinition] = {
 你做出任何修改之后一定要进行测试.
 """.strip(),
         skills=(
-            "addons/egent/builtin/skills/egent-test",
             "addons/egent/builtin/skills/code-optimize",
             "addons/egent/builtin/skills/egent-mcp",
         ),

@@ -1,5 +1,6 @@
 """内置工具模块入口。"""
 
+from . import egent_test_tool
 from . import file_edit_tool
 from . import fuck_tool
 from . import git_tool
@@ -16,6 +17,7 @@ from . import walk_files_tool
 from . import workflow_tool
 
 __all__ = [
+    "egent_test_tool",
     "file_edit_tool",
     "git_tool",
     "godot_test_tool",
