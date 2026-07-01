@@ -12,4 +12,3 @@ __pycache__/
 /.loop/__pycache__/
 /.loop/.bridge-state/
 /.loop/.logs/
-addons/egent/model.toml
