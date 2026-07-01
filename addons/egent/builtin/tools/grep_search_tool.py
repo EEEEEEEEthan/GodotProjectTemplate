@@ -7,9 +7,12 @@ import os
 import re
 import typing
 
+import agent.tool_binding
+
 from . import _path_util as path_util
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def grep_search(
     agent_client: typing.Any,
     pattern: str,

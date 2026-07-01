@@ -65,6 +65,49 @@ def tool(
     return decorator
 
 
+def agent_tool(
+    handler: ToolHandler | None = None,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+    readonly: bool = False,
+) -> ToolHandler | typing.Callable[[ToolHandler], ToolHandler]:
+    """注册 agent 工具。需要 client 时保留首参 agent_client，否则可省略。
+
+    readonly=True 表示不修改项目工作区；写 agent 内部数据（memory、fuck 等）或跑测试/验证仍应标记为 readonly。
+    """
+
+    def decorate(fn: ToolHandler) -> ToolHandler:
+        if name is not None:
+            fn.__tool_name__ = name  # type: ignore[attr-defined]
+        if description is not None:
+            fn.__tool_description__ = description  # type: ignore[attr-defined]
+        if readonly:
+            fn.__tool_readonly__ = True  # type: ignore[attr-defined]
+        return fn
+
+    if handler is not None:
+        return decorate(handler)
+    return decorate
+
+
+def readonly(handler: ToolHandler) -> ToolHandler:
+    """标记工具为只读：不修改项目工作区（含内部数据写入与跑测试/验证）。"""
+    handler.__tool_readonly__ = True  # type: ignore[attr-defined]
+    return handler
+
+
+def is_readonly(handler: ToolHandler) -> bool:
+    """工具是否标记为只读。"""
+    if bool(getattr(handler, "__tool_readonly__", False)):
+        return True
+    return bool(getattr(_unwrap_callable(handler), "__tool_readonly__", False))
+
+
+def _accepts_agent_client(handler: typing.Callable[..., typing.Any]) -> bool:
+    return "agent_client" in inspect.signature(handler).parameters
+
+
 def wrap_tool(
     agent_client: typing.Any,
     handler: typing.Callable[..., typing.Any],
@@ -72,6 +115,7 @@ def wrap_tool(
     """将 agent_client 注入工具函数，生成 LLM 可调用的 handler。"""
     target = _unwrap_callable(handler)
     signature = inspect.signature(target)
+    inject_client = _accepts_agent_client(target)
     exposed_parameters = [
         parameter
         for name, parameter in signature.parameters.items()
@@ -82,18 +126,27 @@ def wrap_tool(
     if inspect.iscoroutinefunction(target):
 
         async def wrapped(**arguments: typing.Any) -> typing.Any:
-            return await target(agent_client, **arguments)
+            if inject_client:
+                return await target(agent_client, **arguments)
+            return await target(**arguments)
 
     else:
 
         def wrapped(**arguments: typing.Any) -> typing.Any:
-            return target(agent_client, **arguments)
+            if inject_client:
+                return target(agent_client, **arguments)
+            return target(**arguments)
 
     functools.update_wrapper(wrapped, target)
     wrapped.__signature__ = exposed_signature  # type: ignore[attr-defined]
     setattr(wrapped, _WRAPPED_TOOL_ATTR, target)
 
-    for attribute_name in ("__tool_name__", "__tool_description__", "__tool_binding_cache__"):
+    for attribute_name in (
+        "__tool_name__",
+        "__tool_description__",
+        "__tool_readonly__",
+        "__tool_binding_cache__",
+    ):
         if hasattr(handler, attribute_name):
             setattr(wrapped, attribute_name, getattr(handler, attribute_name))
 

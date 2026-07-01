@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import importlib.util
 import pathlib
-import typing
+
+import agent.tool_binding
 
 _BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -16,12 +17,12 @@ _run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
 _run_all_tests_spec.loader.exec_module(_run_all_tests)
 
 
-async def run_egent_development(agent_client: typing.Any, prompt: str) -> str:
+@agent.tool_binding.agent_tool
+async def run_egent_development(prompt: str) -> str:
     """执行egent开发工作流：委派任务给 jack
 
     @param prompt: 任务描述.需要包括任务原因,任务细节,关键代码位置
     """
-    del agent_client
     task_prompt = prompt.strip()
     if not task_prompt:
         return "错误：prompt 不能为空。"

@@ -14,6 +14,8 @@ import random
 import re
 import typing
 
+import agent.tool_binding
+
 _DATA_DIR = pathlib.Path(__file__).resolve().parents[2] / ".data"
 _FUCK_PATH = _DATA_DIR / "fuck.json"
 
@@ -80,6 +82,7 @@ def _save_data(data: dict[str, typing.Any]) -> str | None:
 # ── 公开工具函数 ──────────────────────────────────────────
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def fuck(
     agent_client: typing.Any,
     complaint: str,
@@ -120,7 +123,8 @@ def fuck(
     )
 
 
-def add_comment(  # pylint: disable=unused-argument,redefined-builtin
+@agent.tool_binding.agent_tool(readonly=True)
+def add_comment(  # pylint: disable=redefined-builtin
     agent_client: typing.Any,
     id: int,
     comment: str,
@@ -149,8 +153,8 @@ def add_comment(  # pylint: disable=unused-argument,redefined-builtin
     return f"错误：未找到 fuck #{id}"
 
 
-def remove(  # pylint: disable=unused-argument,redefined-builtin
-    agent_client: typing.Any,
+@agent.tool_binding.agent_tool(readonly=True)
+def remove(  # pylint: disable=redefined-builtin
     id: int,
 ) -> str:
     """删除吐槽条目。
@@ -169,9 +173,8 @@ def remove(  # pylint: disable=unused-argument,redefined-builtin
     return f"错误：未找到 fuck #{id}"
 
 
-def list_items(  # pylint: disable=unused-argument
-    agent_client: typing.Any,
-) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def list_items() -> str:
     """列出所有吐槽条目。"""
     data = _load_data()
     if not data["items"]:
@@ -187,8 +190,8 @@ def list_items(  # pylint: disable=unused-argument
     return "\n".join(lines)
 
 
-def get(  # pylint: disable=unused-argument,redefined-builtin
-    agent_client: typing.Any,
+@agent.tool_binding.agent_tool(readonly=True)
+def get(  # pylint: disable=redefined-builtin
     id: int,
 ) -> str:
     """获取单个吐槽条目详情。
@@ -216,8 +219,8 @@ def get(  # pylint: disable=unused-argument,redefined-builtin
     return f"错误：未找到 fuck #{id}"
 
 
-def search(  # pylint: disable=unused-argument
-    agent_client: typing.Any,
+@agent.tool_binding.agent_tool(readonly=True)
+def search(
     query: str,
 ) -> str:
     """在吐槽内容中搜索条目。

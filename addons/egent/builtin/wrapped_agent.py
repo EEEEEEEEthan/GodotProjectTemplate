@@ -86,6 +86,7 @@ class WrappedAgent:
         *,
         role: str = "user",
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None = None,
+        readonly: bool = False,
     ) -> list[str]:
         """发送消息并打印流式输出，返回每轮 TurnCompleted 的完整文本。"""
         completions: list[str] = []
@@ -94,6 +95,7 @@ class WrappedAgent:
                 role,
                 prompt,
                 override_tools=override_tools,
+                readonly=readonly,
             ):
                 self.__print_event(event)
                 if isinstance(event, agent.agent_events.TurnCompleted):

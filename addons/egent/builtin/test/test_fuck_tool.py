@@ -75,25 +75,25 @@ class TestFuckTool(unittest.TestCase):
 
     def test_remove_normal(self):
         fuck_tool.fuck(self.client, "Task")
-        result = fuck_tool.remove(self.client, 1)
+        result = fuck_tool.remove( 1)
         self.assertIn("已删除 fuck #1", result)
         data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
         self.assertEqual(len(data["items"]), 0)
 
     def test_remove_not_found(self):
-        result = fuck_tool.remove(self.client, 999)
+        result = fuck_tool.remove( 999)
         self.assertEqual(result, "错误：未找到 fuck #999")
 
     # ── list_items ────────────────────────────────────────
 
     def test_list_items_empty(self):
-        result = fuck_tool.list_items(self.client)
+        result = fuck_tool.list_items()
         self.assertEqual(result, "(无 fuck 条目)")
 
     def test_list_items_with_data(self):
         fuck_tool.fuck(self.client, "B first")
         fuck_tool.fuck(self.client, "A second")
-        result = fuck_tool.list_items(self.client)
+        result = fuck_tool.list_items()
         lines = result.split("\n")
         self.assertEqual(len(lines), 2)
         self.assertIn("#1", lines[0])
@@ -107,14 +107,14 @@ class TestFuckTool(unittest.TestCase):
 
     def test_get_normal(self):
         fuck_tool.fuck(self.client, "My complaint")
-        result = fuck_tool.get(self.client, 1)
+        result = fuck_tool.get( 1)
         self.assertIn("ID：1", result)
         self.assertIn("作者：test_agent", result)
         self.assertIn("吐槽：My complaint", result)
         self.assertIn("创建时间：", result)
 
     def test_get_not_found(self):
-        result = fuck_tool.get(self.client, 999)
+        result = fuck_tool.get( 999)
         self.assertEqual(result, "错误：未找到 fuck #999")
 
     # ── search ────────────────────────────────────────────
@@ -122,32 +122,32 @@ class TestFuckTool(unittest.TestCase):
     def test_search_match_complaint(self):
         fuck_tool.fuck(self.client, "登录bug修复")
         fuck_tool.fuck(self.client, "优化性能")
-        result = fuck_tool.search(self.client, "登录")
+        result = fuck_tool.search( "登录")
         lines = result.split("\n")
         self.assertEqual(len(lines), 1)
         self.assertIn("登录bug修复", lines[0])
 
     def test_search_match_complaint_exact(self):
         fuck_tool.fuck(self.client, "随便说点啥")
-        result = fuck_tool.search(self.client, "随便说点啥")
+        result = fuck_tool.search( "随便说点啥")
         self.assertIn("随便说点啥", result)
 
     def test_search_no_match(self):
         fuck_tool.fuck(self.client, "Task")
-        result = fuck_tool.search(self.client, "不存在")
+        result = fuck_tool.search( "不存在")
         self.assertEqual(result, "(无匹配「不存在」的 fuck 条目)")
 
     def test_search_case_insensitive(self):
         fuck_tool.fuck(self.client, "Login Bug")
-        result = fuck_tool.search(self.client, "login")
+        result = fuck_tool.search( "login")
         self.assertIn("Login Bug", result)
 
     def test_search_empty_query(self):
-        result = fuck_tool.search(self.client, "")
+        result = fuck_tool.search( "")
         self.assertEqual(result, "错误：query 不能为空。")
 
     def test_search_blank_query(self):
-        result = fuck_tool.search(self.client, "   ")
+        result = fuck_tool.search( "   ")
         self.assertEqual(result, "错误：query 不能为空。")
 
     # ── add_comment ─────────────────────────────────────────
@@ -198,7 +198,7 @@ class TestFuckTool(unittest.TestCase):
         fuck_tool.fuck(self.client, "带评论的吐槽")
         fuck_tool.add_comment(self.client, 1, "评论A")
         fuck_tool.add_comment(self.client, 1, "评论B")
-        result = fuck_tool.get(self.client, 1)
+        result = fuck_tool.get( 1)
         self.assertIn("评论 #1", result)
         self.assertIn("评论A", result)
         self.assertIn("评论 #2", result)
@@ -206,7 +206,7 @@ class TestFuckTool(unittest.TestCase):
 
     def test_get_no_comments(self):
         fuck_tool.fuck(self.client, "无评论的吐槽")
-        result = fuck_tool.get(self.client, 1)
+        result = fuck_tool.get( 1)
         self.assertIn("(无评论)", result)
 
     # ── 数据持久化 ───────────────────────────────────────
@@ -221,7 +221,7 @@ class TestFuckTool(unittest.TestCase):
         fuck_tool.fuck(self.client, "A")
         fuck_tool.fuck(self.client, "B")
         fuck_tool.fuck(self.client, "C")
-        fuck_tool.remove(self.client, 2)
+        fuck_tool.remove( 2)
 
         data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
         ids = [item["id"] for item in data["items"]]

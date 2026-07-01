@@ -7,6 +7,8 @@ import re
 import subprocess
 import typing
 
+import agent.tool_binding
+
 from . import _output_util as output_util
 from . import _path_util as path_util
 
@@ -33,8 +35,8 @@ def _run_git(cmd: list[str], default_message: str) -> str:
     return output
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def git_diff(
-    agent_client: typing.Any,
     *,
     staged: bool = False,
     stat: bool = False,
@@ -48,8 +50,6 @@ def git_diff(
     @param name_only: 是否仅显示文件名（--name-only）
     @param file_path: 限定文件路径（相对工作目录）
     """
-    del agent_client
-
     cmd = ["git", "diff"]
 
     if staged:
@@ -73,7 +73,6 @@ def git_diff(
 
 
 def git_add(
-    agent_client: typing.Any,
     *,
     paths: str = ".",
 ) -> str:
@@ -81,8 +80,6 @@ def git_add(
 
     @param paths: 要添加的文件/目录路径，多个用逗号或空格分隔，缺省 "." 暂存所有变更
     """
-    del agent_client
-
     # 解析 paths：支持逗号或空格分隔
     raw_paths = re.split(r"[,\s]+", paths.strip()) if paths.strip() else ["."]
 
@@ -104,7 +101,6 @@ def git_add(
 
 
 def git_commit(
-    agent_client: typing.Any,
     *,
     message: str,
 ) -> str:
@@ -112,8 +108,6 @@ def git_commit(
 
     @param message: 提交信息（必填）
     """
-    del agent_client
-
     if not message or not message.strip():
         return "错误：提交信息不能为空"
 

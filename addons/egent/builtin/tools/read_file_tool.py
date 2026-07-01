@@ -6,6 +6,8 @@ import pathlib
 import re
 import typing
 
+import agent.tool_binding
+
 from . import _cs_outline as cs_outline
 from . import _output_util as output_util
 from . import _path_util as path_util
@@ -21,35 +23,35 @@ _PY_IMPORT_RE = re.compile(r"^\s*(?:import|from)\s+(\S+)")
 _PY_MODULE_VAR_RE = re.compile(r"^(\w+)\s*=")
 
 
-def read_file_outline_cs(agent_client: typing.Any, file_path: str) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def read_file_outline_cs(file_path: str) -> str:
     """读取 C# 源文件大纲（namespace / 类型 / 成员）。阅读 .cs 文件时先读大纲。
 
     @param file_path: C# 源文件路径（相对工作目录）
     """
-    del agent_client
     return _read_outline_file(file_path, (".cs",), cs_outline.outline_cs_text)
 
 
-def read_file_outline_md(agent_client: typing.Any, file_path: str) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def read_file_outline_md(file_path: str) -> str:
     """读取 Markdown 文件标题大纲。阅读 .md 文件时先读大纲。
 
     @param file_path: Markdown 文件路径（相对工作目录）
     """
-    del agent_client
     return _read_outline_file(file_path, (".md",), _md_outline_text)
 
 
-def read_file_outline_py(agent_client: typing.Any, file_path: str) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def read_file_outline_py(file_path: str) -> str:
     """读取 Python 源文件大纲（类 / 函数 / 顶层赋值）。阅读 .py 文件时先读大纲。
 
     @param file_path: Python 文件路径（相对工作目录）
     """
-    del agent_client
     return _read_outline_file(file_path, (".py", ".pyi", ".pyx"), _py_outline_text)
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def read_lines(
-    agent_client: typing.Any,
     file_path: str,
     start_line: int,
     end_line: int,
@@ -60,7 +62,6 @@ def read_lines(
     @param start_line: 起始行号（1-based，含）
     @param end_line: 结束行号（1-based，含）
     """
-    del agent_client
     absolute_path, resolve_error = _resolve_file(file_path)
     if resolve_error is not None:
         return resolve_error
@@ -83,12 +84,12 @@ def read_lines(
     return output_util.truncate_output(content)
 
 
-def read_whole_file(agent_client: typing.Any, file_path: str) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def read_whole_file(file_path: str) -> str:
     """读取文件全文。用于非 .cs/.md 文件，或大纲策略无法定位细节时的 fallback。
 
     @param file_path: 文件路径（相对工作目录）
     """
-    del agent_client
     absolute_path, resolve_error = _resolve_file(file_path)
     if resolve_error is not None:
         return resolve_error

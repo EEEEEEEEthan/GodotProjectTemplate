@@ -139,20 +139,30 @@ class AgentClient:
     def __resolve_send_handlers(
         self,
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
+        *,
+        readonly: bool = False,
     ) -> tuple[agent.tool_binding.ToolHandler, ...]:
         handlers = (
             self.config.default_tools
             if override_tools is None
             else override_tools
         )
+        if readonly:
+            handlers = tuple(
+                handler
+                for handler in handlers
+                if agent.tool_binding.is_readonly(handler)
+            )
         return agent.tool_binding.wrap_tools(self, *handlers)
 
     def __resolve_active_bindings(
         self,
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
+        *,
+        readonly: bool = False,
     ) -> dict[str, agent.tool_binding.ToolBinding]:
         return agent.tool_binding.bind_tools(
-            *self.__resolve_send_handlers(override_tools),
+            *self.__resolve_send_handlers(override_tools, readonly=readonly),
         )
 
     def __build_advertised_tools(
@@ -196,12 +206,14 @@ class AgentClient:
         *,
         add_to_history: bool = True,
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None = None,
+        readonly: bool = False,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送单条消息并流式返回事件。"""
         async for event in self.send_messages(
             [{"role": role, "content": prompt}],
             add_to_history=add_to_history,
             override_tools=override_tools,
+            readonly=readonly,
         ):
             yield event
 
@@ -211,6 +223,7 @@ class AgentClient:
         *,
         add_to_history: bool = True,
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None = None,
+        readonly: bool = False,
     ) -> collections.abc.AsyncIterator[agent.agent_events.AgentEvent]:
         """发送多条消息，可选写入历史与日志。"""
         await self.__ensure_mcp_ready()
@@ -225,8 +238,11 @@ class AgentClient:
                 if content:
                     agent.log_manager.write(f"[{role}]\n{content}\n\n")
 
-        active_bindings = self.__resolve_active_bindings(override_tools)
-        include_mcp = override_tools is None
+        active_bindings = self.__resolve_active_bindings(
+            override_tools,
+            readonly=readonly,
+        )
+        include_mcp = override_tools is None and not readonly
         advertised_tools = self.__build_advertised_tools(
             active_bindings,
             include_mcp=include_mcp,

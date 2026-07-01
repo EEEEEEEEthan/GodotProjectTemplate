@@ -11,8 +11,10 @@ import uuid
 import pathlib
 
 import agent.data_loader
+import agent.tool_binding
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def learn_skill(
     agent_client: typing.Any,
     skill_id: str,
@@ -76,6 +78,7 @@ def learn_skill(
     )
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 async def run_skill_script(
     agent_client: typing.Any,
     skill_id: str,

@@ -7,6 +7,8 @@ import subprocess
 import sys
 import typing
 
+import agent.tool_binding
+
 import tools._output_util as output_util
 
 _DEFAULT_PATHS = ("builtin/agent", "builtin/tools")
@@ -15,8 +17,8 @@ _PYLINTRC = _EGENT_ROOT / "pylintrc"
 _DEFAULT_TIMEOUT_SECONDS = 120
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def run_pylint(
-    agent_client: typing.Any,
     paths: str | None = None,
     timeout: int | None = None,
 ) -> str:
@@ -25,8 +27,6 @@ def run_pylint(
     @param paths: 要检查的路径（相对 addons/egent），多个用逗号分隔，缺省 `builtin/agent,builtin/tools`
     @param timeout: 超时秒数，缺省 120
     """
-    del agent_client
-
     targets = _resolve_targets(paths)
     if isinstance(targets, str):
         return targets

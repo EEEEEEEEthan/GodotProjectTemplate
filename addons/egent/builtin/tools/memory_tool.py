@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import typing
 
+import agent.tool_binding
+
 from . import _memory_store as memory_store
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def add_item(agent_client: typing.Any, key: str, value: str) -> str:
     """💾 **重要！** 添加长期记忆条目。当你学到项目目标、架构决策、用户偏好等关键信息时，**必须立即记录**，避免遗忘或重复询问。标题为唯一键（大小写不敏感）。
 
@@ -30,6 +33,7 @@ def add_item(agent_client: typing.Any, key: str, value: str) -> str:
     return f"已添加记忆「{normalized_key}」。"
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def remove_item(agent_client: typing.Any, key: str) -> str:
     """删除长期记忆条目。
 
@@ -50,6 +54,7 @@ def remove_item(agent_client: typing.Any, key: str) -> str:
     return f"已删除记忆「{existing}」。"
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def update_item(agent_client: typing.Any, key: str, value: str) -> str:
     """更新长期记忆条目。
 
@@ -74,6 +79,7 @@ def update_item(agent_client: typing.Any, key: str, value: str) -> str:
     return f"已更新记忆「{existing}」。"
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def list_items(  # pylint: disable=redefined-builtin
     agent_client: typing.Any,
     filter: str | None = None,
@@ -107,6 +113,7 @@ def list_items(  # pylint: disable=redefined-builtin
     return "\n".join(lines)
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def find_str(agent_client: typing.Any, pattern: str) -> str:
     """🔍 在记忆中搜索。找不到答案时再问用户，节省时间。在记忆标题与正文中正则搜索（忽略大小写）。
 

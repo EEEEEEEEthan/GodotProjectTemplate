@@ -17,6 +17,7 @@ import typing
 import uuid
 
 import agent.data_loader
+import agent.tool_binding
 
 from . import _output_util as output_util
 
@@ -42,7 +43,6 @@ def _read_log_tail(log_path: str, max_lines: int = 50) -> str:
 
 
 def exec_command(
-    agent_client: typing.Any,
     command: str,
     cwd: str | None = None,
     timeout: int = _DEFAULT_EXEC_TIMEOUT_SECONDS,
@@ -53,7 +53,6 @@ def exec_command(
     @param cwd: 工作目录，缺省为项目根目录
     @param timeout: 超时秒数，缺省 60 秒；长任务请用 shell_tool_bg_exec
     """
-    del agent_client
     if not command or not command.strip():
         return "错误：command 不能为空。"
     if timeout <= 0:
@@ -100,7 +99,6 @@ def exec_command(
 
 
 def bg_exec(
-    agent_client: typing.Any,
     command: str,
     cwd: str | None = None,
 ) -> str:
@@ -110,7 +108,6 @@ def bg_exec(
     @param command: 要执行的 shell 命令，例如 `dir`、`python train.py`
     @param cwd: 工作目录，缺省为项目根目录
     """
-    del agent_client
     if not command or not command.strip():
         return "错误：command 不能为空。"
 
@@ -186,13 +183,13 @@ def bg_exec(
     )
 
 
-def bg_status(agent_client: typing.Any, process_id: str) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def bg_status(process_id: str) -> str:
     """查询后台进程的执行状态。返回是否完成、退出码、已运行时间与最新日志输出。
 
     @tool_name shell_tool_bg_status
     @param process_id: shell_tool_bg_exec 返回的进程 ID
     """
-    del agent_client
     if process_id not in _processes:
         return f"错误：未找到进程 ID：{process_id}"
 
@@ -244,13 +241,13 @@ def bg_status(agent_client: typing.Any, process_id: str) -> str:
     )
 
 
-def wait(agent_client: typing.Any, seconds: float) -> str:
+@agent.tool_binding.agent_tool(readonly=True)
+def wait(seconds: float) -> str:
     """等待指定的秒数（最长 120 秒）。用于需要延时的场景，如等待游戏启动、等待文件生成。
 
     @tool_name shell_tool_wait
     @param seconds: 等待的秒数（0.1 ~ 120）
     """
-    del agent_client
     if seconds <= 0:
         return "已等待 0 秒。"
     if seconds > 120:

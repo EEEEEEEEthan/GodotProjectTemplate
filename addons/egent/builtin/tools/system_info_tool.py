@@ -10,10 +10,12 @@ import socket
 import sys
 import typing
 
+import agent.tool_binding
 
-def system_info(agent_client: typing.Any) -> str:
+
+@agent.tool_binding.agent_tool(readonly=True)
+def system_info() -> str:
     """获取当前时间、时区、操作系统与运行环境属性。"""
-    del agent_client
     sections = [
         _format_time(),
         _format_os(),

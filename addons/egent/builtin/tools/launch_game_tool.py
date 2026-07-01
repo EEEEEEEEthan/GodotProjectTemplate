@@ -12,6 +12,7 @@ import typing
 from datetime import datetime
 
 import agent.data_loader
+import agent.tool_binding
 
 _MCP_READY_LOG_PATTERN = re.compile(
     r"<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=(\d+)>>>"
@@ -25,8 +26,8 @@ _ENGINE_RELATIVE = pathlib.Path(".engine") / ".engine.exe"
 _PREPARE_BAT = pathlib.Path(".engine-prepare.bat")
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def launch_game(
-    agent_client: typing.Any,
     *,
     headless: bool = False,
     skip_prepare: bool = False,
@@ -40,7 +41,6 @@ def launch_game(
     @param skip_import: 是否跳过 --headless --import 资源导入，缺省 false
     @param extra_arguments: 追加传给引擎的命令行参数
     """
-    del agent_client
     project_root = agent.data_loader.PROJECT_ROOT
     engine_executable = (project_root / _ENGINE_RELATIVE).resolve()
     prepare_script = (project_root / _PREPARE_BAT).resolve()

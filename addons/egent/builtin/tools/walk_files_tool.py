@@ -7,9 +7,12 @@ import functools
 import os
 import typing
 
+import agent.tool_binding
+
 from . import _path_util as path_util
 
 
+@agent.tool_binding.agent_tool(readonly=True)
 def walk_files(
     agent_client: typing.Any,
     directory: str,
