@@ -89,6 +89,8 @@ func _execute_script(script_source: String) -> Variant:
 	if gdscript.reload() != OK:
 		return "error: compilation failed"
 	var script_instance = gdscript.new()
+	if not script_instance is RefCounted:
+		return "error: script must extend RefCounted"
 	if not script_instance.has_method("run"):
 		return "error: script missing run(scene_tree) method"
 	return await script_instance.run(get_tree())

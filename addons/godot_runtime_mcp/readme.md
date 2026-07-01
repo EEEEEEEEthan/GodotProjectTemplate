@@ -34,9 +34,11 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 
 ## 脚本格式
 
-POST body 即 GDScript 全文，须定义：
+POST body 即 GDScript 全文，须 `extends RefCounted` 并定义：
 
 ```gdscript
+extends RefCounted
+
 func run(scene_tree: SceneTree) -> Variant:
     var player = scene_tree.current_scene.get_node("Player")
     return {"hp": player.hp, "pos": str(player.global_position)}

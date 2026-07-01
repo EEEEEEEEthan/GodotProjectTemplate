@@ -61,7 +61,7 @@ def run(port: int, script: str) -> str:
 
     Args:
         port: 游戏日志 <<<GAME_MCP::PORT=XXXX>>> 中的端口号。
-        script: 完整 GDScript 源码，须定义 run(scene_tree) 方法。
+        script: 完整 GDScript 源码，须 extends RefCounted 并定义 run(scene_tree) 方法。
     """
     try:
         result = send_http(port, script)
