@@ -147,12 +147,6 @@ class AgentClient:
         )
         return agent.tool_binding.wrap_tools(self, *handlers)
 
-    def __uses_default_tools(
-        self,
-        override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
-    ) -> bool:
-        return override_tools is None
-
     def __resolve_active_bindings(
         self,
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
@@ -232,7 +226,7 @@ class AgentClient:
                     agent.log_manager.write(f"[{role}]\n{content}\n\n")
 
         active_bindings = self.__resolve_active_bindings(override_tools)
-        include_mcp = self.__uses_default_tools(override_tools)
+        include_mcp = override_tools is None
         advertised_tools = self.__build_advertised_tools(
             active_bindings,
             include_mcp=include_mcp,
