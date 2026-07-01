@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "godot-game": {
-      "command": "addons/godot_runtime_mcp/ide_mcp.bat"
+      "command": "addons/godot_runtime_mcp/agent_mcp.bat"
     }
   }
 }
