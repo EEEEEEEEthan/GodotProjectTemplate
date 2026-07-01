@@ -38,8 +38,6 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 <<<GAME_MCP::PORT=6789>>>
 ```
 
-`run` 默认用这个端口，不要硬编码 `6789`（占用时会自动递增）。
-
 也可以让agent自行启动游戏，他会自动将日志纳入上下文
 
 ### 4. 命令agent
