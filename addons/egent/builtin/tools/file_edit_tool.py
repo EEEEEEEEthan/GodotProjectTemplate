@@ -31,10 +31,7 @@ def _resolve_writable_file(
         agent_client.config, "no_write_files", []
     )
     if _path_util.is_ignored_relative_path(relative_path, no_write_patterns):
-        return None, (
-            f"错误：文件 {relative_path} 被写保护"
-            f"（匹配禁止写模式：{', '.join(no_write_patterns)}）"
-        )
+        return None, f"错误：你无权修改这些文件：{', '.join(no_write_patterns)}"
 
     # L3: 存在性检查
     full_path = (pathlib.Path.cwd() / relative_path).resolve()

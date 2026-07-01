@@ -62,9 +62,7 @@ def test_l2_no_write_egent():
             os.chdir(tmpdir)
             os.makedirs("addons/egent", exist_ok=True)
             result = create(file_path="addons/egent/something.py", content="bad")
-            assert result.startswith("错误：")
-            assert "被写保护" in result
-            assert "addons/egent" in result
+            assert result == "错误：你无权修改这些文件：addons/egent"
         finally:
             os.chdir(original_cwd)
 
@@ -79,9 +77,7 @@ def test_l2_no_write_pyc():
         try:
             os.chdir(tmpdir)
             result = create(file_path="mymodule.cpython-311.pyc")
-            assert result.startswith("错误：")
-            assert "被写保护" in result
-            assert "*.pyc" in result
+            assert result == "错误：你无权修改这些文件：*.pyc"
         finally:
             os.chdir(original_cwd)
 
@@ -97,8 +93,7 @@ def test_l2_no_write_in_subdir():
             os.chdir(tmpdir)
             os.makedirs("foo/addons/egent/bar", exist_ok=True)
             result = create(file_path="foo/addons/egent/bar/test.py")
-            assert result.startswith("错误：")
-            assert "被写保护" in result
+            assert result == "错误：你无权修改这些文件：addons/egent"
         finally:
             os.chdir(original_cwd)
 
