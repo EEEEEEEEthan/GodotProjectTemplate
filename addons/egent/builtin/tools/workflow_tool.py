@@ -3,18 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-import importlib.util
-import pathlib
 
 import agent.tool_binding
-
-_BUILTIN_ROOT = pathlib.Path(__file__).resolve().parent.parent
-
-_run_all_tests_spec = importlib.util.spec_from_file_location(
-    "run_all_tests", _BUILTIN_ROOT / "test" / "run_all_tests.py"
-)
-_run_all_tests = importlib.util.module_from_spec(_run_all_tests_spec)
-_run_all_tests_spec.loader.exec_module(_run_all_tests)
+import tools.egent_test_tool
 
 
 @agent.tool_binding.agent_tool
@@ -38,7 +29,7 @@ async def run_egent_development(prompt: str) -> str:
         while True:
             # 内层 test-retry 循环，最多 10 次
             for attempt in range(10):
-                tests_passed, tests_info = await asyncio.to_thread(_run_all_tests.run_all)
+                tests_passed, tests_info = await asyncio.to_thread(tools.egent_test_tool.run_all)
                 if tests_passed:
                     break
                 await jack.send(
@@ -56,7 +47,7 @@ async def run_egent_development(prompt: str) -> str:
             lst_review = await nahte.send(
                 f"jack完成了需求:\n```\n{task_prompt}\n```\n"
                 "测试通过了。现在你需要根据git diff审查代码."
-                "请按照项目约定,技能等进行审查."
+                "请按照项目约定,code-optimi技能等进行审查."
                 "额外注意测试代码是否正确覆盖了需求。"
                 "如果审查通过，直接输出`<<<通过>>>`"
                 "（三个尖括号包裹的通过），不要有任何多余的输出。"
