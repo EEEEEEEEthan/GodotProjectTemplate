@@ -86,28 +86,37 @@ func _dispatch_request(connection: Dictionary) -> void:
 	var request_line := header_text.split("\r\n", false)[0]
 	var request_parts := request_line.split(" ")
 	if request_parts.size() < 2:
-		_send_json_response(connection, 400, "无效请求行")
+		_send_error_response(connection, 400, "无效请求行")
 		return
 	var method := request_parts[0]
 	var body_text: String = connection.body_bytes.get_string_from_utf8()
 	var json := JSON.new()
 	if json.parse(body_text) != OK:
-		_send_json_response(connection, 400, "JSON 解析失败")
+		_send_error_response(connection, 400, "JSON 解析失败")
 		return
 	var data: Variant = json.data
 	if typeof(data) != TYPE_DICTIONARY:
-		_send_json_response(connection, 400, "请求体必须是 JSON 对象")
+		_send_error_response(connection, 400, "请求体必须是 JSON 对象")
 		return
 	print("Game MCP: 收到 data=%s" % body_text)
 	connection.state = "dispatched"
 	var result = await _on_command_received(data)
-	_send_json_response(connection, 200, String(result))
+	_send_ok_response(connection, result)
 
 
-func _send_json_response(connection: Dictionary, status_code: int, body_text: String) -> void:
+func _send_ok_response(connection: Dictionary, data: Variant) -> void:
+	_send_json_response(connection, 200, {"ok": true, "data": data})
+
+
+func _send_error_response(connection: Dictionary, status_code: int, error: String) -> void:
+	_send_json_response(connection, status_code, {"ok": false, "error": error})
+
+
+func _send_json_response(connection: Dictionary, status_code: int, body: Variant) -> void:
 	if connection.responded:
 		return
 	var peer: StreamPeerTCP = connection.peer
+	var body_text := JSON.stringify(body)
 	print("Game MCP: 发送 %s" % body_text)
 	var status_text := "OK"
 	if status_code == 400:
