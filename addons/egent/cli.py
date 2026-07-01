@@ -12,8 +12,6 @@ from agents import (
     Runner,
     set_default_openai_api,
     set_default_openai_client,
-    set_trace_processors,
-    set_tracing_disabled,
 )
 from agents.models.openai_provider import OpenAIProvider
 from openai import AsyncOpenAI
@@ -36,8 +34,6 @@ async def async_main(argv: list[str] | None = None) -> int:
     except (ConfigTemplateCreatedError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
-    set_tracing_disabled(True)
-    set_trace_processors([])
     client = AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url)
     set_default_openai_client(client)
     set_default_openai_api("chat_completions")
@@ -45,7 +41,6 @@ async def async_main(argv: list[str] | None = None) -> int:
     run_config = RunConfig(
         model=settings.model_name,
         model_provider=provider,
-        tracing_disabled=True,
     )
     agent = Agent(
         name="助手",
