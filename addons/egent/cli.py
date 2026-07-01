@@ -13,10 +13,16 @@ from agents import (
     set_default_openai_api,
     set_default_openai_client,
 )
-from agents.models.openai_provider import OpenAIProvider
+from agents.models.multi_provider import MultiProvider
 from openai import AsyncOpenAI
 
-from .model_settings import ConfigTemplateCreatedError, ModelSettings
+if __package__:
+    from .model_settings import ConfigTemplateCreatedError, ModelSettings
+else:
+    import pathlib
+
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+    from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
 
 DEFAULT_PROFILE = "coconut"
 DEFAULT_MODEL = "low"
@@ -37,15 +43,13 @@ async def async_main(argv: list[str] | None = None) -> int:
     client = AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url)
     set_default_openai_client(client)
     set_default_openai_api("chat_completions")
-    provider = OpenAIProvider(openai_client=client, use_responses=False)
     run_config = RunConfig(
         model=settings.model_name,
-        model_provider=provider,
+        model_provider=MultiProvider(unknown_prefix_mode="model_id"),
     )
     agent = Agent(
         name="助手",
         instructions=ASSISTANT_INSTRUCTIONS,
-        model=settings.model_name,
     )
     print(
         f"使用 [{settings.profile_name}] / {settings.model_alias} "
@@ -74,3 +78,7 @@ async def async_main(argv: list[str] | None = None) -> int:
 def main(argv: list[str] | None = None) -> None:
     """main"""
     raise SystemExit(asyncio.run(async_main(argv)))
+
+
+if __name__ == "__main__":
+    main()
