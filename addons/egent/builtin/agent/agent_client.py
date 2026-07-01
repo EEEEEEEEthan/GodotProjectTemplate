@@ -167,11 +167,9 @@ class AgentClient:
         *,
         include_mcp: bool = True,
     ) -> list[dict[str, typing.Any]]:
-        if not include_mcp:
-            return agent.tool_binding.to_openai_tools(active_bindings)
         return agent.tool_binding.merge_advertised_tools(
             active_bindings,
-            self.__tooling.mcp_schemas,
+            self.__tooling.mcp_schemas if include_mcp else None,
         )
 
     def __build_invoke(
