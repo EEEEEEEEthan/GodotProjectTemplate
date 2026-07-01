@@ -16,12 +16,16 @@ config/features=PackedStringArray("4.7")
 
 [autoload]
 
-McpHandler="*uid://dsqkksyrft4is"
+McpServer="*uid://cifvycrd10ysd"
 
 [display]
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp_server/plugin.cfg")
 
 [physics]
 

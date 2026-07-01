@@ -1,30 +1,20 @@
 extends Node
-class_name McpServer
 
-const PLUGIN_CONFIG_PATH := "res://addons/egent/mcp/plugin.cfg"
-const DEFAULT_PORT := 8765
-const MAX_PORT_ATTEMPTS := 100
-const ROUTE_PATH := "/mcp"
-const READY_LOG_TEMPLATE := "<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=%d>>>"
-const BIND_FAILED_LOG_LINE := "<<<EGENT::GAME_MCP::HANDSHAKE::v1::BIND_FAILED>>>"
-
-@export var port: int
-@export var auto_port: bool = true
 signal command_received(data: Dictionary, respond: Callable)
+var port: int
 var _tcp_server := TCPServer.new()
 var _connections: Array[Dictionary] = []
 
 func _ready() -> void:
-	while not _start(port) and auto_port:
-		port = port + 1
+	while not _start(port):
+		port += 1
+	print("<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=%d>>>" % port)
 
 func _start(port: int) -> bool:
 	if _tcp_server.listen(port) == OK:
 		self.port = port
 		set_process(true)
 		return true
-	push_error(BIND_FAILED_LOG_LINE)
-	print(BIND_FAILED_LOG_LINE)
 	return false
 
 func _on_command_received(data: Dictionary, respond: Callable) -> void:
@@ -108,10 +98,6 @@ func _dispatch_request(connection: Dictionary) -> void:
 		_send_json_response(connection, 400, {"ok": false, "error": "无效请求行"})
 		return
 	var method := request_parts[0]
-	var path := request_parts[1]
-	if method != "POST" or path != ROUTE_PATH:
-		_send_json_response(connection, 404, {"ok": false, "error": "仅支持 POST %s" % ROUTE_PATH})
-		return
 	var body_text: String = connection.body_bytes.get_string_from_utf8()
 	var json := JSON.new()
 	if json.parse(body_text) != OK:
