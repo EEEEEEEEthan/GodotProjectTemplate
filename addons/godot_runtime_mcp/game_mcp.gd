@@ -99,6 +99,7 @@ func _dispatch_request(connection: Dictionary) -> void:
 	_send_ok_response(connection, result)
 
 func _execute_script(script_source: String) -> Variant:
+	await get_tree().process_frame
 	_dynamic_script_count += 1
 	var gdscript := GDScript.new()
 	gdscript.source_code = script_source
