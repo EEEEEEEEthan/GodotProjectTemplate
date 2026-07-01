@@ -37,6 +37,16 @@ def write(text: str) -> None:
             buffering=1,
         )
         atexit.register(close)
+        try:
+            log_files = sorted(
+                log_dir.glob("*.log"),
+                key=lambda f: f.stat().st_mtime,
+                reverse=True,
+            )
+            for f in log_files[30:]:
+                f.unlink(missing_ok=True)
+        except Exception:  # pylint: disable=broad-except
+            pass
     _LOG_FILE.write(text)
 
 

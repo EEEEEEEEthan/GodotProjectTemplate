@@ -24,6 +24,7 @@ def _env_with_pythonpath() -> dict[str, str]:
         paths.insert(0, builtin_str)
     env["PYTHONPATH"] = os.pathsep.join(paths)
     env["EGENT_NO_LOG"] = "1"
+    env["EGENT_TEST_NESTED"] = "1"
     return env
 
 
