@@ -19,16 +19,20 @@ class GameCommandError(RuntimeError):
 
 def send_http(
     port: int,
-    data: dict[str, Any],
+    script: str,
     *,
     host: str = DEFAULT_HOST,
     timeout_seconds: float = 30.0,
 ) -> Any:
-    """POST JSON payload to the given port; returns the response data field on success."""
+    """POST GDScript source to the given port; returns the response data field on success."""
     url = f"http://{host}:{port}/"
     try:
         with httpx.Client(timeout=timeout_seconds) as client:
-            response = client.post(url, json=data)
+            response = client.post(
+                url,
+                content=script.encode("utf-8"),
+                headers={"Content-Type": "text/plain; charset=utf-8"},
+            )
             response.raise_for_status()
     except httpx.TimeoutException as error:
         raise GameCommandError(
@@ -52,15 +56,15 @@ def send_http(
 
 
 @mcp.tool()
-def send(port: int, data: dict[str, Any]) -> str:
-    """Send a JSON command to a running Godot game instance.
+def eval(port: int, script: str) -> str:
+    """在运行中的 Godot 实例里执行 GDScript。
 
     Args:
-        port: Port from game log <<<GAME_MCP::PORT=XXXX>>>.
-        data: Payload forwarded to the game-side command handler.
+        port: 游戏日志 <<<GAME_MCP::PORT=XXXX>>> 中的端口号。
+        script: 完整 GDScript 源码，须定义 run(scene_tree) 方法。
     """
     try:
-        result = send_http(port, data)
+        result = send_http(port, script)
     except GameCommandError as error:
         return f"error: {error}"
     return json.dumps(result, ensure_ascii=False, indent=2)

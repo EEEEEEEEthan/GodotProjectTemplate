@@ -1,26 +1,20 @@
 extends Node
 
-var handler: Callable
-var port: int = 6789
+var _port: int = 6789
 var _tcp_server := TCPServer.new()
 var _connections: Array[Dictionary] = []
+var _dynamic_script_count := 0
 
 func _ready() -> void:
-	while not _start(port):
-		port += 1
-	print("<<<GAME_MCP::PORT=%d>>>" % port)
+	while not _start(_port):
+		_port += 1
+	print("<<<GAME_MCP::PORT=%d>>>" % _port)
 
 func _start(port: int) -> bool:
-	if _tcp_server.listen(port) == OK:
-		self.port = port
+	if _tcp_server.listen(_port) == OK:
 		set_process(true)
 		return true
 	return false
-
-func _on_command_received(data: Dictionary):
-	var result = await handler.call(data)
-	return result
-
 
 func _process(_delta: float) -> void:
 	while _tcp_server.is_connection_available():
@@ -34,7 +28,6 @@ func _process(_delta: float) -> void:
 		})
 	for connection_index in range(_connections.size() - 1, -1, -1):
 		_poll_connection(_connections[connection_index], connection_index)
-
 
 func _poll_connection(connection: Dictionary, connection_index: int) -> void:
 	var peer: StreamPeerTCP = connection.peer
@@ -52,7 +45,6 @@ func _poll_connection(connection: Dictionary, connection_index: int) -> void:
 		_dispatch_request(connection)
 	if connection.responded:
 		_close_connection(connection_index)
-
 
 func _try_finish_reading(connection: Dictionary) -> bool:
 	var buffer: PackedByteArray = connection.buffer
@@ -72,7 +64,6 @@ func _try_finish_reading(connection: Dictionary) -> bool:
 	connection.body_bytes = buffer.slice(body_start, body_start + body_length)
 	return true
 
-
 func _read_content_length(header_text: String) -> int:
 	for header_line in header_text.split("\r\n"):
 		var lower_line := header_line.to_lower()
@@ -80,37 +71,33 @@ func _read_content_length(header_text: String) -> int:
 			return header_line.split(":", true, 1)[1].strip_edges().to_int()
 	return 0
 
-
 func _dispatch_request(connection: Dictionary) -> void:
-	var header_text: String = connection.header_text
-	var request_line := header_text.split("\r\n", false)[0]
-	var request_parts := request_line.split(" ")
-	if request_parts.size() < 2:
-		_send_error_response(connection, 400, "invalid request line")
+	var script_source: String = connection.body_bytes.get_string_from_utf8()
+	if script_source.is_empty():
+		_send_error_response(connection, 400, "script is empty")
 		return
-	var method := request_parts[0]
-	var body_text: String = connection.body_bytes.get_string_from_utf8()
-	var json := JSON.new()
-	if json.parse(body_text) != OK:
-		_send_error_response(connection, 400, "JSON parse failed")
-		return
-	var data: Variant = json.data
-	if typeof(data) != TYPE_DICTIONARY:
-		_send_error_response(connection, 400, "request body must be a JSON object")
-		return
-	print("Game MCP: received data=%s" % body_text)
+	print("Game MCP: received script (%d bytes)" % script_source.length())
 	connection.state = "dispatched"
-	var result = await _on_command_received(data)
+	var result = await _execute_script(script_source)
 	_send_ok_response(connection, result)
 
+func _execute_script(script_source: String) -> Variant:
+	_dynamic_script_count += 1
+	var gdscript := GDScript.new()
+	gdscript.source_code = script_source
+	gdscript.resource_path = "mcp-dynamic://%d" % _dynamic_script_count
+	if gdscript.reload() != OK:
+		return "error: compilation failed"
+	var script_instance = gdscript.new()
+	if not script_instance.has_method("run"):
+		return "error: script missing run(scene_tree) method"
+	return await script_instance.run(get_tree())
 
 func _send_ok_response(connection: Dictionary, data: Variant) -> void:
 	_send_json_response(connection, 200, {"ok": true, "data": data})
 
-
 func _send_error_response(connection: Dictionary, status_code: int, error: String) -> void:
 	_send_json_response(connection, status_code, {"ok": false, "error": error})
-
 
 func _send_json_response(connection: Dictionary, status_code: int, body: Variant) -> void:
 	if connection.responded:
@@ -131,7 +118,6 @@ func _send_json_response(connection: Dictionary, status_code: int, body: Variant
 	]
 	peer.put_data(response_text.to_utf8_buffer())
 	connection.responded = true
-
 
 func _close_connection(connection_index: int) -> void:
 	var connection: Dictionary = _connections[connection_index]
