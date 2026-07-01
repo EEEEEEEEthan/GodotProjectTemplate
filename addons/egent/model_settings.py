@@ -5,9 +5,7 @@ import os
 import pathlib
 from dataclasses import dataclass
 
-PACKAGE_ROOT = pathlib.Path(__file__).resolve().parent
-DEFAULT_CONFIG_PATH = PACKAGE_ROOT / ".model.json"
-DEFAULT_BASE_URL = "https://api.openai.com/v1"
+DEFAULT_CONFIG_PATH = pathlib.Path(__file__).resolve().parent / ".model.json"
 
 DEFAULT_PROFILES = {
     "coconut": {
@@ -57,7 +55,7 @@ class ModelSettings:
             profile = profiles[profile_name]
             return ModelSettings(
                 api_key=profile["key"] or os.getenv("OPENAI_API_KEY"),
-                base_url=profile.get("url") or DEFAULT_BASE_URL,
+                base_url=profile.get("url") or "https://api.openai.com/v1",
                 model_name=profile["models"][model_alias],
                 profile_name=profile_name,
                 model_alias=model_alias,

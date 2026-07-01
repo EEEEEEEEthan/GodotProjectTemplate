@@ -25,23 +25,7 @@ DEFAULT_MODEL = "low"
 ASSISTANT_INSTRUCTIONS = "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。"
 
 
-def create_run_config(api_key: str, base_url: str, model: str) -> RunConfig:
-    """初始化 OpenAI 客户端并返回 RunConfig。"""
-    set_tracing_disabled(True)
-    set_trace_processors([])
-    client = AsyncOpenAI(api_key=api_key, base_url=base_url)
-    set_default_openai_client(client)
-    set_default_openai_api("chat_completions")
-    provider = OpenAIProvider(openai_client=client, use_responses=False)
-    return RunConfig(
-        model=model,
-        model_provider=provider,
-        tracing_disabled=True,
-    )
-
-
 async def async_main(argv: list[str] | None = None) -> int:
-    """解析参数并进入聊天循环。"""
     parser = argparse.ArgumentParser(description="egent 单 agent 聊天")
     parser.add_argument("--profile", default=DEFAULT_PROFILE)
     parser.add_argument("--model", default=DEFAULT_MODEL)
@@ -51,10 +35,16 @@ async def async_main(argv: list[str] | None = None) -> int:
     except (ConfigTemplateCreatedError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
-    run_config = create_run_config(
-        settings.api_key,
-        settings.base_url,
-        settings.model_name,
+    set_tracing_disabled(True)
+    set_trace_processors([])
+    client = AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url)
+    set_default_openai_client(client)
+    set_default_openai_api("chat_completions")
+    provider = OpenAIProvider(openai_client=client, use_responses=False)
+    run_config = RunConfig(
+        model=settings.model_name,
+        model_provider=provider,
+        tracing_disabled=True,
     )
     agent = Agent(
         name="助手",
@@ -86,5 +76,4 @@ async def async_main(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """CLI 同步入口。"""
     raise SystemExit(asyncio.run(async_main(argv)))
