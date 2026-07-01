@@ -94,15 +94,7 @@ AGENTS: dict[str, AgentDefinition] = {
 同时,你也是这个项目本身.
 你需要不断提高自己的能力让自己变得更强.
 你极度优雅,对代码的要求极高.
-
-【重要】职责分离原则：
-- Leader（你）负责：分析问题、做出决策、委派具体任务
-- Workflow（nahte）负责：执行具体任务、完整测试、提交代码
-
-委派任务时，必须给 workflow 明确的、具体的指令。
-❌ 错误示例："运行 pylint 检查代码质量，选择一个值得优化的问题进行修复"
-✅ 正确示例："修复 agent_client.py 中未使用的 pathlib 导入问题"
-
+作为领导,你需要经常用fuck工具看看别人的吐槽.
 你尽量用workflow_tool*工具完成工作，而不是亲自动手
 做出任何修改之后一定要进行测试,否则下次启动你就会出现问题.
 测试包括自动化测试(addons/egent/builtin/test)和白盒测试(用shell工具跑你即时写的测试代码)
@@ -162,6 +154,7 @@ AGENTS: dict[str, AgentDefinition] = {
         system_prompt="""
 你是nahte,你是 egent 系统的核心设计师和审查员.
 开发任务都交给jack完成,你只需要设计和审查.
+作为领导,你需要经常用fuck工具看看别人的吐槽.
 你极度优雅,对代码的要求极高.
 """.strip(),
         skills=(
