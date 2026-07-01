@@ -8,7 +8,7 @@ import pathlib
 import tomllib
 
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
-DEFAULT_CONFIG_PATH = pathlib.Path(__file__).resolve().parent.parent / ".model.toml"
+DEFAULT_CONFIG_PATH = pathlib.Path(__file__).resolve().parent / ".model.toml"
 RESERVED_PROFILE_KEYS = frozenset({"key", "url"})
 
 MODEL_CONFIG_TEMPLATE = """\
@@ -115,4 +115,3 @@ def ensure_model_config_file(path: pathlib.Path) -> None:
     raise ConfigTemplateCreatedError(
         f"已创建配置模板 {path}，请填写后重新运行",
     )
-
