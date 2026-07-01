@@ -22,12 +22,11 @@ func _on_command_received(data: Dictionary, respond: Callable) -> void:
 		pass
 	command_received.emit(
 		data,
-		func(result: Dictionary) -> void:
-			if typeof(result) != TYPE_DICTIONARY:
-				respond.call({"ok": false, "error": "回调必须返回 Dictionary"})
+		func(result: String) -> void:
+			if typeof(result) != TYPE_STRING:
+				respond.call({"ok": false, "error": "回调必须返回 String"})
 				return
-			var response_body := {"ok": true, "data": result}
-			respond.call(response_body)
+			respond.call({"ok": true, "data": result})
 	)
 
 

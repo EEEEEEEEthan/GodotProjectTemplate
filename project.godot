@@ -16,7 +16,7 @@ config/features=PackedStringArray("4.7")
 
 [autoload]
 
-McpServer="*uid://cifvycrd10ysd"
+GameMcp="*uid://cifvycrd10ysd"
 
 [display]
 
