@@ -1,9 +1,0 @@
-[MAIN]
-max-line-length=120
-ignore=.temp,.data,__pycache__,.venv
-jobs=0
-
-[MESSAGES CONTROL]
-disable=
-    R0912,  # too-many-branches
-    R0915,  # too-many-statements
