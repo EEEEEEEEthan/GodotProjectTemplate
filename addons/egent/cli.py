@@ -12,6 +12,7 @@ from agents import (
     Runner,
     set_default_openai_api,
     set_default_openai_client,
+    set_tracing_disabled,
 )
 from agents.models.multi_provider import MultiProvider
 from openai import AsyncOpenAI
@@ -46,6 +47,7 @@ async def async_main(argv: list[str] | None = None) -> int:
     run_config = RunConfig(
         model=settings.model_name,
         model_provider=MultiProvider(unknown_prefix_mode="model_id"),
+        tracing_disabled=True,
     )
     agent = Agent(
         name="助手",
