@@ -23,9 +23,9 @@ import agent.tool_binding
 if typing.TYPE_CHECKING:
     import wrapped_agent
 
-MAX_INFLIGHT_CONTEXT_CHARS = 120_000
-KEEP_RECENT_TOOL_MESSAGES = 8
-MAX_STREAM_RETRIES = 3
+_MAX_INFLIGHT_CONTEXT_CHARS = 120_000
+_KEEP_RECENT_TOOL_MESSAGES = 8
+_MAX_STREAM_RETRIES = 3
 _STREAM_RETRY_BACKOFF_SECONDS = 1.5
 _TOOL_RESULT_OMITTED = "\n[较早的工具结果已省略以控制上下文大小]"
 STREAM_RETRYABLE_ERRORS = (
@@ -291,12 +291,12 @@ class AgentClient:
         client = self.__get_or_create_client()
 
         while True:
-            AgentClient.__trim_inflight_context(messages, MAX_INFLIGHT_CONTEXT_CHARS)
+            AgentClient.__trim_inflight_context(messages, _MAX_INFLIGHT_CONTEXT_CHARS)
             turn_text: list[str] = []
             tool_calls_by_index: dict[int, dict[str, typing.Any]] = {}
             buffer_checkpoint = len(text_buffer)
 
-            for attempt in range(MAX_STREAM_RETRIES):
+            for attempt in range(_MAX_STREAM_RETRIES):
                 turn_text.clear()
                 tool_calls_by_index.clear()
                 del text_buffer[buffer_checkpoint:]
@@ -323,7 +323,7 @@ class AgentClient:
                                 )
                     break
                 except STREAM_RETRYABLE_ERRORS:
-                    if attempt + 1 >= MAX_STREAM_RETRIES:
+                    if attempt + 1 >= _MAX_STREAM_RETRIES:
                         raise
                     await asyncio.sleep(_STREAM_RETRY_BACKOFF_SECONDS * (attempt + 1))
 
@@ -411,7 +411,7 @@ class AgentClient:
             for index, message in enumerate(messages)
             if message.get("role") == "tool"
         ]
-        protected = set(tool_indices[-KEEP_RECENT_TOOL_MESSAGES:])
+        protected = set(tool_indices[-_KEEP_RECENT_TOOL_MESSAGES:])
         trimmed = False
         for index in tool_indices:
             if index in protected:
