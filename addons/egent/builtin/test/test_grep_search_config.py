@@ -54,7 +54,7 @@ def test_grep_search_uses_config():
             
             assert "normal_dir/test.txt" in result, "应该包含 normal_dir/test.txt"
             assert ".git/test.txt" not in result, "不应该包含 .git/test.txt"
-            assert ".godot/test.txt" in result, "应该包含 .godot/test.txt（不在默认配置中）"
+            assert ".godot/test.txt" not in result, "不应该包含 .godot/test.txt"
             assert "addons/egent/test.txt" not in result, "不应该包含 addons/egent/test.txt"
             assert "node_modules/test.txt" not in result, "不应该包含 node_modules/test.txt"
             assert "__pycache__/test.txt" not in result, "不应该包含 __pycache__/test.txt"

@@ -10,6 +10,36 @@ import agent.tool_binding
 
 DEFAULT_SYSTEM_PROMPT = "你是我的助手。你应该在合适的时候查看和更新你的memory"
 
+GODOT_IGNORE_FILES: tuple[str, ...] = (
+    ".godot",
+    ".engine",
+    ".export",
+    ".local.settings",
+)
+
+EGENT_DATA_IGNORE_FILES: tuple[str, ...] = (
+    "addons/egent/.temp",
+    "addons/egent/.egent",
+    "addons/egent/.data",
+    "addons/egent/.logs",
+)
+
+BINARY_IGNORE_FILES: tuple[str, ...] = (
+    "*.exe",
+    "*.dll",
+    "*.cache",
+    "*.bin",
+    "*.pdb",
+    "*.import",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.webp",
+    "*.ogg",
+    "*.wav",
+    "*.mp3",
+)
+
 COMMON_IGNORE_FILES: tuple[str, ...] = (
     ".git",
     ".idea",
@@ -22,6 +52,10 @@ COMMON_IGNORE_FILES: tuple[str, ...] = (
     ".claude",
     ".venv",
     ".temp",
+    ".loop",
+    *GODOT_IGNORE_FILES,
+    *EGENT_DATA_IGNORE_FILES,
+    *BINARY_IGNORE_FILES,
 )
 
 EGENT_IGNORE_FILES: tuple[str, ...] = ("addons/egent",)

@@ -82,12 +82,12 @@ def wrap_tool(
     if inspect.iscoroutinefunction(target):
 
         async def wrapped(**arguments: typing.Any) -> typing.Any:
-            return await handler(agent_client, **arguments)
+            return await target(agent_client, **arguments)
 
     else:
 
         def wrapped(**arguments: typing.Any) -> typing.Any:
-            return handler(agent_client, **arguments)
+            return target(agent_client, **arguments)
 
     functools.update_wrapper(wrapped, target)
     wrapped.__signature__ = exposed_signature  # type: ignore[attr-defined]

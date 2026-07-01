@@ -140,9 +140,12 @@ class AgentClient:
         self,
         override_tools: tuple[agent.tool_binding.ToolHandler, ...] | None,
     ) -> tuple[agent.tool_binding.ToolHandler, ...]:
-        if override_tools is not None:
-            return override_tools
-        return agent.tool_binding.wrap_tools(self, *self.config.default_tools)
+        handlers = (
+            self.config.default_tools
+            if override_tools is None
+            else override_tools
+        )
+        return agent.tool_binding.wrap_tools(self, *handlers)
 
     def __uses_default_tools(
         self,

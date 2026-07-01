@@ -58,12 +58,18 @@ def grep_search(
 
     parts: list[str] = []
     if warnings:
-        parts.append("\n".join(warnings))
+        parts.append(_format_warnings(warnings))
     if output_lines:
         parts.append("\n".join(output_lines))
     if not parts:
         return "(无匹配)"
     return "\n".join(parts)
+
+
+def _format_warnings(warnings: list[str]) -> str:
+    if len(warnings) <= 3:
+        return "\n".join(warnings)
+    return f"警告：跳过 {len(warnings)} 个无法读取的文件（含非 UTF-8 或权限问题）"
 
 
 def _iter_matching_files(
