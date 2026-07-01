@@ -17,15 +17,6 @@ import typing
 _DATA_DIR = pathlib.Path(__file__).resolve().parents[2] / ".data"
 _FUCK_PATH = _DATA_DIR / "fuck.json"
 
-FuckCategory = typing.Literal[
-    "code",
-    "stuck",
-    "requirement",
-    "boss",
-    "life",
-    "other",
-]
-
 _EMPTY_DATA: dict[str, typing.Any] = {"next_id": 1, "items": []}
 
 _ENCOURAGEMENTS: list[str] = [
@@ -89,15 +80,13 @@ def _save_data(data: dict[str, typing.Any]) -> str | None:
 # ── 公开工具函数 ──────────────────────────────────────────
 
 
-def fuck(  # pylint: disable=unused-argument
+def fuck(
     agent_client: typing.Any,
     complaint: str,
-    category: FuckCategory = "other",
 ) -> str:
     """🔊 尽情吐槽工作中的一切不爽！每一次吐槽都是献给团队的宝贵优化信号。你要在工作遇到问题的第一时间吐槽，而不是工作结束才吐槽。
 
     @param complaint: 你要吐槽的内容，尽情发泄吧，别憋着
-    @param category: 吐槽类别：code-代码太臭, stuck-卡住了搞不定, requirement-需求沙雕, boss-老板脑子有坑, life-人生好难, other-其他
     """
     complaint_text = complaint.strip()
     if not complaint_text:
@@ -108,13 +97,13 @@ def fuck(  # pylint: disable=unused-argument
     item_id = data["next_id"]
     data["next_id"] += 1
 
+    author = agent_client.name
     now = _current_timestamp()
     new_item = {
         "id": item_id,
         "complaint": complaint_text,
-        "category": category,
+        "author": author,
         "created_at": now,
-        "updated_at": now,
     }
     data["items"].append(new_item)
 
@@ -163,7 +152,7 @@ def list_items(  # pylint: disable=unused-argument
     for item in sorted_items:
         snippet = item["complaint"][:60]
         lines.append(
-            f"#{item['id']} [{item['category']}] {snippet} · {item['updated_at']}"
+            f"#{item['id']} [{item.get('author', '?')}] {snippet} · {item['created_at']}"
         )
     return "\n".join(lines)
 
@@ -181,10 +170,9 @@ def get(  # pylint: disable=unused-argument,redefined-builtin
         if item["id"] == id:
             return (
                 f"ID：{item['id']}\n"
-                f"分类：{item['category']}\n"
+                f"作者：{item.get('author', '?')}\n"
                 f"吐槽：{item['complaint']}\n"
-                f"创建时间：{item['created_at']}\n"
-                f"更新时间：{item['updated_at']}"
+                f"创建时间：{item['created_at']}"
             )
     return f"错误：未找到 fuck #{id}"
 
@@ -210,7 +198,7 @@ def search(  # pylint: disable=unused-argument
     matches = [
         item
         for item in data["items"]
-        if regex.search(item["complaint"]) or regex.search(item["category"])
+        if regex.search(item["complaint"])
     ]
 
     if not matches:
@@ -221,6 +209,6 @@ def search(  # pylint: disable=unused-argument
     for item in matches:
         snippet = item["complaint"][:60]
         lines.append(
-            f"#{item['id']} [{item['category']}] {snippet} · {item['updated_at']}"
+            f"#{item['id']} [{item.get('author', '?')}] {snippet} · {item['created_at']}"
         )
     return "\n".join(lines)
