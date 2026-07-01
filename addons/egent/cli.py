@@ -26,7 +26,7 @@ PACKAGE_ROOT = pathlib.Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = PACKAGE_ROOT / ".model.toml"
 DEFAULT_SESSION_DATABASE = PACKAGE_ROOT / ".data" / "conversations.db"
 DEFAULT_PROFILE = "coconut"
-DEFAULT_TIER = "low"
+DEFAULT_MODEL = "low"
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
 RESERVED_PROFILE_KEYS = frozenset({"key", "url"})
 ASSISTANT_INSTRUCTIONS = "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。"
@@ -58,10 +58,10 @@ class ConfigTemplateCreatedError(FileNotFoundError):
 
 def load_model_settings(
     profile_name: str,
-    tier_name: str,
-    config_path: pathlib.Path,
+    model_alias: str,
 ) -> tuple[str, str, str, str, str]:
-    """加载 API key、base URL、模型名，以及配置节与档位名称。"""
+    """加载 API key、base URL、模型名，以及配置节与模型别名。"""
+    config_path = DEFAULT_CONFIG_PATH
     if not config_path.is_file():
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(MODEL_CONFIG_TEMPLATE, encoding="utf-8")
@@ -78,20 +78,20 @@ def load_model_settings(
         raise ValueError(
             f"未知配置节 {profile_name!r}，可选: {available_profiles}",
         )
-    tier_names = [
+    model_aliases = [
         field_name
         for field_name in profile
         if field_name not in RESERVED_PROFILE_KEYS
     ]
-    if tier_name not in tier_names:
+    if model_alias not in model_aliases:
         raise ValueError(
-            f"配置节 [{profile_name}] 不存在档位 {tier_name!r}，"
-            f"可选: {tier_names}",
+            f"配置节 [{profile_name}] 不存在模型别名 {model_alias!r}，"
+            f"可选: {model_aliases}",
         )
-    model_name = profile[tier_name]
+    model_name = profile[model_alias]
     if not isinstance(model_name, str) or not model_name.strip():
         raise ValueError(
-            f"配置节 [{profile_name}] 档位 {tier_name!r} 的模型名为空",
+            f"配置节 [{profile_name}] 模型别名 {model_alias!r} 的模型名为空",
         )
     base_url = profile.get("url", DEFAULT_BASE_URL)
     if not isinstance(base_url, str) or not base_url.strip():
@@ -109,7 +109,7 @@ def load_model_settings(
         base_url,
         model_name.strip(),
         profile_name,
-        tier_name,
+        model_alias,
     )
 
 
@@ -131,27 +131,24 @@ def create_run_config(api_key: str, base_url: str, model: str) -> RunConfig:
 async def async_main(argv: list[str] | None = None) -> int:
     """解析参数并进入聊天循环。"""
     parser = argparse.ArgumentParser(description="egent 单 agent 聊天")
-    parser.add_argument("--config", type=pathlib.Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--profile", default=DEFAULT_PROFILE)
-    parser.add_argument("--tier", default=DEFAULT_TIER)
+    parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--session-id", default="default")
     arguments = parser.parse_args(argv)
     try:
-        api_key, base_url, model, profile_name, tier_name = load_model_settings(
-            arguments.profile,
-            arguments.tier,
-            arguments.config,
+        api_key, base_url, resolved_model, profile_name, model_alias = (
+            load_model_settings(arguments.profile, arguments.model)
         )
     except (ConfigTemplateCreatedError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
-    run_config = create_run_config(api_key, base_url, model)
+    run_config = create_run_config(api_key, base_url, resolved_model)
     agent = Agent(
         name="助手",
         instructions=ASSISTANT_INSTRUCTIONS,
-        model=model,
+        model=resolved_model,
     )
-    print(f"使用 [{profile_name}] / {tier_name} → {model}\n")
+    print(f"使用 [{profile_name}] / {model_alias} → {resolved_model}\n")
     print("输入消息开始对话，输入 exit / quit 退出。\n")
     DEFAULT_SESSION_DATABASE.parent.mkdir(parents=True, exist_ok=True)
     session = SQLiteSession(arguments.session_id, DEFAULT_SESSION_DATABASE)
