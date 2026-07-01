@@ -8,7 +8,6 @@ import re
 import subprocess
 import sys
 import time
-import typing
 from datetime import datetime
 
 import agent.data_loader

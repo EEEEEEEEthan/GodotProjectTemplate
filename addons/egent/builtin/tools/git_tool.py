@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-import typing
 
 import agent.tool_binding
 
