@@ -40,9 +40,12 @@ POST body 即 GDScript 全文，须 `extends RefCounted` 并定义：
 extends RefCounted
 
 func run(scene_tree: SceneTree) -> Variant:
+    print("debug info")
     var player = scene_tree.current_scene.get_node("Player")
     return {"hp": player.hp, "pos": str(player.global_position)}
 ```
+
+响应 `data` 固定为 `{"value": <run 返回值>, "stdout": "<执行期间 print 输出>"}`。
 
 ## 获取端口号
 
@@ -52,7 +55,7 @@ func run(scene_tree: SceneTree) -> Variant:
 <<<GAME_MCP::PORT=6789>>>
 ```
 
-`run` 必须用这个端口，不要硬编码 `6789`（占用时会自动递增）。
+`run` 默认用这个端口，不要硬编码 `6789`（占用时会自动递增）。
 
 Agent 流程：
 

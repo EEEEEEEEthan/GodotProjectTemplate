@@ -1,5 +1,22 @@
 extends Node
 
+class _RunOutputCapture extends Logger:
+	var _mutex := Mutex.new()
+	var _lines: PackedStringArray = []
+
+	func _log_message(message: String, error: bool) -> void:
+		if error:
+			return
+		_mutex.lock()
+		_lines.append(message)
+		_mutex.unlock()
+
+	func collect() -> String:
+		_mutex.lock()
+		var text := "\n".join(_lines)
+		_mutex.unlock()
+		return text
+
 var _port: int = 6789
 var _tcp_server := TCPServer.new()
 var _connections: Array[Dictionary] = []
@@ -93,7 +110,14 @@ func _execute_script(script_source: String) -> Variant:
 		return "error: script must extend RefCounted"
 	if not script_instance.has_method("run"):
 		return "error: script missing run(scene_tree) method"
-	return await script_instance.run(get_tree())
+	var output_capture := _RunOutputCapture.new()
+	OS.add_logger(output_capture)
+	var run_result = await script_instance.run(get_tree())
+	OS.remove_logger(output_capture)
+	return {
+		"value": run_result,
+		"stdout": output_capture.collect(),
+	}
 
 func _send_ok_response(connection: Dictionary, data: Variant) -> void:
 	_send_json_response(connection, 200, {"ok": true, "data": data})
