@@ -150,6 +150,65 @@ class TestFuckTool(unittest.TestCase):
         result = fuck_tool.search(self.client, "   ")
         self.assertEqual(result, "错误：query 不能为空。")
 
+    # ── add_comment ─────────────────────────────────────────
+
+    def test_add_comment_normal(self):
+        fuck_tool.fuck(self.client, "这代码真烂")
+        result = fuck_tool.add_comment(self.client, 1, "确实，我也看不下去了")
+        self.assertEqual(result, "💬 已评论 fuck #1")
+
+        data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
+        item = data["items"][0]
+        self.assertEqual(len(item["comments"]), 1)
+        comment = item["comments"][0]
+        self.assertEqual(comment["comment"], "确实，我也看不下去了")
+        self.assertEqual(comment["author"], "test_agent")
+        self.assertIn("created_at", comment)
+
+    def test_add_comment_empty(self):
+        fuck_tool.fuck(self.client, "吐槽一下")
+        result = fuck_tool.add_comment(self.client, 1, "")
+        self.assertEqual(result, "错误：comment 不能为空。")
+
+    def test_add_comment_blank(self):
+        fuck_tool.fuck(self.client, "吐槽一下")
+        result = fuck_tool.add_comment(self.client, 1, "   ")
+        self.assertEqual(result, "错误：comment 不能为空。")
+
+    def test_add_comment_not_found(self):
+        result = fuck_tool.add_comment(self.client, 999, "不存在的条目")
+        self.assertEqual(result, "错误：未找到 fuck #999")
+
+    def test_add_comment_multiple(self):
+        fuck_tool.fuck(self.client, "多评论测试")
+        fuck_tool.add_comment(self.client, 1, "第一条评论")
+        fuck_tool.add_comment(self.client, 1, "第二条评论")
+        fuck_tool.add_comment(self.client, 1, "第三条评论")
+
+        data = json.loads(fuck_tool._FUCK_PATH.read_text(encoding="utf-8"))
+        comments = data["items"][0]["comments"]
+        self.assertEqual(len(comments), 3)
+        self.assertEqual(comments[0]["comment"], "第一条评论")
+        self.assertEqual(comments[1]["comment"], "第二条评论")
+        self.assertEqual(comments[2]["comment"], "第三条评论")
+
+    # ── get 含评论 ────────────────────────────────────────
+
+    def test_get_with_comments(self):
+        fuck_tool.fuck(self.client, "带评论的吐槽")
+        fuck_tool.add_comment(self.client, 1, "评论A")
+        fuck_tool.add_comment(self.client, 1, "评论B")
+        result = fuck_tool.get(self.client, 1)
+        self.assertIn("评论 #1", result)
+        self.assertIn("评论A", result)
+        self.assertIn("评论 #2", result)
+        self.assertIn("评论B", result)
+
+    def test_get_no_comments(self):
+        fuck_tool.fuck(self.client, "无评论的吐槽")
+        result = fuck_tool.get(self.client, 1)
+        self.assertIn("(无评论)", result)
+
     # ── 数据持久化 ───────────────────────────────────────
 
     def test_persistence(self):

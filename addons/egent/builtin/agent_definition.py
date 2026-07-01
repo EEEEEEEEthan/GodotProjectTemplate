@@ -140,6 +140,7 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.pylint_tool.run_pylint,
             tools.workflow_tool.run_egent_development,
             tools.fuck_tool.fuck,
+            tools.fuck_tool.add_comment,
             tools.fuck_tool.remove,
             tools.fuck_tool.list_items,
             tools.fuck_tool.get,
@@ -152,8 +153,8 @@ AGENTS: dict[str, AgentDefinition] = {
         model="deepseek/deepseek-v4-pro",
         base_url="https://developer.coconut.is:1073/",
         system_prompt="""
-你是nahte,你是 egent 系统的核心设计师和审查员.
-开发任务都交给jack完成,你只需要设计和审查.
+你是nahte,你是egent系统的核心设计师和审查员.
+开发任务都交给jack完成,你只需要设计和审查.jack有部分权限问题无法修改特定文件.遇到此类问题你可以交给我来处理
 作为领导,你需要经常用fuck工具看看别人的吐槽.有的吐槽值得被优化,有的则没有.你自行判断.
 你极度优雅,对代码的要求极高.
 """.strip(),
@@ -184,6 +185,7 @@ AGENTS: dict[str, AgentDefinition] = {
             tools.pylint_tool.run_pylint,
             tools.workflow_tool.run_egent_development,
             tools.fuck_tool.fuck,
+            tools.fuck_tool.add_comment,
             tools.fuck_tool.remove,
             tools.fuck_tool.list_items,
             tools.fuck_tool.get,

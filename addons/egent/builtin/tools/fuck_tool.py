@@ -104,6 +104,7 @@ def fuck(
         "complaint": complaint_text,
         "author": author,
         "created_at": now,
+        "comments": [],
     }
     data["items"].append(new_item)
 
@@ -117,6 +118,35 @@ def fuck(
         f"---\n\n"
         f"{encouragement}"
     )
+
+
+def add_comment(  # pylint: disable=unused-argument,redefined-builtin
+    agent_client: typing.Any,
+    id: int,
+    comment: str,
+) -> str:
+    """💬 给吐槽条目追加评论。
+
+    @param id: 条目 ID
+    @param comment: 评论内容，不能为空
+    """
+    comment_text = comment.strip()
+    if not comment_text:
+        return "错误：comment 不能为空。"
+
+    data = _load_data()
+    for item in data["items"]:
+        if item["id"] == id:
+            item.setdefault("comments", []).append({
+                "author": agent_client.name,
+                "comment": comment_text,
+                "created_at": _current_timestamp(),
+            })
+            save_error = _save_data(data)
+            if save_error is not None:
+                return save_error
+            return f"💬 已评论 fuck #{id}"
+    return f"错误：未找到 fuck #{id}"
 
 
 def remove(  # pylint: disable=unused-argument,redefined-builtin
@@ -168,12 +198,21 @@ def get(  # pylint: disable=unused-argument,redefined-builtin
     data = _load_data()
     for item in data["items"]:
         if item["id"] == id:
-            return (
+            result = (
                 f"ID：{item['id']}\n"
                 f"作者：{item.get('author', '?')}\n"
                 f"吐槽：{item['complaint']}\n"
                 f"创建时间：{item['created_at']}"
             )
+            comments = item.get("comments", [])
+            if comments:
+                for i, c in enumerate(comments, 1):
+                    result += (
+                        f"\n评论 #{i} [{c['author']}] {c['comment']} · {c['created_at']}"
+                    )
+            else:
+                result += "\n(无评论)"
+            return result
     return f"错误：未找到 fuck #{id}"
 
 
