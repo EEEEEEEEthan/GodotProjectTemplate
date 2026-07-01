@@ -8,7 +8,7 @@ var _connections: Array[Dictionary] = []
 func _ready() -> void:
 	while not _start(port):
 		port += 1
-	print("<<<EGENT::GAME_MCP::HANDSHAKE::v1::port=%d>>>" % port)
+	print("<<<GAME_MCP::PORT=%d>>>" % port)
 
 func _start(port: int) -> bool:
 	if _tcp_server.listen(port) == OK:
@@ -86,19 +86,19 @@ func _dispatch_request(connection: Dictionary) -> void:
 	var request_line := header_text.split("\r\n", false)[0]
 	var request_parts := request_line.split(" ")
 	if request_parts.size() < 2:
-		_send_error_response(connection, 400, "无效请求行")
+		_send_error_response(connection, 400, "invalid request line")
 		return
 	var method := request_parts[0]
 	var body_text: String = connection.body_bytes.get_string_from_utf8()
 	var json := JSON.new()
 	if json.parse(body_text) != OK:
-		_send_error_response(connection, 400, "JSON 解析失败")
+		_send_error_response(connection, 400, "JSON parse failed")
 		return
 	var data: Variant = json.data
 	if typeof(data) != TYPE_DICTIONARY:
-		_send_error_response(connection, 400, "请求体必须是 JSON 对象")
+		_send_error_response(connection, 400, "request body must be a JSON object")
 		return
-	print("Game MCP: 收到 data=%s" % body_text)
+	print("Game MCP: received data=%s" % body_text)
 	connection.state = "dispatched"
 	var result = await _on_command_received(data)
 	_send_ok_response(connection, result)
@@ -117,7 +117,7 @@ func _send_json_response(connection: Dictionary, status_code: int, body: Variant
 		return
 	var peer: StreamPeerTCP = connection.peer
 	var body_text := JSON.stringify(body)
-	print("Game MCP: 发送 %s" % body_text)
+	print("Game MCP: sent %s" % body_text)
 	var status_text := "OK"
 	if status_code == 400:
 		status_text = "Bad Request"

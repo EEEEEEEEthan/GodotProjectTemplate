@@ -17,18 +17,18 @@ func on_command_received(data: Dictionary) -> Variant:
 	elif command == \"execute\":
 		var script_source: String = data.get(\"script\", \"\")
 		if script_source.is_empty():
-			return {\"error\": \"script 为空\"}
+			return {\"error\": \"script is empty\"}
 		_dynamic_script_count += 1
 		var gdscript := GDScript.new()
 		gdscript.source_code = script_source
 		gdscript.resource_path = \"mcp-dynamic://%d\" % _dynamic_script_count
 		if gdscript.reload() != OK:
-			return {\"error\": \"编译失败\"}
+			return {\"error\": \"compilation failed\"}
 		var script_instance = gdscript.new()
 		if not script_instance.has_method(\"run\"):
-			return {\"error\": \"脚本缺少 run(scene_tree) 方法\"}
+			return {\"error\": \"script missing run(scene_tree) method\"}
 		return await script_instance.run(get_tree())
-	return {\"error\": \"未知命令: %s\" % str(command)}
+	return {\"error\": \"unknown command: %s\" % str(command)}
 "
 
 [node name="Main" type="Control" unique_id=837875434]
