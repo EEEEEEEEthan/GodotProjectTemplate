@@ -291,7 +291,7 @@ class AgentClient:
         client = self.__get_or_create_client()
 
         while True:
-            AgentClient.__trim_inflight_context(messages, _MAX_INFLIGHT_CONTEXT_CHARS)
+            self.__trim_inflight_context(messages, _MAX_INFLIGHT_CONTEXT_CHARS)
             turn_text: list[str] = []
             tool_calls_by_index: dict[int, dict[str, typing.Any]] = {}
             buffer_checkpoint = len(text_buffer)
