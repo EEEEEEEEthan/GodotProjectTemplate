@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import dataclasses
 
-from agents import RunConfig, set_default_openai_api, set_default_openai_client
+from agents import (
+    RunConfig,
+    set_default_openai_api,
+    set_default_openai_client,
+    set_tracing_disabled,
+)
 from agents.models.openai_provider import OpenAIProvider
 from openai import AsyncOpenAI
 
@@ -26,9 +31,14 @@ class ModelRuntime:
         )
         set_default_openai_client(client)
         set_default_openai_api("chat_completions")
+        set_tracing_disabled(True)
         provider = OpenAIProvider(
             openai_client=client,
             use_responses=False,
         )
-        run_config = RunConfig(model=config.model, model_provider=provider)
+        run_config = RunConfig(
+            model=config.model,
+            model_provider=provider,
+            tracing_disabled=True,
+        )
         return cls(config=config, run_config=run_config)
