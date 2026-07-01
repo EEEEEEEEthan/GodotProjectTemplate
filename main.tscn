@@ -17,18 +17,18 @@ func on_command_received(data: Dictionary) -> Variant:
 	elif command == \"execute\":
 		var script_source: String = data.get(\"script\", \"\")
 		if script_source.is_empty():
-			return {\"error\": \"script is empty\"}
+			return \"error: script is empty\"
 		_dynamic_script_count += 1
 		var gdscript := GDScript.new()
 		gdscript.source_code = script_source
 		gdscript.resource_path = \"mcp-dynamic://%d\" % _dynamic_script_count
 		if gdscript.reload() != OK:
-			return {\"error\": \"compilation failed\"}
+			return \"error: compilation failed\"
 		var script_instance = gdscript.new()
 		if not script_instance.has_method(\"run\"):
-			return {\"error\": \"script missing run(scene_tree) method\"}
+			return \"error: script missing run(scene_tree) method\"
 		return await script_instance.run(get_tree())
-	return {\"error\": \"unknown command: %s\" % str(command)}
+	return \"error： unknown command: %s\" % str(command)
 "
 
 [node name="Main" type="Control" unique_id=837875434]
