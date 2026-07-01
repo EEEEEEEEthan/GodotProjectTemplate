@@ -32,7 +32,7 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 
 完成以上两步即可，无需在场景里注册 handler。
 
-## 获取端口号
+### 3. 获取端口号
 
 游戏启动后日志会打印：
 
@@ -42,8 +42,12 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 
 `run` 默认用这个端口，不要硬编码 `6789`（占用时会自动递增）。
 
-Agent 流程：
+也可以让agent自行启动游戏，他会自动将日志纳入上下文
 
-1. 启动游戏，等待 `<<<GAME_MCP::PORT=XXXX>>>`
-2. `run(port=XXXX, script="...")`
-3. 结束后关闭游戏
+### 4. 命令agent
+
+提示词示例
+
+```
+用mcp查看一下当前游戏6789端口的场景树
+```
