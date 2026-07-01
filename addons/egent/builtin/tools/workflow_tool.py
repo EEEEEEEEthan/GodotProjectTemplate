@@ -60,7 +60,7 @@ async def run_egent_development(prompt: str) -> str:
                 "额外注意测试代码是否正确覆盖了需求。"
                 "如果审查通过，直接输出`<<<通过>>>`"
                 "（三个尖括号包裹的通过），不要有任何多余的输出。"
-                "否则，输出修改意见"
+                "否则，输出修改意见", readonly=True
             )
             if lst_review and "<<<通过>>>" in lst_review[-1]:
                 import tools
@@ -69,7 +69,7 @@ async def run_egent_development(prompt: str) -> str:
                     override_tools=(tools.fuck_tool.fuck,),
                 )
                 report = "\n".join(lst_report)
-                return report + "\n\n任务完成。代码已审查，可以等待用户验收。"
+                return report + "\n\n任务完成。已进行过测试和审查，现在是等待提交的状态."
 
             # review 不通过 → 修复后回到外层 while，内层 attempt 自然归零
             await jack.send(
