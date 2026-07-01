@@ -9,11 +9,13 @@ import sys
 from openai import AsyncOpenAI
 
 if __package__:
+    from .conversation import Conversation, TextDelta
     from .model_settings import ConfigTemplateCreatedError, ModelSettings
 else:
     import pathlib
 
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+    from egent.conversation import Conversation, TextDelta
     from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
 
 DEFAULT_PROFILE = "coconut"
@@ -33,9 +35,8 @@ async def async_main(argv: list[str] | None = None) -> int:
         print(error, file=sys.stderr)
         return 1
     client = AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url)
-    messages: list[dict[str, str]] = [
-        {"role": "system", "content": ASSISTANT_INSTRUCTIONS},
-    ]
+    conversation = Conversation(client, settings.model_name)
+    conversation.add_message("system", ASSISTANT_INSTRUCTIONS)
     print(
         f"使用 [{settings.profile_name}] / {settings.model_alias} "
         f"→ {settings.model_name}\n",
@@ -51,21 +52,12 @@ async def async_main(argv: list[str] | None = None) -> int:
             continue
         if user_message.lower() in {"exit", "quit", "/exit"}:
             break
-        messages.append({"role": "user", "content": user_message})
         print("\n助手: ", end="", flush=True)
-        reply_parts: list[str] = []
-        stream = await client.chat.completions.create(
-            model=settings.model_name,
-            messages=messages,
-            stream=True,
-        )
-        async for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                reply_parts.append(delta)
-                print(delta, end="", flush=True)
+        conversation.add_message("user", user_message)
+        async for event in conversation.send():
+            if isinstance(event, TextDelta):
+                print(event.text, end="", flush=True)
         print()
-        messages.append({"role": "assistant", "content": "".join(reply_parts)})
     return 0
 
 
