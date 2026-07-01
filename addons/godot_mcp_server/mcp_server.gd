@@ -28,6 +28,8 @@ func _start(port: int) -> bool:
 	return false
 
 func _on_command_received(data: Dictionary, respond: Callable) -> void:
+	if not command_received.get_connections():
+		pass
 	command_received.emit(
 		data,
 		func(result: Dictionary) -> void:
