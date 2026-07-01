@@ -91,12 +91,6 @@ def agent_tool(
     return decorate
 
 
-def readonly(handler: ToolHandler) -> ToolHandler:
-    """标记工具为只读：不修改项目工作区（含内部数据写入与跑测试/验证）。"""
-    handler.__tool_readonly__ = True  # type: ignore[attr-defined]
-    return handler
-
-
 def is_readonly(handler: ToolHandler) -> bool:
     """工具是否标记为只读。"""
     if bool(getattr(handler, "__tool_readonly__", False)):
