@@ -76,4 +76,5 @@ async def async_main(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> None:
+    """main"""
     raise SystemExit(asyncio.run(async_main(argv)))

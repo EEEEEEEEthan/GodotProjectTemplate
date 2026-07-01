@@ -1,3 +1,5 @@
+"""从 .model.json 加载模型连接配置。"""
+
 from __future__ import annotations
 
 import json
@@ -32,6 +34,8 @@ class ConfigTemplateCreatedError(FileNotFoundError):
 
 @dataclass
 class ModelSettings:
+    """指定 profile 与 model 别名的 API 连接参数。"""
+
     api_key: str
     base_url: str
     model_name: str
@@ -40,6 +44,7 @@ class ModelSettings:
 
     @staticmethod
     def load(profile_name: str, model_alias: str) -> ModelSettings:
+        """读取配置；若文件不存在则创建模板并抛出 ConfigTemplateCreatedError。"""
         path = DEFAULT_CONFIG_PATH
         if not path.is_file():
             path.parent.mkdir(parents=True, exist_ok=True)
