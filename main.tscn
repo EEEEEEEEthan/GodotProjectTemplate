@@ -3,14 +3,32 @@
 [sub_resource type="GDScript" id="GDScript_7dm0k"]
 script/source = "extends Control
 
+var _dynamic_script_count := 0
 
-# Called when the node enters the scene tree for the first time.
+
 func _ready() -> void:
 	GameMcp.handler = on_command_received
 
-func on_command_received(data: Dictionary) -> String:
-	await get_tree().create_timer(10.0).timeout
-	return \"asdf\"
+
+func on_command_received(data: Dictionary) -> Variant:
+	var command = data.get(\"command\")
+	if command == \"ping\":
+		return \"pong\"
+	elif command == \"execute\":
+		var script_source: String = data.get(\"script\", \"\")
+		if script_source.is_empty():
+			return {\"error\": \"script 为空\"}
+		_dynamic_script_count += 1
+		var gdscript := GDScript.new()
+		gdscript.source_code = script_source
+		gdscript.resource_path = \"mcp-dynamic://%d\" % _dynamic_script_count
+		if gdscript.reload() != OK:
+			return {\"error\": \"编译失败\"}
+		var script_instance = gdscript.new()
+		if not script_instance.has_method(\"run\"):
+			return {\"error\": \"脚本缺少 run(scene_tree) 方法\"}
+		return await script_instance.run(get_tree())
+	return {\"error\": \"未知命令: %s\" % str(command)}
 "
 
 [node name="Main" type="Control" unique_id=837875434]
