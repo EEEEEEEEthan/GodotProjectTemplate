@@ -50,10 +50,10 @@ func run(scene_tree: SceneTree) -> Variant:
 <<<GAME_MCP::PORT=6789>>>
 ```
 
-`eval` 必须用这个端口，不要硬编码 `6789`（占用时会自动递增）。
+`run` 必须用这个端口，不要硬编码 `6789`（占用时会自动递增）。
 
 Agent 流程：
 
 1. 启动游戏，等待 `<<<GAME_MCP::PORT=XXXX>>>`
-2. `eval(port=XXXX, script="...")`
+2. `run(port=XXXX, script="...")`
 3. 结束后关闭游戏

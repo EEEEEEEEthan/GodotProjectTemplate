@@ -56,7 +56,7 @@ def send_http(
 
 
 @mcp.tool()
-def eval(port: int, script: str) -> str:
+def run(port: int, script: str) -> str:
     """在运行中的 Godot 实例里执行 GDScript。
 
     Args:
