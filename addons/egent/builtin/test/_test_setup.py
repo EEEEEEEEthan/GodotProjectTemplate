@@ -6,5 +6,7 @@ import os
 import pathlib
 import sys
 
+os.environ.setdefault("EGENT_NO_LOG", "1")
+
 _builtin_dir = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_builtin_dir))

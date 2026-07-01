@@ -8,15 +8,23 @@ from __future__ import annotations
 
 import atexit
 import datetime
+import os
 import typing
 
 import agent.data_loader
 
 _LOG_FILE: typing.TextIO | None = None
+_NO_LOG_ENV = "EGENT_NO_LOG"
+
+
+def _logging_disabled() -> bool:
+    return os.environ.get(_NO_LOG_ENV, "").lower() in ("1", "true", "yes")
 
 
 def write(text: str) -> None:
     """写入日志（首次调用时自动创建日志文件）。"""
+    if _logging_disabled():
+        return
     global _LOG_FILE  # pylint: disable=global-statement
     if _LOG_FILE is None:
         log_dir = agent.data_loader.LOG_DIR
