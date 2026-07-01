@@ -1,22 +1,22 @@
 # Godot Runtime MCP
 
-运行时向 Godot 发送 GDScript 并执行，用于 debug、白盒测试、探查场景状态。
+Send GDScript to a running Godot instance and execute it at runtime—for debugging, white-box testing, and inspecting scene state.
 
-## 接入
+## Setup
 
 ### 1. Autoload
 
-**项目 → 项目设置 → Autoload**，添加：
+In **Project → Project Settings → Autoload**, add:
 
 ```
 res://addons/godot_runtime_mcp/game_mcp.gd
 ```
 
-节点名：`GameMcp`
+Node name: `GameMcp`
 
-### 2. MCP 配置
+### 2. MCP configuration
 
-项目根 `.cursor/mcp.json`：
+In the project root `.cursor/mcp.json`:
 
 ```json
 {
@@ -28,22 +28,22 @@ res://addons/godot_runtime_mcp/game_mcp.gd
 }
 ```
 
-需要 Python 3.10+。
+Requires Python 3.10+.
 
-### 3. 获取端口号
+### 3. Get the port number
 
-游戏启动后日志会打印：
+After the game starts, the log prints:
 
 ```
 <<<GAME_MCP::PORT=6789>>>
 ```
 
-也可以让agent自行启动游戏，他会自动将日志纳入上下文
+You can also have the agent launch the game itself—it will automatically include the log in context.
 
-### 4. 命令agent
+### 4. Prompt the agent
 
-提示词示例
+Example prompt:
 
 ```
-用mcp查看一下当前游戏6789端口的场景树
+Use MCP to inspect the scene tree on game port 6789
 ```
