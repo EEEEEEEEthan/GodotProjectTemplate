@@ -20,25 +20,15 @@ def get_walk_files_tool(
     """按白名单与黑名单生成预配置的目录遍历工具。"""
     whitelist_patterns = tuple(whitelist or ())
     blacklist_patterns = tuple(blacklist or ())
-
-    def path_matches_blacklist(relative_path_text: str) -> bool:
-        return any(
-            fnmatch.fnmatch(relative_path_text, pattern)
-            for pattern in blacklist_patterns
-        )
-
-    def path_matches_whitelist(relative_path_text: str) -> bool:
-        return any(
-            fnmatch.fnmatch(relative_path_text, pattern)
-            for pattern in whitelist_patterns
-        )
-
-    def to_relative_path_text(path: str | Path) -> str:
-        return Path(path).relative_to(resolved_working_directory).as_posix()
-
     resolved_working_directory = (
         Path.cwd() if working_directory is None else Path(working_directory).resolve()
     )
+
+    def relative_path_text(path: str | Path) -> str:
+        return Path(path).relative_to(resolved_working_directory).as_posix()
+
+    def path_matches(patterns: tuple[str, ...], path_text: str) -> bool:
+        return any(fnmatch.fnmatch(path_text, pattern) for pattern in patterns)
 
     def walk_files_tool(
         directory: str,
@@ -48,13 +38,13 @@ def get_walk_files_tool(
         root = (resolved_working_directory / Path((directory or ".").strip())).resolve()
         if not root.is_relative_to(resolved_working_directory):
             return f"错误：目录超出工作目录范围：{directory}"
-        relative_directory_text = to_relative_path_text(root)
-        if relative_directory_text != "." and path_matches_blacklist(relative_directory_text):
+        relative_directory_text = relative_path_text(root)
+        if relative_directory_text != "." and path_matches(blacklist_patterns, relative_directory_text):
             return f"错误：目录命中黑名单：{directory}"
         if (
             whitelist_patterns
             and relative_directory_text != "."
-            and not path_matches_whitelist(relative_directory_text)
+            and not path_matches(whitelist_patterns, relative_directory_text)
         ):
             return f"错误：目录不在白名单内：{directory}"
         if not root.is_dir():
@@ -64,41 +54,41 @@ def get_walk_files_tool(
         max_depth = depth if depth is not None else 1
         lines: list[str] = []
 
-        def walk_directory(root: str, prefixes: list[bool] | None = None) -> None:
+        def walk_directory(directory_path: str, prefixes: list[bool] | None = None) -> None:
             if prefixes is None:
                 prefixes = []
             if 0 < max_depth <= len(prefixes):
                 return
 
             try:
-                entries = sorted(os.scandir(root), key=lambda entry: entry.name.lower())
+                entries = sorted(os.scandir(directory_path), key=lambda entry: entry.name.lower())
             except OSError as error:
-                lines.append(f"警告：无法访问 {root}：{error}")
+                lines.append(f"警告：无法访问 {directory_path}：{error}")
                 return
 
-            visible_entries = [
-                entry
-                for entry in entries
-                if not entry.is_symlink()
-                and not path_matches_blacklist(to_relative_path_text(entry.path))
-            ]
-            for index, entry in enumerate(visible_entries):
+            visible_entries: list[tuple[os.DirEntry, str]] = []
+            for entry in entries:
+                if entry.is_symlink():
+                    continue
+                relative_entry_path = relative_path_text(entry.path)
+                if path_matches(blacklist_patterns, relative_entry_path):
+                    continue
+                visible_entries.append((entry, relative_entry_path))
+
+            for index, (entry, relative_entry_path) in enumerate(visible_entries):
                 is_last = index == len(visible_entries) - 1
-                relative_entry_path = to_relative_path_text(entry.path)
                 matches_filter = filter_pattern == "*" or fnmatch.fnmatch(entry.name, filter_pattern)
                 matches_whitelist = (
                     not whitelist_patterns
-                    or path_matches_whitelist(relative_entry_path)
+                    or path_matches(whitelist_patterns, relative_entry_path)
                 )
+                is_directory = entry.is_dir(follow_symlinks=False)
                 if matches_filter and matches_whitelist:
-                    prefix = "".join(" " if last else "│" for last in prefixes)
+                    prefix = "".join(" " if ancestor_is_last else "│" for ancestor_is_last in prefixes)
                     connector = "└ " if is_last else "├ "
-                    if entry.is_dir(follow_symlinks=False):
-                        name = f"{entry.name}/"
-                    else:
-                        name = entry.name
-                    lines.append(prefix + connector + name)
-                if entry.is_dir(follow_symlinks=False):
+                    display_name = f"{entry.name}/" if is_directory else entry.name
+                    lines.append(prefix + connector + display_name)
+                if is_directory:
                     walk_directory(entry.path, prefixes + [is_last])
 
         walk_directory(str(root))
