@@ -5,6 +5,7 @@ from egent.conversation import (
     ConversationEvent,
     TextDelta,
     ToolCallExecuted,
+    ToolCallStarted,
     TurnCompleted,
 )
 from . import builtin_tools
@@ -14,6 +15,7 @@ __all__ = [
     "ConversationEvent",
     "TextDelta",
     "ToolCallExecuted",
+    "ToolCallStarted",
     "TurnCompleted",
     "builtin_tools",
 ]

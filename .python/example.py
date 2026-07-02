@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 import asyncio
-from egent.conversation import Conversation, TextDelta, ToolCallExecuted
+from egent.conversation import (
+    Conversation,
+    TextDelta,
+    ToolCallExecuted,
+    ToolCallStarted,
+)
 from egent import builtin_tools
 
 
@@ -19,11 +24,10 @@ async def async_main() -> int:
         async for event in conversation.request(tools=[builtin_tools.get_walk_files_tool()]):
             if isinstance(event, TextDelta):
                 print(event.text, end="", flush=True)
+            elif isinstance(event, ToolCallStarted):
+                print(f"\n[工具 {event.name}]", flush=True)
             elif isinstance(event, ToolCallExecuted):
-                print(
-                    f"\n[工具 {event.name}]\n{event.result}\n",
-                    flush=True,
-                )
+                print(f"{event.result}\n", flush=True)
         print()
     return 0
 

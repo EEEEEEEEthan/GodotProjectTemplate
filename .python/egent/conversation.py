@@ -32,6 +32,14 @@ class TextDelta(ConversationEvent):
 
 
 @dataclass(frozen=True)
+class ToolCallStarted(ConversationEvent):
+    """工具调用即将执行。"""
+
+    name: str
+    arguments: str
+
+
+@dataclass(frozen=True)
 class ToolCallExecuted(ConversationEvent):
     """工具调用已执行并写回结果。"""
 
@@ -133,6 +141,10 @@ class Conversation:
                 if handler is None:
                     raise ValueError(f"未注册工具处理器: {function_name}")
 
+                yield ToolCallStarted(
+                    name=function_name,
+                    arguments=function_arguments,
+                )
                 handler_result = handler(function_arguments)
                 if isinstance(handler_result, Awaitable):
                     handler_result = await handler_result
