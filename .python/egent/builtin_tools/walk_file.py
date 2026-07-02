@@ -22,15 +22,10 @@ def get_walk_files_tool(
     blacklist_patterns = tuple(blacklist or ())
 
     def matches_blacklist(pattern_text: str) -> bool:
-        return any(
-            fnmatch.fnmatch(pattern_text, pattern)
-            for pattern in blacklist_patterns
-        )
+        return any(fnmatch.fnmatch(pattern_text, pattern) for pattern in blacklist_patterns)
 
     resolved_working_directory = (
-        Path.cwd()
-        if working_directory is None
-        else Path(working_directory).resolve()
+        Path.cwd() if working_directory is None else Path(working_directory).resolve()
     )
 
     def walk_files_tool(
@@ -43,10 +38,7 @@ def get_walk_files_tool(
             return f"错误：目录超出工作目录范围：{directory}"
         relative_directory_path = root.relative_to(resolved_working_directory)
         relative_directory_text = relative_directory_path.as_posix()
-        if (
-            relative_directory_text != "."
-            and matches_blacklist(relative_directory_text)
-        ):
+        if relative_directory_text != "." and matches_blacklist(relative_directory_text):
             return f"错误：目录命中黑名单：{directory}"
         if not root.is_dir():
             return f"错误：目录不存在：{directory}"
@@ -62,10 +54,7 @@ def get_walk_files_tool(
                 return
 
             try:
-                entries = sorted(
-                    os.scandir(root),
-                    key=lambda entry: entry.name.lower(),
-                )
+                entries = sorted(os.scandir(root), key=lambda entry: entry.name.lower())
             except OSError as error:
                 lines.append(f"警告：无法访问 {root}：{error}")
                 return
@@ -74,20 +63,16 @@ def get_walk_files_tool(
                 entry
                 for entry in entries
                 if not entry.is_symlink()
-                and not matches_blacklist(entry.name)
+                and not matches_blacklist(
+                    Path(entry.path).relative_to(resolved_working_directory).as_posix()
+                )
             ]
             for index, entry in enumerate(visible_entries):
                 is_last = index == len(visible_entries) - 1
-                matches_filter = (
-                    filter_pattern == "*"
-                    or fnmatch.fnmatch(entry.name, filter_pattern)
-                )
+                matches_filter = filter_pattern == "*" or fnmatch.fnmatch(entry.name, filter_pattern)
                 matches_whitelist = (
                     not whitelist_patterns
-                    or any(
-                        fnmatch.fnmatch(entry.name, pattern)
-                        for pattern in whitelist_patterns
-                    )
+                    or any(fnmatch.fnmatch(entry.name, pattern) for pattern in whitelist_patterns)
                 )
                 if matches_filter and matches_whitelist:
                     prefix = "".join(" " if last else "│" for last in prefixes)
