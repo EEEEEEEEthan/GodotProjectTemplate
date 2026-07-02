@@ -1,4 +1,4 @@
-"""目录遍历与文件读取内置工具。"""
+"""只读内置工具。"""
 
 from __future__ import annotations
 

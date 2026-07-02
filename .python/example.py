@@ -24,8 +24,8 @@ async def async_main() -> int:
         conversation.add_message("user", input(">>> ").strip())
         async for event in conversation.request(
             tools=[
-                builtin_tools.read_tools.get_walk_files(),
-                builtin_tools.read_tools.read_file,
+                builtin_tools.readonly_tools.get_walk_files(),
+                builtin_tools.readonly_tools.read_file,
             ],
         ):
             if isinstance(event, TextDelta):

@@ -1,5 +1,5 @@
 """内置工具。"""
 
-from . import read_tools
+from . import readonly_tools
 
-__all__ = ["read_tools"]
+__all__ = ["readonly_tools"]
