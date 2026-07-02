@@ -10,7 +10,7 @@ from pathlib import Path
 from egent.tool import ToolCallable
 
 
-def get_walk_file_tool(
+def get_walk_files_tool(
     whitelist: Iterable[str] | None = None,
     blacklist: Iterable[str] | None = None,
 ) -> ToolCallable:

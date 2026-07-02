@@ -16,7 +16,7 @@ async def async_main() -> int:
     )
     while True:
         conversation.add_message("user", input(">>> ").strip())
-        async for event in conversation.request(tools=[builtin_tools.get_walk_file_tool()]):
+        async for event in conversation.request(tools=[builtin_tools.get_walk_files_tool()]):
             if isinstance(event, TextDelta):
                 print(event.text, end="", flush=True)
             elif isinstance(event, ToolCallExecuted):
