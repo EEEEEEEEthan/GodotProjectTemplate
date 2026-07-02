@@ -5,9 +5,12 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
 from openai import AsyncOpenAI
+
+if TYPE_CHECKING:
+    from egent.model_settings import ModelSettings
 
 ChatRole = Literal["system", "user", "assistant"]
 ChatMessage = dict[str, str]
@@ -41,12 +44,15 @@ class Conversation:
 
     def __init__(
         self,
-        client: AsyncOpenAI,
-        model: str,
+        settings: ModelSettings,
         messages: list[ChatMessage] | None = None,
     ) -> None:
-        self.client = client
-        self.model = model
+        self._settings = settings
+        self._client = AsyncOpenAI(
+            api_key=settings.api_key,
+            base_url=settings.base_url,
+        )
+        self.model = settings.model_name
         self._messages = _copy_messages(messages) if messages else []
 
     @property
@@ -70,7 +76,7 @@ class Conversation:
             )
 
         reply_parts: list[str] = []
-        stream = await self.client.chat.completions.create(
+        stream = await self._client.chat.completions.create(
             model=self.model,
             messages=self._messages,
             stream=True,
@@ -89,8 +95,7 @@ class Conversation:
     def clone(self) -> Conversation:
         """克隆一份聊天记录完全相同的独立会话。"""
         return Conversation(
-            client=self.client,
-            model=self.model,
+            settings=self._settings,
             messages=self._messages,
         )
 

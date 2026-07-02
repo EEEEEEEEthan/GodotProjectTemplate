@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 import sys
 
-from openai import AsyncOpenAI
-
 from egent.conversation import Conversation, TextDelta
 from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
 
@@ -19,8 +17,7 @@ async def async_main() -> int:
     except (ConfigTemplateCreatedError, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
-    client = AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url)
-    conversation = Conversation(client, settings.model_name)
+    conversation = Conversation(settings)
     conversation.add_message(
         "system",
         "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。",  # noqa: S1192
@@ -33,8 +30,6 @@ async def async_main() -> int:
             break
         if not user_message:
             continue
-        if user_message.lower() in {"exit", "quit", "/exit"}:
-            break
         conversation.add_message("user", user_message)
         async for event in conversation.send():
             if isinstance(event, TextDelta):
