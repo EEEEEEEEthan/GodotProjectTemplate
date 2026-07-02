@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pathlib
+import uuid
 from collections.abc import AsyncIterator, Awaitable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
@@ -9,11 +11,14 @@ from typing import Any, Literal
 
 from openai import AsyncOpenAI, NOT_GIVEN
 
-from egent.model_settings import ModelSettings
+from egent.model_settings import ModelSettings, ensure_egent_gitignore
 from egent.tool import ToolCallable, resolve_tools
 
 ChatRole = Literal["system", "user", "assistant", "tool"]
 ChatMessage = dict[str, Any]
+
+_TOOL_RESULT_MAX_CHARS = 8_000
+_EGENT_TEMP_DIR = pathlib.Path.cwd() / ".egent" / ".temp"
 
 
 @dataclass(frozen=True)
@@ -141,6 +146,7 @@ class Conversation:
                 handler_result = handler(function_arguments)
                 if isinstance(handler_result, Awaitable):
                     handler_result = await handler_result
+                handler_result = _limit_tool_result(handler_result, function_name)
 
                 yield ToolCallExecuted(
                     name=function_name,
@@ -152,6 +158,23 @@ class Conversation:
                     "tool_call_id": tool_call.id,
                     "content": handler_result,
                 })
+
+
+def _limit_tool_result(content: str, tool_name: str) -> str:
+    if len(content) <= _TOOL_RESULT_MAX_CHARS:
+        return content
+
+    head = content[:_TOOL_RESULT_MAX_CHARS]
+    tail = content[_TOOL_RESULT_MAX_CHARS:]
+    _EGENT_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+    ensure_egent_gitignore()
+    file_name = f"{tool_name}-{uuid.uuid4().hex}.txt"
+    (_EGENT_TEMP_DIR / file_name).write_text(content, encoding="utf-8")
+    relative_path = f".egent/.temp/{file_name}"
+    return (
+        f"{head}...\n"
+        f"(内容太长被截断,剩余{len(tail)}字符,完整内容保存于{relative_path})"
+    )
 
 
 def _copy_messages(messages: list[ChatMessage]) -> list[ChatMessage]:

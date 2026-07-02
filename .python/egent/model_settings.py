@@ -7,8 +7,9 @@ import pathlib
 import tomllib
 from dataclasses import dataclass
 
-DEFAULT_CONFIG_PATH = pathlib.Path.cwd() / ".egent" / ".model.toml"
-EGENT_DIR_GITIGNORE = ".model.toml\n"
+EGENT_DIR = pathlib.Path.cwd() / ".egent"
+DEFAULT_CONFIG_PATH = EGENT_DIR / ".model.toml"
+EGENT_GITIGNORE_ENTRIES = (".model.toml", "/.temp/")
 
 DEFAULT_CONFIG_TEMPLATE = """\
 [gpt5-flash]
@@ -21,6 +22,28 @@ url = "OPENAI_URL"
 model = "MODEL_NAME"
 apikey = "OPENAI_KEY"
 """
+
+
+def ensure_egent_gitignore() -> None:
+    """确保 ``.egent/.gitignore`` 包含模型配置与临时目录忽略项。"""
+    EGENT_DIR.mkdir(parents=True, exist_ok=True)
+    gitignore_path = EGENT_DIR / ".gitignore"
+    if not gitignore_path.is_file():
+        gitignore_path.write_text(
+            "\n".join(EGENT_GITIGNORE_ENTRIES) + "\n",
+            encoding="utf-8",
+        )
+        return
+    existing_lines = gitignore_path.read_text(encoding="utf-8").splitlines()
+    missing_entries = [
+        entry for entry in EGENT_GITIGNORE_ENTRIES if entry not in existing_lines
+    ]
+    if not missing_entries:
+        return
+    gitignore_path.write_text(
+        "\n".join(existing_lines + missing_entries) + "\n",
+        encoding="utf-8",
+    )
 
 
 class ConfigTemplateCreatedError(FileNotFoundError):
@@ -44,11 +67,8 @@ class ModelSettings:
         """
         path = DEFAULT_CONFIG_PATH
         if not path.is_file():
-            egent_dir = path.parent
-            egent_dir.mkdir(parents=True, exist_ok=True)
-            gitignore_path = egent_dir / ".gitignore"
-            if not gitignore_path.is_file():
-                gitignore_path.write_text(EGENT_DIR_GITIGNORE, encoding="utf-8")
+            EGENT_DIR.mkdir(parents=True, exist_ok=True)
+            ensure_egent_gitignore()
             path.write_text(DEFAULT_CONFIG_TEMPLATE, encoding="utf-8")
             raise ConfigTemplateCreatedError(
                 f"已创建配置模板 {path}，请填写后重新运行",
