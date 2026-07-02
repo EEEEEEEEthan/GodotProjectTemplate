@@ -2,10 +2,10 @@
 /.engine/
 /.export/
 /.temp/
-addons/egent/.temp/
-addons/egent/.egent/
+.python/egent/.temp/
 /.local.settings
-addons/egent/.data/
+.python/egent/.data/
+.python/egent/.logs/
 /.idea/
 __pycache__/
 /.loop/.venv/
