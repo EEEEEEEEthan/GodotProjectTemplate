@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import pathlib
 import sys
 
 from openai import AsyncOpenAI
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from egent.conversation import Conversation, TextDelta
 from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
 
