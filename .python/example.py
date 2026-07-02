@@ -11,23 +11,7 @@ from egent.conversation import (
 from egent import builtin_tools
 
 _WALK_FILES_BLACKLIST: tuple[str, ...] = (
-    "__pycache__",
-    "*.pyc",
-    "*.pyo",
-    "*.pyd",
-    ".git",
-    ".godot",
-    ".engine",
-    ".export",
-    ".temp",
-    ".idea",
-    ".mypy_cache",
-    ".ruff_cache",
-    "node_modules",
-    ".DS_Store",
-    "Thumbs.db",
-    "bin",
-    "obj",
+    "*__pycache__*",
 )
 
 

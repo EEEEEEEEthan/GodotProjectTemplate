@@ -132,11 +132,7 @@ def read_file(
         lines = lines[start:]
     if not lines:
         return "(空文件)"
-    numbered = [
-        f"{start + index + 1:6}|{line}"
-        for index, line in enumerate(lines)
-    ]
-    content = "".join(numbered)
+    content = "".join(lines)
     if len(content) <= _READ_FILE_MAX_CHARS:
         return content
     remaining = len(content) - _READ_FILE_MAX_CHARS
