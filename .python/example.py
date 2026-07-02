@@ -7,7 +7,7 @@ import sys
 
 from egent.conversation import Conversation, TextDelta, ToolCallExecuted
 from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
-from egent.builtin_tools import get_walk_file_tool
+from egent import builtin_tools
 
 
 async def async_main() -> int:
@@ -32,7 +32,7 @@ async def async_main() -> int:
         if not user_message:
             continue
         conversation.add_message("user", user_message)
-        async for event in conversation.request(tools=[get_walk_file_tool()]):
+        async for event in conversation.request(tools=[builtin_tools.get_walk_file_tool()]):
             if isinstance(event, TextDelta):
                 print(event.text, end="", flush=True)
             elif isinstance(event, ToolCallExecuted):

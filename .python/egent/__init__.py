@@ -7,7 +7,7 @@ from egent.conversation import (
     ToolCallExecuted,
     TurnCompleted,
 )
-from egent.builtin_tools import get_walk_file_tool
+from . import builtin_tools
 
 __all__ = [
     "Conversation",
@@ -15,5 +15,5 @@ __all__ = [
     "TextDelta",
     "ToolCallExecuted",
     "TurnCompleted",
-    "get_walk_file_tool",
+    "builtin_tools",
 ]
