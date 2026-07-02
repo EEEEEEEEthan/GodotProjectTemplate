@@ -11,13 +11,13 @@ from typing import Any, Literal
 
 from openai import AsyncOpenAI, NOT_GIVEN
 
+from egent.limits import TOOL_RESULT_MAX_CHARS
 from egent.model_settings import ModelSettings, ensure_egent_gitignore
 from egent.tool import ToolCallable, resolve_tools
 
 ChatRole = Literal["system", "user", "assistant", "tool"]
 ChatMessage = dict[str, Any]
 
-_TOOL_RESULT_MAX_CHARS = 8_000
 _EGENT_TEMP_DIR = pathlib.Path.cwd() / ".egent" / ".temp"
 
 
@@ -161,11 +161,11 @@ class Conversation:
 
 
 def _limit_tool_result(content: str, tool_name: str) -> str:
-    if len(content) <= _TOOL_RESULT_MAX_CHARS:
+    if len(content) <= TOOL_RESULT_MAX_CHARS:
         return content
 
-    head = content[:_TOOL_RESULT_MAX_CHARS]
-    tail = content[_TOOL_RESULT_MAX_CHARS:]
+    head = content[:TOOL_RESULT_MAX_CHARS]
+    tail = content[TOOL_RESULT_MAX_CHARS:]
     _EGENT_TEMP_DIR.mkdir(parents=True, exist_ok=True)
     ensure_egent_gitignore()
     file_name = f"{tool_name}-{uuid.uuid4().hex}.txt"

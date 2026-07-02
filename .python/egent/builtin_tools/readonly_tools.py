@@ -7,7 +7,10 @@ import os
 from collections.abc import Iterable
 from pathlib import Path
 
+from egent.limits import TOOL_RESULT_MAX_CHARS
 from egent.tool import ToolCallable
+
+_READ_FILE_MAX_CHARS = TOOL_RESULT_MAX_CHARS * 9 // 10
 
 
 def get_walk_files(
@@ -133,4 +136,11 @@ def read_file(
         f"{start + index + 1:6}|{line}"
         for index, line in enumerate(lines)
     ]
-    return "".join(numbered)
+    content = "".join(numbered)
+    if len(content) <= _READ_FILE_MAX_CHARS:
+        return content
+    remaining = len(content) - _READ_FILE_MAX_CHARS
+    return (
+        f"{content[:_READ_FILE_MAX_CHARS]}...\n"
+        f"(内容太长被截断，剩余{remaining}字符)"
+    )
