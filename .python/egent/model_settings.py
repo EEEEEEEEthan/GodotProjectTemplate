@@ -1,4 +1,4 @@
-"""从 .model.toml 加载模型连接配置。"""
+"""从运行目录/.egent/.model.toml 加载模型连接配置。"""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ import pathlib
 import tomllib
 from dataclasses import dataclass
 
-DEFAULT_CONFIG_PATH = pathlib.Path(__file__).resolve().parent / ".model.toml"
+DEFAULT_CONFIG_PATH = pathlib.Path.cwd() / ".egent" / ".model.toml"
+EGENT_DIR_GITIGNORE = ".model.toml\n"
 
 DEFAULT_CONFIG_TEMPLATE = """\
 [gpt5-flash]
@@ -43,7 +44,11 @@ class ModelSettings:
         """
         path = DEFAULT_CONFIG_PATH
         if not path.is_file():
-            path.parent.mkdir(parents=True, exist_ok=True)
+            egent_dir = path.parent
+            egent_dir.mkdir(parents=True, exist_ok=True)
+            gitignore_path = egent_dir / ".gitignore"
+            if not gitignore_path.is_file():
+                gitignore_path.write_text(EGENT_DIR_GITIGNORE, encoding="utf-8")
             path.write_text(DEFAULT_CONFIG_TEMPLATE, encoding="utf-8")
             raise ConfigTemplateCreatedError(
                 f"已创建配置模板 {path}，请填写后重新运行",
