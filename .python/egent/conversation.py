@@ -78,7 +78,6 @@ class Conversation:
         self,
         *,
         tools: Iterable[ToolCallable] | None = None,
-        add_to_history: bool = True,
     ) -> AsyncIterator[ConversationEvent]:
         """根据当前历史流式请求助手回复，必要时自动执行工具并续聊。"""
         api_tools: list[ChatCompletionToolUnionParam] | None = None
@@ -113,8 +112,7 @@ class Conversation:
                 for index in sorted(tool_calls_by_index)
             ]
             if not tool_calls:
-                if add_to_history:
-                    self.add_message("assistant", reply_text)
+                self.add_message("assistant", reply_text)
                 yield TurnCompleted(reply_text)
                 return
 
@@ -126,8 +124,7 @@ class Conversation:
                 "content": reply_text or None,
                 "tool_calls": tool_calls,
             }
-            if add_to_history:
-                self._messages.append(assistant_message)
+            self._messages.append(assistant_message)
 
             for tool_call in tool_calls:
                 function_name = tool_call["function"]["name"]
@@ -145,12 +142,11 @@ class Conversation:
                     arguments=function_arguments,
                     result=handler_result,
                 )
-                if add_to_history:
-                    self._messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call["id"],
-                        "content": handler_result,
-                    })
+                self._messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call["id"],
+                    "content": handler_result,
+                })
 
     def clone(self) -> Conversation:
         """克隆一份聊天记录完全相同的独立会话。"""
