@@ -3,7 +3,8 @@
         "**/__pycache__/": true,
         "**/.godot/": true,
         "**/.mypy_cache/": true,
-        "**/.ruff_cache/": true
+        "**/.ruff_cache/": true,
+        ".loops/build/": true,
     },
     "pylint.args": ["--max-line-length=120"]
 }
