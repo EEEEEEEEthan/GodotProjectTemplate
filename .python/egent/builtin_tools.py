@@ -9,6 +9,8 @@ from pathlib import Path
 
 from egent.tool import ToolCallable
 
+__all__ = ["get_walk_file_tool"]
+
 
 def get_walk_file_tool(
     whitelist: Iterable[str] | None = None,
