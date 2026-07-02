@@ -4,5 +4,6 @@
         "**/.godot/": true,
         "**/.mypy_cache/": true,
         "**/.ruff_cache/": true
-    }
+    },
+    "pylint.args": ["--max-line-length=120"]
 }
