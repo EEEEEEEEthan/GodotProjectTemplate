@@ -5,17 +5,15 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any, Literal
 
 from openai import AsyncOpenAI, NOT_GIVEN
 from openai.types.chat.chat_completion_tool_union_param import (
     ChatCompletionToolUnionParam,
 )
 
+from egent.model_settings import ModelSettings
 from egent.tool import ToolCallable, ToolHandler, resolve_tools
-
-if TYPE_CHECKING:
-    from egent.model_settings import ModelSettings
 
 ChatRole = Literal["system", "user", "assistant", "tool"]
 ChatMessage = dict[str, Any]
@@ -54,9 +52,11 @@ class Conversation:
 
     def __init__(
         self,
-        settings: ModelSettings,
+        settings: ModelSettings | str,
         messages: list[ChatMessage] | None = None,
     ) -> None:
+        if isinstance(settings, str):
+            settings = ModelSettings.load(settings)
         self._settings = settings
         self._client = AsyncOpenAI(
             api_key=settings.api_key,

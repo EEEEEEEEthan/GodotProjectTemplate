@@ -6,21 +6,15 @@ import asyncio
 import sys
 
 from egent.conversation import Conversation, TextDelta, ToolCallExecuted
-from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
 from egent import builtin_tools
 
 
 async def async_main() -> int:
     """运行交互式聊天，返回进程退出码。"""
-    try:
-        settings = ModelSettings.load("gpt5")  # noqa: S1192
-    except (ConfigTemplateCreatedError, ValueError) as error:
-        print(error, file=sys.stderr)
-        return 1
-    conversation = Conversation(settings)
+    conversation = Conversation("gpt5")
     conversation.add_message(
         "system",
-        "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。"  # noqa: S1192
+        "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。"
         "需要查看项目目录结构时，调用 walk_files 工具。",
     )
     while True:
