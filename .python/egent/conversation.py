@@ -8,12 +8,9 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from openai import AsyncOpenAI, NOT_GIVEN
-from openai.types.chat.chat_completion_tool_union_param import (
-    ChatCompletionToolUnionParam,
-)
 
 from egent.model_settings import ModelSettings
-from egent.tool import ToolCallable, ToolHandler, resolve_tools
+from egent.tool import ToolCallable, resolve_tools
 
 ChatRole = Literal["system", "user", "assistant", "tool"]
 ChatMessage = dict[str, Any]
@@ -85,13 +82,10 @@ class Conversation:
     async def request(
         self,
         *,
-        tools: Iterable[ToolCallable] | None = None,
+        tools: Iterable[ToolCallable] = (),
     ) -> AsyncIterator[ConversationEvent]:
         """根据当前历史流式请求助手回复，必要时自动执行工具并续聊。"""
-        api_tools: list[ChatCompletionToolUnionParam] | None = None
-        tool_handlers: dict[str, ToolHandler] | None = None
-        if tools is not None:
-            api_tools, tool_handlers = resolve_tools(list(tools))
+        api_tools, tool_handlers = resolve_tools(list(tools))
 
         while True:
             reply_parts: list[str] = []
@@ -100,7 +94,7 @@ class Conversation:
                 model=self.model,
                 messages=self._messages,
                 stream=True,
-                tools=api_tools if api_tools is not None else NOT_GIVEN,
+                tools=api_tools if api_tools else NOT_GIVEN,
             )
             async for chunk in stream:
                 choice_delta = chunk.choices[0].delta
@@ -123,9 +117,6 @@ class Conversation:
                 self.add_message("assistant", reply_text)
                 yield TurnCompleted(reply_text)
                 return
-
-            if tool_handlers is None:
-                raise ValueError("模型返回了工具调用，但未提供 tools。")
 
             assistant_message: ChatMessage = {
                 "role": "assistant",
