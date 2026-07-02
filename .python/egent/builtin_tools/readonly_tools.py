@@ -13,7 +13,7 @@ from egent.tool import ToolCallable
 _READ_FILE_MAX_CHARS = TOOL_RESULT_MAX_CHARS * 9 // 10
 
 
-def get_walk_files(
+def get_walk_files_tool(
     whitelist: Iterable[str] | None = None,
     blacklist: Iterable[str] | None = None,
     working_directory: str | Path | None = None,
