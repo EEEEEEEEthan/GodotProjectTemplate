@@ -27,11 +27,9 @@ async def async_main() -> int:
         "system",
         "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。",  # noqa: S1192
     )
-    print(f"使用 [{settings.profile_name}] → {settings.model_name}\n")
-    print("输入消息开始对话，输入 exit / quit 退出。\n")
     while True:
         try:
-            user_message = input("你: ").strip()
+            user_message = input(">>> ").strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -39,7 +37,6 @@ async def async_main() -> int:
             continue
         if user_message.lower() in {"exit", "quit", "/exit"}:
             break
-        print("\n助手: ", end="", flush=True)
         conversation.add_message("user", user_message)
         async for event in conversation.send():
             if isinstance(event, TextDelta):
