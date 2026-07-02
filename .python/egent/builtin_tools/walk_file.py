@@ -76,21 +76,21 @@ def get_walk_files_tool(
                 return
             visible_entries: list[os.DirEntry] = []
             for entry in entries:
-                if entry.is_symlink():
-                    continue
                 relative_entry_path = relative_path_text(entry.path)
                 if not path_available(relative_entry_path, whitelist_patterns, blacklist_patterns):
                     continue
                 visible_entries.append(entry)
             for index, entry in enumerate(visible_entries):
                 is_last = index == len(visible_entries) - 1
-                is_directory = entry.is_dir(follow_symlinks=False)
+                is_symlink = entry.is_symlink()
+                is_directory = entry.is_dir(follow_symlinks=False) or is_symlink
                 if fnmatch.fnmatch(entry.name, filter_pattern):
                     prefix = "".join(" " if ancestor_is_last else "│" for ancestor_is_last in prefixes)
                     connector = "└ " if is_last else "├ "
-                    lines.append(
-                        prefix + connector + (f"{entry.name}/" if is_directory else entry.name)
-                    )
+                    display_name = f"{entry.name}/" if is_directory else entry.name
+                    if is_symlink:
+                        display_name += " #symlink"
+                    lines.append(prefix + connector + display_name)
                 if is_directory:
                     walk_directory(entry.path, prefixes + (is_last,))
 
