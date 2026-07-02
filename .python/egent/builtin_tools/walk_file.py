@@ -10,6 +10,24 @@ from pathlib import Path
 from egent.tool import ToolCallable
 
 
+def _path_matches_any(patterns: tuple[str, ...], path_text: str) -> bool:
+    return any(fnmatch.fnmatch(path_text, pattern) for pattern in patterns)
+
+
+def path_available(
+    path_text: str,
+    whitelist: Iterable[str] | None,
+    blacklist: Iterable[str] | None,
+) -> bool:
+    blacklist_patterns = tuple(blacklist or ())
+    whitelist_patterns = tuple(whitelist or ())
+    if blacklist_patterns and _path_matches_any(blacklist_patterns, path_text):
+        return False
+    if whitelist_patterns and not _path_matches_any(whitelist_patterns, path_text):
+        return False
+    return True
+
+
 def get_walk_files_tool(
     whitelist: Iterable[str] | None = None,
     blacklist: Iterable[str] | None = None,
@@ -27,9 +45,6 @@ def get_walk_files_tool(
     def relative_path_text(path: str | Path) -> str:
         return Path(path).relative_to(resolved_working_directory).as_posix()
 
-    def path_matches(patterns: tuple[str, ...], path_text: str) -> bool:
-        return any(fnmatch.fnmatch(path_text, pattern) for pattern in patterns)
-
     def walk_files_tool(
         directory: str,
         filter: str | None = None,  # noqa: A002 pylint: disable=redefined-builtin
@@ -37,15 +52,13 @@ def get_walk_files_tool(
     ) -> str:
         root = (resolved_working_directory / Path((directory or ".").strip())).resolve()
         if not root.is_relative_to(resolved_working_directory):
-            return f"错误：目录超出工作目录范围：{directory}"
+            return f"错误：没有权限访问目录：{directory}"
         relative_directory_text = relative_path_text(root)
         is_workspace_root = relative_directory_text == "."
-        if not is_workspace_root and path_matches(blacklist_patterns, relative_directory_text):
-            return f"错误：目录命中黑名单：{directory}"
-        if whitelist_patterns and not is_workspace_root and not path_matches(
-            whitelist_patterns, relative_directory_text
+        if not is_workspace_root and not path_available(
+            relative_directory_text, whitelist_patterns, blacklist_patterns
         ):
-            return f"错误：目录不在白名单内：{directory}"
+            return f"错误：没有权限访问目录：{directory}"
         if not root.is_dir():
             return f"错误：目录不存在：{directory}"
 
@@ -61,21 +74,18 @@ def get_walk_files_tool(
             except OSError as error:
                 lines.append(f"警告：无法访问 {directory_path}：{error}")
                 return
-            visible_entries: list[tuple[os.DirEntry, str]] = []
+            visible_entries: list[os.DirEntry] = []
             for entry in entries:
                 if entry.is_symlink():
                     continue
                 relative_entry_path = relative_path_text(entry.path)
-                if path_matches(blacklist_patterns, relative_entry_path):
+                if not path_available(relative_entry_path, whitelist_patterns, blacklist_patterns):
                     continue
-                visible_entries.append((entry, relative_entry_path))
-            for index, (entry, relative_entry_path) in enumerate(visible_entries):
+                visible_entries.append(entry)
+            for index, entry in enumerate(visible_entries):
                 is_last = index == len(visible_entries) - 1
                 is_directory = entry.is_dir(follow_symlinks=False)
-                if fnmatch.fnmatch(entry.name, filter_pattern) and (
-                    not whitelist_patterns
-                    or path_matches(whitelist_patterns, relative_entry_path)
-                ):
+                if fnmatch.fnmatch(entry.name, filter_pattern):
                     prefix = "".join(" " if ancestor_is_last else "│" for ancestor_is_last in prefixes)
                     connector = "└ " if is_last else "├ "
                     lines.append(
