@@ -70,11 +70,6 @@ class Conversation:
         add_to_history: bool = True,
     ) -> AsyncIterator[ConversationEvent]:
         """根据当前历史流式请求助手回复。"""
-        if self._messages and self._messages[-1]["role"] == "assistant":
-            raise UnexpectedAssistantTurnError(
-                "上一条消息已是 assistant，请先追加 user 消息",
-            )
-
         reply_parts: list[str] = []
         stream = await self._client.chat.completions.create(
             model=self.model,
