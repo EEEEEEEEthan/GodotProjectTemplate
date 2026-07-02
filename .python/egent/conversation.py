@@ -60,6 +60,12 @@ class Conversation:
         settings: str,
         messages: list[ChatMessage] | None = None,
     ) -> None:
+        """初始化对话会话。
+
+        Args:
+            settings: ``.egent/.model.toml`` 中的 profile 名（相对运行目录 ``cwd``）。
+            messages: 初始聊天记录；省略时从空历史开始。
+        """
         self._settings = ModelSettings.load(settings)
         self._client = AsyncOpenAI(
             api_key=self._settings.api_key,
