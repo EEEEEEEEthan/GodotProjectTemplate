@@ -17,11 +17,17 @@ async def async_main() -> int:
     conversation.add_message(
         "system",
         "你是一个有用的 AI 助手。回答要准确、简洁；不确定时明确说明。"
-        "需要查看项目目录结构时，调用 walk_files 工具。",
+        "需要查看项目目录结构时，调用 walk_files 工具；"
+        "需要查看文件内容时，调用 read_file 工具。",
     )
     while True:
         conversation.add_message("user", input(">>> ").strip())
-        async for event in conversation.request(tools=[builtin_tools.get_walk_files_tool()]):
+        async for event in conversation.request(
+            tools=[
+                builtin_tools.read_tools.get_walk_files(),
+                builtin_tools.read_tools.read_file,
+            ],
+        ):
             if isinstance(event, TextDelta):
                 print(event.text, end="", flush=True)
             elif isinstance(event, ToolCallStarted):
