@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        "**/__pycache__/": true,
+        "**/.godot/": true,
+        "**/.mypy_cache/": true,
+        "**/.ruff_cache/": true
+    }
+}
