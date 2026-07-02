@@ -1,5 +1,5 @@
 [project]
-name = "godot-template-python"
+name = "godot-template-loops"
 version = "0.0.0"
 description = "Godot 模板项目的 Python 侧车依赖"
 requires-python = ">=3.11"
