@@ -13,8 +13,10 @@ from egent.tool import ToolCallable
 def get_walk_files_tool(
     whitelist: Iterable[str] | None = None,
     blacklist: Iterable[str] | None = None,
+    name: str = "builtin_walk_files",
+    description: str = "遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件。",
 ) -> ToolCallable:
-    """按白名单与黑名单生成预配置的 builtin_walk_files 工具。"""
+    """按白名单与黑名单生成预配置的目录遍历工具。"""
     whitelist_patterns = tuple(whitelist or ())
     blacklist_patterns = tuple(blacklist or ())
 
@@ -23,12 +25,6 @@ def get_walk_files_tool(
         filter: str | None = None,  # noqa: A002 pylint: disable=redefined-builtin
         depth: int | None = None,
     ) -> str:
-        """遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件。
-
-        @param directory 要遍历的目录（相对工作目录）
-        @param filter 文件与文件夹名通配符，缺省 *
-        @param depth 最大层级深度，0 表示不限制，缺省 1
-        """
         relative_directory = Path((directory or ".").strip())
         if relative_directory.is_absolute():
             return f"错误：目录必须是相对工作目录的路径，不接受绝对路径：{directory}"
@@ -92,5 +88,11 @@ def get_walk_files_tool(
         walk_directory(str(root))
         return "(空目录)" if not lines else "\n".join(lines)
 
-    walk_files_tool.__name__ = "builtin_walk_files"
+    walk_files_tool.__name__ = name
+    walk_files_tool.__doc__ = (
+        f"{description}\n\n"
+        "@param directory 要遍历的目录\n"
+        "@param filter 文件与文件夹名通配符，缺省 *\n"
+        "@param depth 最大层级深度，0 表示不限制，缺省 1"
+    )
     return walk_files_tool
