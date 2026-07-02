@@ -1,10 +1,7 @@
 """egent 聊天 CLI 示例。"""
 
 from __future__ import annotations
-
 import asyncio
-import sys
-
 from egent.conversation import Conversation, TextDelta, ToolCallExecuted
 from egent import builtin_tools
 
