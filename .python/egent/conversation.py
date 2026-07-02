@@ -57,17 +57,15 @@ class Conversation:
 
     def __init__(
         self,
-        settings: ModelSettings | str,
+        settings: str,
         messages: list[ChatMessage] | None = None,
     ) -> None:
-        if isinstance(settings, str):
-            settings = ModelSettings.load(settings)
-        self._settings = settings
+        self._settings = ModelSettings.load(settings)
         self._client = AsyncOpenAI(
-            api_key=settings.api_key,
-            base_url=settings.base_url,
+            api_key=self._settings.api_key,
+            base_url=self._settings.base_url,
         )
-        self.model = settings.model_name
+        self.model = self._settings.model_name
         self._messages = _copy_messages(messages) if messages else []
 
     @property
@@ -148,13 +146,6 @@ class Conversation:
                     "tool_call_id": tool_call.id,
                     "content": handler_result,
                 })
-
-    def clone(self) -> Conversation:
-        """克隆一份聊天记录完全相同的独立会话。"""
-        return Conversation(
-            settings=self._settings,
-            messages=self._messages,
-        )
 
 
 def _copy_messages(messages: list[ChatMessage]) -> list[ChatMessage]:
