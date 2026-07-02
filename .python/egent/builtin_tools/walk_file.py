@@ -13,6 +13,7 @@ from egent.tool import ToolCallable
 def get_walk_files_tool(
     whitelist: Iterable[str] | None = None,
     blacklist: Iterable[str] | None = None,
+    working_directory: str | Path | None = None,
     name: str = "builtin_walk_files",
     description: str = "遍历目录文件树并缩进输出文件名。用于了解项目结构、列出目录下文件。",
 ) -> ToolCallable:
@@ -20,16 +21,33 @@ def get_walk_files_tool(
     whitelist_patterns = tuple(whitelist or ())
     blacklist_patterns = tuple(blacklist or ())
 
+    def matches_blacklist(pattern_text: str) -> bool:
+        return any(
+            fnmatch.fnmatch(pattern_text, pattern)
+            for pattern in blacklist_patterns
+        )
+
+    resolved_working_directory = (
+        Path.cwd()
+        if working_directory is None
+        else Path(working_directory).resolve()
+    )
+
     def walk_files_tool(
         directory: str,
         filter: str | None = None,  # noqa: A002 pylint: disable=redefined-builtin
         depth: int | None = None,
     ) -> str:
-        relative_directory = Path((directory or ".").strip())
-        if relative_directory.is_absolute():
-            return f"错误：目录必须是相对工作目录的路径，不接受绝对路径：{directory}"
-
-        root = (Path.cwd() / relative_directory).resolve()
+        root = (resolved_working_directory / Path((directory or ".").strip())).resolve()
+        if not root.is_relative_to(resolved_working_directory):
+            return f"错误：目录超出工作目录范围：{directory}"
+        relative_directory_path = root.relative_to(resolved_working_directory)
+        relative_directory_text = relative_directory_path.as_posix()
+        if (
+            relative_directory_text != "."
+            and matches_blacklist(relative_directory_text)
+        ):
+            return f"错误：目录命中黑名单：{directory}"
         if not root.is_dir():
             return f"错误：目录不存在：{directory}"
 
@@ -56,10 +74,7 @@ def get_walk_files_tool(
                 entry
                 for entry in entries
                 if not entry.is_symlink()
-                and not any(
-                    fnmatch.fnmatch(entry.name, pattern)
-                    for pattern in blacklist_patterns
-                )
+                and not matches_blacklist(entry.name)
             ]
             for index, entry in enumerate(visible_entries):
                 is_last = index == len(visible_entries) - 1
