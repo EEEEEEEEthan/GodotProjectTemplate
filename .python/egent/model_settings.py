@@ -1,31 +1,25 @@
-"""从 .model.json 加载模型连接配置。"""
+"""从 .model.toml 加载模型连接配置。"""
 
 from __future__ import annotations
 
-import json
 import os
 import pathlib
+import tomllib
 from dataclasses import dataclass
 
-DEFAULT_CONFIG_PATH = pathlib.Path(__file__).resolve().parent / ".model.json"
+DEFAULT_CONFIG_PATH = pathlib.Path(__file__).resolve().parent / ".model.toml"
 
-DEFAULT_PROFILES = {
-    "coconut": {
-        "key": "OPENAI_KEY",
-        "url": "OPENAI_URL",
-        "models": {"high": "MODEL_NAME", "low": "MODEL_NAME"},
-    },
-    "openai": {
-        "key": "OPENAI_KEY",
-        "url": "OPENAI_URL",
-        "models": {"high": "MODEL_NAME", "low": "MODEL_NAME"},
-    },
-    "vocal": {
-        "key": "OPENAI_KEY",
-        "url": "OPENAI_URL",
-        "models": {"high": "MODEL_NAME", "low": "MODEL_NAME"},
-    },
-}
+DEFAULT_CONFIG_TEMPLATE = """\
+[gpt5-flash]
+url = "OPENAI_URL"
+model = "MODEL_NAME"
+apikey = "OPENAI_KEY"
+
+[gpt5]
+url = "OPENAI_URL"
+model = "MODEL_NAME"
+apikey = "OPENAI_KEY"
+"""
 
 
 class ConfigTemplateCreatedError(FileNotFoundError):
@@ -34,41 +28,34 @@ class ConfigTemplateCreatedError(FileNotFoundError):
 
 @dataclass
 class ModelSettings:
-    """指定 profile 与 model 别名的 API 连接参数。"""
+    """指定 profile 的 API 连接参数。"""
 
     api_key: str
     base_url: str
     model_name: str
     profile_name: str
-    model_alias: str
 
     @staticmethod
-    def load(profile_name: str, model_alias: str) -> ModelSettings:
-        """读取指定 profile 与 model 别名的连接配置。
+    def load(profile_name: str) -> ModelSettings:
+        """读取指定 profile 的连接配置。
 
         若配置文件不存在，则创建模板并抛出 ``ConfigTemplateCreatedError``。
         """
         path = DEFAULT_CONFIG_PATH
         if not path.is_file():
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
-                json.dumps(DEFAULT_PROFILES, indent=2, ensure_ascii=False) + "\n",
-                encoding="utf-8",
-            )
+            path.write_text(DEFAULT_CONFIG_TEMPLATE, encoding="utf-8")
             raise ConfigTemplateCreatedError(
                 f"已创建配置模板 {path}，请填写后重新运行",
             )
         try:
-            profiles = json.loads(path.read_text(encoding="utf-8"))
-            profile = profiles[profile_name]
+            profiles = tomllib.loads(path.read_text(encoding="utf-8"))
+            section = profiles[profile_name]
             return ModelSettings(
-                api_key=profile["key"] or os.getenv("OPENAI_API_KEY"),
-                base_url=profile.get("url") or "https://api.openai.com/v1",
-                model_name=profile["models"][model_alias],
+                api_key=section.get("apikey") or os.getenv("OPENAI_API_KEY"),
+                base_url=section.get("url") or "https://api.openai.com/v1",
+                model_name=section["model"],
                 profile_name=profile_name,
-                model_alias=model_alias,
             )
-        except (KeyError, TypeError, json.JSONDecodeError) as error:
-            raise ValueError(
-                f"配置无效: profile={profile_name!r} model={model_alias!r}",
-            ) from error
+        except (KeyError, TypeError, tomllib.TOMLDecodeError) as error:
+            raise ValueError(f"配置无效: profile={profile_name!r}") from error
