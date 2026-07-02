@@ -15,14 +15,7 @@ async def async_main() -> int:
         "需要查看项目目录结构时，调用 walk_files 工具。",
     )
     while True:
-        try:
-            user_message = input(">>> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            break
-        if not user_message:
-            continue
-        conversation.add_message("user", user_message)
+        conversation.add_message("user", input(">>> ").strip())
         async for event in conversation.request(tools=[builtin_tools.get_walk_file_tool()]):
             if isinstance(event, TextDelta):
                 print(event.text, end="", flush=True)
