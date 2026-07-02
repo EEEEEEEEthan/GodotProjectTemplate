@@ -1,4 +1,4 @@
-"""内置工具。"""
+"""目录遍历内置工具。"""
 
 from __future__ import annotations
 
@@ -8,8 +8,6 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from egent.tool import ToolCallable
-
-__all__ = ["get_walk_file_tool"]
 
 
 def get_walk_file_tool(
