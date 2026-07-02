@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterable
+from collections.abc import AsyncIterator, Awaitable, Iterable
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -88,46 +88,44 @@ class Conversation:
         api_tools, tool_handlers = resolve_tools(list(tools))
 
         while True:
-            reply_parts: list[str] = []
-            tool_calls_by_index: dict[int, dict[str, Any]] = {}
-            stream = await self._client.chat.completions.create(
+            async with self._client.chat.completions.stream(
                 model=self.model,
                 messages=self._messages,
-                stream=True,
                 tools=api_tools if api_tools else NOT_GIVEN,
-            )
-            async for chunk in stream:
-                choice_delta = chunk.choices[0].delta
-                delta_text = choice_delta.content
-                if delta_text:
-                    reply_parts.append(delta_text)
-                    yield TextDelta(delta_text)
-                if choice_delta.tool_calls:
-                    _merge_tool_call_deltas(
-                        tool_calls_by_index,
-                        choice_delta.tool_calls,
-                    )
+            ) as stream:
+                async for event in stream:
+                    if event.type == "content.delta":
+                        yield TextDelta(event.delta)
 
-            reply_text = "".join(reply_parts)
-            tool_calls = [
-                tool_calls_by_index[index]
-                for index in sorted(tool_calls_by_index)
-            ]
+                completion = await stream.get_final_completion()
+
+            message = completion.choices[0].message
+            reply_text = message.content or ""
+            tool_calls = message.tool_calls or []
             if not tool_calls:
                 self.add_message("assistant", reply_text)
                 yield TurnCompleted(reply_text)
                 return
 
-            assistant_message: ChatMessage = {
+            self._messages.append({
                 "role": "assistant",
-                "content": reply_text or None,
-                "tool_calls": tool_calls,
-            }
-            self._messages.append(assistant_message)
+                "content": message.content,
+                "tool_calls": [
+                    {
+                        "id": tool_call.id,
+                        "type": "function",
+                        "function": {
+                            "name": tool_call.function.name,
+                            "arguments": tool_call.function.arguments,
+                        },
+                    }
+                    for tool_call in tool_calls
+                ],
+            })
 
             for tool_call in tool_calls:
-                function_name = tool_call["function"]["name"]
-                function_arguments = tool_call["function"]["arguments"]
+                function_name = tool_call.function.name
+                function_arguments = tool_call.function.arguments
                 handler = tool_handlers.get(function_name)
                 if handler is None:
                     raise ValueError(f"未注册工具处理器: {function_name}")
@@ -147,7 +145,7 @@ class Conversation:
                 )
                 self._messages.append({
                     "role": "tool",
-                    "tool_call_id": tool_call["id"],
+                    "tool_call_id": tool_call.id,
                     "content": handler_result,
                 })
 
@@ -157,34 +155,6 @@ class Conversation:
             settings=self._settings,
             messages=self._messages,
         )
-
-
-def _merge_tool_call_deltas(
-    tool_calls_by_index: dict[int, dict[str, Any]],
-    tool_call_deltas: Iterable[Any],
-) -> None:
-    for tool_call_delta in tool_call_deltas:
-        index = tool_call_delta.index
-        if index not in tool_calls_by_index:
-            tool_calls_by_index[index] = {
-                "id": "",
-                "type": "function",
-                "function": {"name": "", "arguments": ""},
-            }
-
-        accumulated_tool_call = tool_calls_by_index[index]
-        if tool_call_delta.id:
-            accumulated_tool_call["id"] = tool_call_delta.id
-        if tool_call_delta.function is None:
-            continue
-        if tool_call_delta.function.name:
-            accumulated_tool_call["function"]["name"] += (
-                tool_call_delta.function.name
-            )
-        if tool_call_delta.function.arguments:
-            accumulated_tool_call["function"]["arguments"] += (
-                tool_call_delta.function.arguments
-            )
 
 
 def _copy_messages(messages: list[ChatMessage]) -> list[ChatMessage]:
