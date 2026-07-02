@@ -3,12 +3,10 @@
 /.engine/
 /.export/
 /.temp/
-.python/egent/.temp/
 /.local.settings
-.python/egent/.data/
-.python/egent/.logs/
 /.idea/
 __pycache__/
+*.egg-info/
 /.loop/.venv/
 /.loop/__pycache__/
 /.loop/.bridge-state/
