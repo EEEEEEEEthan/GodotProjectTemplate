@@ -1,22 +1,17 @@
-"""egent 聊天 CLI。"""
+"""egent 聊天 CLI 示例。"""
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import pathlib
 import sys
 
 from openai import AsyncOpenAI
 
-if __package__:
-    from .conversation import Conversation, TextDelta
-    from .model_settings import ConfigTemplateCreatedError, ModelSettings
-else:
-    import pathlib
-
-    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-    from egent.conversation import Conversation, TextDelta
-    from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from egent.conversation import Conversation, TextDelta
+from egent.model_settings import ConfigTemplateCreatedError, ModelSettings
 
 DEFAULT_PROFILE = "coconut"
 DEFAULT_MODEL = "low"
